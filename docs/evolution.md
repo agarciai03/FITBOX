@@ -11,6 +11,7 @@ FITBOX es una aplicación web diseñada para modernizar la gestión de gimnasios
 **FITBOX** es una aplicación web desarrollada para el ciclo de **Desarrollo de Aplicaciones Web**. Permite a los administradores controlar el flujo de su negocio y a los socios gestionar su actividad física de forma autónoma.
 
 - **Administración:** Gestión de altas/bajas, control de cuotas, creación de clases y supervisión de máquinas.
+- **Socios:** Acceso al recinto mediante QR, reserva de plazas en clases y consulta de historial de pagos.
 
 ## 🛠️ TECNOLOGÍAS UTILIZADAS
 
