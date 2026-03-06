@@ -23,7 +23,7 @@
 
 Actualmente, los gimnasios de tamaño pequeño y mediano (como los boxes de Crossfit o centros de artes marciales) se enfrentan a un problema: las soluciones de software del mercado son demasiado caras, complejas o están anticuadas. Muchos siguen recurriendo a hojas de cálculo en Excel, cobros en efectivo descontrolados y tarjetas de acceso físicas que los socios pierden constantemente.
 
-**FITBOX** nace como una solución integral, alojada 100% en la nube (SaaS), que digitaliza y automatiza las tareas diarias del centro deportivo. Su diseño **Mobile-First**, su interfaz en **Modo Oscuro (Dark UI)** y la **Nnternalización (i18n)** de la página garantizan una experiencia de usuario premium tanto para el dueño del negocio como para el cliente final.
+**FITBOX** nace como una solución integral, alojada 100% en la nube (SaaS), que digitaliza y automatiza las tareas diarias del centro deportivo. Su diseño **Mobile-First**, su interfaz en **Modo Oscuro (Dark UI)** y la **Internalización (i18n)** de la página garantizan una experiencia de usuario premium tanto para el dueño del negocio como para el cliente final.
 
 ## 👥 Perfiles de Usuario 
 
