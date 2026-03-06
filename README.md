@@ -1,7 +1,7 @@
 # 🥊 FITBOX - Gestión Integral de Gimnasios
 
 **Autor:** Alberto García Izquierdo  
-**Tutor:** Francisco José Mera Calderón   
+**Tutor:** Francisco José Mera Calderón  
 **Curso:** 2º DAW - IES Albarregas (2025/2026)
 
 ## 🌍 Visión general del proyecto
@@ -14,11 +14,41 @@ El objetivo principal es eliminar el uso de papel y hojas de cálculo, ofreciend
 - Los **monitores** pueden pasar lista y reportar averías en las máquinas.
 - El **administrador** tiene un control total sobre las cuotas, los aforos y el personal.
 
-## 📂 Estructura de la Documentación
+## 📁 Estructura del Proyecto
 
-Toda la documentación detallada del proyecto se encuentra en la carpeta `/docs`. Allí encontrarás:
+El proyecto está construido con React, Vite y TypeScript, siguiendo una arquitectura modular orientada a la escalabilidad:
 
-1. **Manual del Proyecto:** Evolución y timeline de los dos trimestres.
-2. **Manual de Usuario:** Guía visual de uso de la aplicación.
-3. **Manual Técnico:** Arquitectura, base de datos y requisitos.
-4. **Manual de Despliegue:** Instrucciones para ejecutar la app en local y en producción.
+```text
+FITBOX/
+ ├── docs/                      
+ ├── public/                    
+ ├── src/                      
+ │    ├── assets/              
+ │    ├── components/           
+ │    ├    ├── charts
+ |    |    ├── common
+ |    |    ├── forms
+ |    |    ├── ui
+ |    |    └── utils
+ │    ├── database/     
+ |    |    ├── repositories
+ │    │    └── supabase/
+ │    │         └── Client.ts   
+ |    ├── hooks
+ │    ├── interfaces/                
+ │    ├── layouts/              
+ │    ├── locales/                
+ │    ├── pages/               
+ │    ├── router/                
+ │    ├── stores/   
+ |    ├── styles  
+ |    |      └── index.css  
+ |    ├── types
+ |    ├── utils          
+ │    ├── App.tsx               
+ │    └── main.tsx              
+ ├── .env                       
+ ├── package.json               
+ ├── tailwind.config.js         
+ └── vite.config.ts             
+```

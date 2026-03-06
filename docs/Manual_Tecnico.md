@@ -40,4 +40,57 @@ Utilizamos una base de datos relacional PostgreSQL (alojada en Supabase). Las en
 - `maquinas`: Inventario y control de estados (Operativa / Rota).
 - `pagos`: Histórico de cuotas por usuario.
 
-_(Nota: En versiones posteriores de este manual se incluirá el diagrama Entidad-Relación visual)_
+### 3.1. Diagrama Entidad-Relación
+
+A continuación se detalla el Modelo Entidad-Relación de la base de datos de FITBOX, generado dinámicamente. Este modelo garantiza la integridad referencial conectando a los usuarios con sus roles, reservas y pagos:
+
+```mermaid
+erDiagram
+    ROLES ||--o{ USUARIOS : "tiene (1:N)}"
+    USUARIOS ||--o{ RESERVAS : "realiza (1:N)}"
+    CLASES ||--o{ RESERVAS : "incluye (1:N)}"
+    USUARIOS ||--o{ PAGOS : "realiza (1:N)}"
+
+    ROLES {
+        int8 id_rol PK
+        text nombre_rol
+    }
+
+    USUARIOS {
+        uuid id_usuario PK
+        text nombre
+        text email
+        int8 id_rol FK
+        timestamptz fecha_alta
+        text codigo_qr
+    }
+
+    CLASES {
+        int8 id_clase PK
+        text tipo_clase
+        timestamptz horario
+        int4 aforo_maximo
+    }
+
+    RESERVAS {
+        int8 id_reserva PK
+        uuid id_usuario FK
+        int8 id_clase FK
+        timestamptz fecha_reserva
+    }
+
+    PAGOS {
+        int8 id_pago PK
+        uuid id_usuario FK
+        text mes
+        text estado_pago
+        timestamptz fecha_pago
+    }
+
+    MAQUINAS {
+        int8 id_maquina PK
+        text nombre
+        text estado
+        text observaciones
+    }
+```

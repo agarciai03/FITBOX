@@ -1,4 +1,4 @@
-# 🚀 Manual de Despliegue (para Junio)
+# 🚀 Manual de Despliegue
 
 Instrucciones para poner en marcha el proyecto FITBOX, tanto en un entorno local de desarrollo como en producción.
 
@@ -11,7 +11,7 @@ Para que un desarrollador o el tutor pueda probar la aplicación en su máquina,
 2. **Instalar las dependencias:**
    Abrir la terminal en la carpeta del proyecto y ejecutar: `npm install`
 3. **Variables de entorno:**
-   Crear un archivo `.env.local` en la raíz del proyecto y añadir las credenciales de conexión a Supabase (URL y Anon Key).
+   Crear un archivo `.env` en la raíz del proyecto y añadir las credenciales de conexión a Supabase (URL y Anon Key).
 4. **Arrancar el servidor:**
    Ejecutar `npm run dev`. La aplicación estará disponible en `http://localhost:5173`.
 
