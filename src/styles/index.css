@@ -1,14 +1,18 @@
 @import "tailwindcss";
 
-@layer base {
+@theme {
+  /* Colores corporativos de FITBOX según el Manual de Diseño */
+  --color-fitbox-bg: #0f1115;
+  --color-fitbox-card: #16181d;
+  --color-fitbox-red: #dc2626;
+  --color-fitbox-red-hover: #b91c1c;
+  --color-fitbox-text: #e5e5e5;
+  --color-fitbox-text-muted: #a3a3a3;
+}
 
-  html,
+/* Forzamos el modo oscuro por defecto en toda la app */
+@layer base {
   body {
-    margin: 0;
-    padding: 0;
-    background-color: #0f1115;
-    color: #e5e5e5;
-    font-family: system-ui, -apple-system, sans-serif;
-    overflow-x: hidden;
+    @apply bg-fitbox-bg text-fitbox-text antialiased;
   }
 }
