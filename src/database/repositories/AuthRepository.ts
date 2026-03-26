@@ -1,18 +1,41 @@
 import { supabase } from "../supabase/Client";
 
+// Todos los datos que tu RegisterPage va a enviar.
+export interface RegisterData {
+    nombre: string;
+    apellidos: string;
+    email: string;
+    password?: string;
+    dni: string;
+    telefono: string;
+    sexo: string;
+    pais: string;
+    codigo_postal: string;
+    localidad: string;
+    provincia: string;
+}
 
 export const AuthRepository = {
 
-    // Función para registrar al usuario
-    register: async (email: string, password: string, nombre: string) => {
-        // Fíjate cómo le pasamos el "nombre" en los metadatos. 
-        // Nuestro Trigger de SQL leerá esto y lo meterá en tu tabla 'usuarios' automáticamente.
+    // función recibe (email, password) y (userData)
+    register: async (email: string, password: string, userData: RegisterData) => {
+
+        // Enviamos todo a Supabase
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: {
-                    nombre: nombre,
+                    // Mapeamos uno a uno los campos para que lleguen a SQL
+                    nombre: userData.nombre,
+                    apellidos: userData.apellidos,
+                    dni: userData.dni,
+                    telefono: userData.telefono,
+                    sexo: userData.sexo,
+                    pais: userData.pais,
+                    codigo_postal: userData.codigo_postal,
+                    localidad: userData.localidad,
+                    provincia: userData.provincia
                 }
             }
         });
@@ -21,7 +44,6 @@ export const AuthRepository = {
         return data;
     },
 
-    // Más adelante, podemos mover aquí el Login que hicimos en LoginPage
     login: async (email: string, password: string) => {
         const { data, error } = await supabase.auth.signInWithPassword({
             email,

@@ -1,5 +1,6 @@
 import { useAuthStore } from '../../store/authStore';
 import { Button } from '../ui/Button';
+import FitboxLogo from '../../assets/Fitbox.png';
 
 export const Header = () => {
     // Leemos el estado global de Zustand
@@ -10,14 +11,15 @@ export const Header = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
 
-                    {/* Logo del gimnasio */}
-                    <div className="flex-shrink-0 flex items-center">
-                        <h1 className="text-2xl font-extrabold text-white tracking-tight">
-                            FIT<span className="text-fitbox-red">BOX</span>
-                        </h1>
+                    <div className="shrink-0 flex items-center">
+                        <img
+                            src={FitboxLogo}
+                            alt="FITBOX - Tu Gimnasio Inteligente"
+                            className="h-9 w-auto "
+                        />
                     </div>
 
-                    {/* Acciones: Solo se muestran si el usuario ya ha hecho Login */}
+                    {/* Acciones de Usuario (Lado Derecho) */}
                     {user && (
                         <div className="flex items-center gap-4">
                             <span className="text-sm font-medium text-fitbox-text-muted hidden sm:block">

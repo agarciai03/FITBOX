@@ -1,15 +1,11 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
-
-// Componentes de Estructura (Layout)
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
-
-// Páginas
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { RegistroPage } from './pages/RegisterPage';
+import { RegisterPage } from './pages/RegisterPage';
 
 
 // Componente Guardián (Protege las rutas privadas)
@@ -48,11 +44,11 @@ export const App = () => {
         <Header />
 
         {/* main actua como contenedor expansible donde se cargan las páginas */}
-        <main className="flex-grow flex flex-col">
+        <main className="grow flex flex-col">
           <Routes>
             {/* Ruta Pública (Login) */}
             <Route path="/" element={<LoginPage />} />
-            <Route path="/registro" element={<RegistroPage />} />
+            <Route path="/registro" element={<RegisterPage />} />
 
             {/* Rutas Privadas (Solo entras si pasas el ProtectedRoute) */}
             <Route
