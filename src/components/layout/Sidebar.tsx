@@ -66,6 +66,76 @@ export const Sidebar = () => {
                     </>
                 )}
 
+                // RENDERIZADO CONDICIONAL: Solo para el Administrador
+                {rol === 'Administrador' && (
+                    <>
+                        <button
+                            onClick={() => navigate('/socios')}
+                            className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
+                        >
+                            <Users className="w-5 h-5" />
+                            Gestión de Socios
+                        </button>
+                        <button className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors">
+                            <Calendar className="w-5 h-5" />
+                            Horarios y Clases
+                        </button>
+                        {/* LE AÑADIMOS EL ONCLICK A ESTE BOTÓN */}
+                        <button
+                            onClick={() => navigate('/maquinas')}
+                            className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
+                        >
+                            <Dumbbell className="w-5 h-5" />
+                            Inventario
+                        </button>
+                    </>
+                )}
+
+                // RENDERIZADO CONDICIONAL: Solo para el Monitor
+                {rol === 'Monitor' && (
+                    <>
+                        <button className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors">
+                            <ClipboardList className="w-5 h-5" />
+                            Mis Clases (Pasar Lista)
+                        </button>
+                        {/* LE AÑADIMOS EL ONCLICK A ESTE TAMBIÉN */}
+                        <button
+                            onClick={() => navigate('/maquinas')}
+                            className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
+                        >
+                            <Wrench className="w-5 h-5" />
+                            Reportar Avería
+                        </button>
+                    </>
+                )}
+
+                {/* Para el admin */}
+                <button
+                    onClick={() => navigate('/clases')}
+                    className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
+                >
+                    <Calendar className="w-5 h-5" />
+                    Horarios y Clases
+                </button>
+
+                {/* Para el monitor */}
+                <button
+                    onClick={() => navigate('/clases')}
+                    className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
+                >
+                    <Calendar className="w-5 h-5" />
+                    Horarios y Clases
+                </button>
+
+                {/* Para el socio */}
+                <button
+                    onClick={() => navigate('/clases')}
+                    className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
+                >
+                    <Calendar className="w-5 h-5" />
+                    Horarios y Reservas
+                </button>
+
                 {/* RENDERIZADO CONDICIONAL: Solo para el Socio */}
                 {rol === 'Socio' && (
                     <>

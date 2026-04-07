@@ -6,6 +6,8 @@ import { Footer } from './components/layout/Footer';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { MaquinasPage } from './pages/MaquinasPage';
+import { ClasesPage } from './pages/ClasesPage';
 
 
 // Componente Guardián (Protege las rutas privadas)
@@ -56,6 +58,25 @@ export const App = () => {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 2. AÑADIMOS LA RUTA PROTEGIDA DE LAS MÁQUINAS */}
+            <Route
+              path="/maquinas"
+              element={
+                <ProtectedRoute>
+                  <MaquinasPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/clases"
+              element={
+                <ProtectedRoute>
+                  <ClasesPage />
                 </ProtectedRoute>
               }
             />
