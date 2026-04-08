@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../database/supabase/Client';
 import { useAuthStore } from '../store/authStore';
 import type { AuthError } from '@supabase/supabase-js';
@@ -117,7 +117,7 @@ export const LoginPage = () => {
                         })}
                     />
 
-                    {/* Botón Rojo (Cambiamos el texto si está cargando) */}
+                    {/* Botón Rojo (Cambiamos el texto a "Acceder") */}
                     <div className="pt-4">
                         <Button
                             type="submit"
@@ -125,10 +125,22 @@ export const LoginPage = () => {
                             fullWidth
                             disabled={isLoading}
                         >
-                            {isLoading ? 'Comprobando credenciales...' : 'Entrar a FITBOX'}
+                            {isLoading ? 'Comprobando credenciales...' : 'Acceder'}
                         </Button>
                     </div>
                 </form>
+
+                {/* Enlace directo al Registro */}
+                <div className="mt-6 text-center text-sm text-fitbox-text-muted">
+                    ¿No tienes cuenta?{' '}
+                    <Link
+                        to="/registro"
+                        className="text-fitbox-red font-semibold hover:text-white transition-colors"
+                    >
+                        Crea una ahora
+                    </Link>
+                </div>
+
             </Card>
         </div>
     );

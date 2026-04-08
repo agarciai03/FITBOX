@@ -1,9 +1,5 @@
 import { supabase } from '../supabase/Client';
 
-// ==========================================
-// 1. TIPADOS (Para que TypeScript no llore)
-// ==========================================
-
 export interface Disciplina {
     id_disciplina: string;
     nombre: string;
@@ -25,22 +21,22 @@ export interface Clase {
     hora_inicio: string;
     hora_fin: string;
     aforo_maximo: number;
-    // Estos campos nos vendrán del JOIN con las otras tablas para pintarlo fácil en React
     disciplinas?: { nombre: string };
     usuarios?: { nombre: string; apellidos: string };
 }
 
-// ==========================================
-// 2. EL REPOSITORIO (Nuestras herramientas)
-// ==========================================
+// NUEVO TIPO PARA LAS RESERVAS
+export interface Reserva {
+    id: string;
+    id_clase: string;
+    id_socio: string;
+    fecha_reserva: string;
+    estado: string;
+    clases?: Clase; 
+}
 
 export const ClassRepository = {
 
-    // ----------------------------------------------------
-    // HERRAMIENTAS PARA DISCIPLINAS Y RUTINAS
-    // ----------------------------------------------------
-
-    // Nos traemos los deportes pactados (Crossfit, Boxeo...)
     getAllDisciplinas: async (): Promise<Disciplina[]> => {
         const { data, error } = await supabase
             .from('disciplinas')
@@ -51,7 +47,6 @@ export const ClassRepository = {
         return data as Disciplina[];
     },
 
-    // Le pasamos el ID de un deporte y nos devuelve sus 5 días de rutinas
     getRutinasByDisciplina: async (id_disciplina: string): Promise<Rutina[]> => {
         const { data, error } = await supabase
             .from('rutinas')
@@ -62,11 +57,6 @@ export const ClassRepository = {
         return data as Rutina[];
     },
 
-    // ----------------------------------------------------
-    // HERRAMIENTAS PARA EL CALENDARIO (CLASES)
-    // ----------------------------------------------------
-
-    // Trae todas las clases (haciendo un JOIN automático para traer el nombre del deporte y del monitor)
     getAllClases: async (): Promise<Clase[]> => {
         const { data, error } = await supabase
             .from('clases')
@@ -82,7 +72,6 @@ export const ClassRepository = {
         return data as Clase[];
     },
 
-    // Para que el Admin cree una clase nueva en el calendario
     createClase: async (claseData: Omit<Clase, 'id_clase' | 'disciplinas' | 'usuarios'>): Promise<Clase> => {
         const { data, error } = await supabase
             .from('clases')
@@ -94,12 +83,58 @@ export const ClassRepository = {
         return data as Clase;
     },
 
-    // Por si el Admin se equivoca y necesita borrar una clase
     deleteClase: async (id_clase: string): Promise<void> => {
         const { error } = await supabase
             .from('clases')
             .delete()
             .eq('id_clase', id_clase);
+
+        if (error) throw error;
+    },
+
+    // 1. Apuntar a un socio a una clase
+    reservarClase: async (id_clase: string, id_socio: string): Promise<Reserva> => {
+        const { data, error } = await supabase
+            .from('reservas')
+            .insert([{ id_clase, id_socio }]) // Se crea con estado 'activa' por defecto
+            .select()
+            .single();
+
+        if (error) {
+            // Cazamos el error de "Duplicado" (Violación del UNIQUE constraint)
+            if (error.code === '23505') {
+                throw new Error('Ya tienes una reserva activa para esta clase.');
+            }
+            throw new Error('No se pudo completar la reserva.');
+        }
+        return data as Reserva;
+    },
+
+    // 2. Traer las reservas activas de un socio (Para su perfil o calendario)
+    getReservasBySocio: async (id_socio: string): Promise<Reserva[]> => {
+        const { data, error } = await supabase
+            .from('reservas')
+            .select(`
+                *,
+                clases (
+                    *,
+                    disciplinas(nombre),
+                    usuarios(nombre, apellidos)
+                )
+            `)
+            .eq('id_socio', id_socio)
+            .eq('estado', 'activa');
+
+        if (error) throw error;
+        return data as Reserva[];
+    },
+
+    // 3. Cancelar una reserva (Por si el socio no puede ir)
+    cancelarReserva: async (id_reserva: string): Promise<void> => {
+        const { error } = await supabase
+            .from('reservas')
+            .update({ estado: 'cancelada' })
+            .eq('id', id_reserva);
 
         if (error) throw error;
     }

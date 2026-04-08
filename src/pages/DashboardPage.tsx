@@ -1,15 +1,16 @@
 import { useAuthStore } from '../store/authStore';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Sidebar } from '../components/layout/Sidebar'; // <-- Importamos el Sidebar
+import { Sidebar } from '../components/layout/Sidebar';
+import { useNavigate } from 'react-router-dom'; // Añadimos esto para que el botón funcione
 
 export const DashboardPage = () => {
-    // Ahora usamos el profile para decir su nombre real en vez de su email
     const profile = useAuthStore((state) => state.profile);
+    const navigate = useNavigate();
 
     return (
         <div className="flex flex-1">
-            {/* Añadimos el Sidebar a la izquierda */}
+            {/* Sidebar a la izquierda */}
             <Sidebar />
 
             {/* Contenido principal del Dashboard a la derecha */}
@@ -27,11 +28,22 @@ export const DashboardPage = () => {
 
                 {/* Grid de Tarjetas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    {/* Nueva tarjeta útil conectada al Sprint 2 */}
                     <Card className="p-6">
-                        <h3 className="text-xl font-bold text-white mb-2">Smart Entry</h3>
-                        <p className="text-sm text-fitbox-text-muted mb-6">Abre el torno desde el móvil.</p>
-                        <Button variant="primary" fullWidth>Generar Mi Código QR</Button>
+                        <h3 className="text-xl font-bold text-white mb-2">Horarios y Clases</h3>
+                        <p className="text-sm text-fitbox-text-muted mb-6">
+                            Consulta los entrenamientos de esta semana y las rutinas.
+                        </p>
+                        <Button 
+                            variant="primary" 
+                            fullWidth
+                            onClick={() => navigate('/clases')}
+                        >
+                            Ver Calendario
+                        </Button>
                     </Card>
+
                 </div>
 
             </div>

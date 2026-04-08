@@ -10,7 +10,6 @@ import { MaquinasPage } from './pages/MaquinasPage';
 import { ClasesPage } from './pages/ClasesPage';
 
 
-// Componente Guardián (Protege las rutas privadas)
 // Si el usuario no está logueado, el router lo expulsa a la pantalla inicial "/"
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAuthStore((state) => state.user);
@@ -81,7 +80,6 @@ export const App = () => {
               }
             />
 
-            {/* Ruta comodín: Si el usuario inventa una URL (/pepito), lo mandamos al inicio */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { ClassRepository, type Clase, type Disciplina, type Rutina } from '../database/repositories/ClassRepository';
 import { supabase } from '../database/supabase/Client';
 import { Button } from '../components/ui/Button';
-import { Calendar, Dumbbell, Trash2, Clock, Users } from 'lucide-react';
+// NUEVO: Añadimos CheckCircle para el mensaje de éxito
+import { Calendar, Dumbbell, Trash2, Clock, Users, CheckCircle } from 'lucide-react';
 
 // Pon esto debajo de los imports
 interface MonitorBasico {
@@ -17,18 +18,23 @@ export const ClasesPage = () => {
     const profile = useAuthStore((state) => state.profile);
     const rol = profile?.roles?.nombre_rol || 'Socio';
     const isAdmin = rol === 'Administrador';
+    const isSocio = rol === 'Socio'; // NUEVO: Para saber si es el cliente
 
     // 2. Variables para guardar los datos de la base de datos
     const [clases, setClases] = useState<Clase[]>([]);
     const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
     const [rutinas, setRutinas] = useState<Rutina[]>([]);
     const [monitores, setMonitores] = useState<MonitorBasico[]>([]);
+    
+    // NUEVO: Guardamos los IDs de las clases a las que el socio YA está apuntado
+    const [misReservasActivas, setMisReservasActivas] = useState<string[]>([]);
 
     // 3. Control de la vista (Pestañas) y cargas
     const [vistaActiva, setVistaActiva] = useState<'horarios' | 'rutinas'>('horarios');
     const [disciplinaSeleccionada, setDisciplinaSeleccionada] = useState<string>(''); // Para filtrar rutinas
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null); // NUEVO: Para el mensaje de reserva correcta
 
     // 4. Variables para la ventanita de "Crear Clase" (Solo Admin)
     const [isCreando, setIsCreando] = useState(false);
@@ -42,23 +48,21 @@ export const ClasesPage = () => {
     });
 
     // Función para cargar todo al entrar a la página
-    const cargarDatos = async () => {
+    const cargarDatos = useCallback(async () => {
         try {
             setIsLoading(true);
+            setError(null);
 
-            // Traemos clases y deportes de nuestro Repositorio
             const dataClases = await ClassRepository.getAllClases();
             const dataDisciplinas = await ClassRepository.getAllDisciplinas();
 
             setClases(dataClases);
             setDisciplinas(dataDisciplinas);
 
-            // Si hay disciplinas, seleccionamos la primera por defecto para la pestaña de rutinas
             if (dataDisciplinas.length > 0) {
                 setDisciplinaSeleccionada(dataDisciplinas[0].id_disciplina);
             }
 
-            // Hacemos una llamadita rápida a Supabase para traernos a los monitores (id_rol = 2)
             const { data: dataMonitores } = await supabase
                 .from('usuarios')
                 .select('id_usuario, nombre, apellidos')
@@ -66,13 +70,20 @@ export const ClasesPage = () => {
 
             if (dataMonitores) setMonitores(dataMonitores);
 
+            // Si es un socio, buscamos a qué clases está apuntado ya
+            if (isSocio && profile?.id_usuario) {
+                const misReservas = await ClassRepository.getReservasBySocio(profile.id_usuario);
+                const idsClasesReservadas = misReservas.map(reserva => reserva.id_clase);
+                setMisReservasActivas(idsClasesReservadas);
+            }
+
         } catch (err) {
             console.error(err);
             setError('Error al cargar los datos del calendario.');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [isSocio, profile?.id_usuario]); 
 
     // Efecto para cargar las rutinas cuando cambiamos la disciplina en el desplegable
     useEffect(() => {
@@ -86,7 +97,7 @@ export const ClasesPage = () => {
     // Arrancamos la carga inicial
     useEffect(() => {
         cargarDatos();
-    }, []);
+    }, [cargarDatos]);
 
     // Función para que el Admin guarde la clase
     const handleCrearClase = async () => {
@@ -125,6 +136,27 @@ export const ClasesPage = () => {
         }
     };
 
+    // SOCIO RESERVA CLASE
+    const handleReservar = async (id_clase: string) => {
+        setError(null);
+        setSuccessMessage(null);
+        
+        if (!profile?.id_usuario) return;
+
+        try {
+            await ClassRepository.reservarClase(id_clase, profile.id_usuario);
+            setSuccessMessage("¡Plaza reservada con éxito! Te esperamos.");
+            // Recargamos los datos para que el botón cambie a verde
+            cargarDatos();
+        } catch (err: unknown) { // ARREGLADO EL ERROR DEL ANY AQUI
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("Error al intentar reservar la plaza.");
+            }
+        }
+    };
+
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
 
@@ -160,6 +192,14 @@ export const ClasesPage = () => {
                 </div>
             )}
 
+            {/* NUEVO: Mensaje de éxito al reservar */}
+            {successMessage && (
+                <div className="p-4 bg-green-500/10 border border-green-500/50 text-green-500 rounded-lg flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" />
+                    {successMessage}
+                </div>
+            )}
+
             {/* PESTAÑA 1: HORARIOS */}
             {vistaActiva === 'horarios' && (
                 <div className="space-y-4">
@@ -178,7 +218,8 @@ export const ClasesPage = () => {
                                     <th className="px-6 py-4">Disciplina</th>
                                     <th className="px-6 py-4">Monitor</th>
                                     <th className="px-6 py-4">Aforo</th>
-                                    {isAdmin && <th className="px-6 py-4 text-right">Acciones</th>}
+                                    {/* NUEVO: El socio también ve la columna de acciones para reservar */}
+                                    {(isAdmin || isSocio) && <th className="px-6 py-4 text-right">Acciones</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-800">
@@ -187,34 +228,58 @@ export const ClasesPage = () => {
                                 ) : clases.length === 0 ? (
                                     <tr><td colSpan={6} className="px-6 py-8 text-center">No hay clases programadas.</td></tr>
                                 ) : (
-                                    clases.map((clase) => (
-                                        <tr key={clase.id_clase} className="hover:bg-neutral-800/20 transition-colors">
-                                            <td className="px-6 py-4 font-medium">{new Date(clase.fecha).toLocaleDateString()}</td>
-                                            <td className="px-6 py-4 flex items-center gap-2">
-                                                <Clock className="w-4 h-4 text-fitbox-text-muted" />
-                                                {clase.hora_inicio.slice(0, 5)} - {clase.hora_fin.slice(0, 5)}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className="bg-fitbox-red/20 text-fitbox-red px-2 py-1 rounded-md text-xs font-bold">
-                                                    {clase.disciplinas?.nombre}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {clase.usuarios ? `${clase.usuarios.nombre} ${clase.usuarios.apellidos}` : 'Sin asignar'}
-                                            </td>
-                                            <td className="px-6 py-4 flex items-center gap-2">
-                                                <Users className="w-4 h-4 text-fitbox-text-muted" />
-                                                {clase.aforo_maximo} pax
-                                            </td>
-                                            {isAdmin && (
-                                                <td className="px-6 py-4 text-right">
-                                                    <button onClick={() => handleBorrarClase(clase.id_clase)} className="text-red-500 hover:text-red-400">
-                                                        <Trash2 className="w-5 h-5 inline" />
-                                                    </button>
+                                    clases.map((clase) => {
+                                        // NUEVO: Comprobamos si el socio ya tiene reservada esta clase
+                                        const yaReservada = misReservasActivas.includes(clase.id_clase);
+
+                                        return (
+                                            <tr key={clase.id_clase} className="hover:bg-neutral-800/20 transition-colors">
+                                                <td className="px-6 py-4 font-medium">{new Date(clase.fecha).toLocaleDateString()}</td>
+                                                <td className="px-6 py-4 flex items-center gap-2">
+                                                    <Clock className="w-4 h-4 text-fitbox-text-muted" />
+                                                    {clase.hora_inicio.slice(0, 5)} - {clase.hora_fin.slice(0, 5)}
                                                 </td>
-                                            )}
-                                        </tr>
-                                    ))
+                                                <td className="px-6 py-4">
+                                                    <span className="bg-fitbox-red/20 text-fitbox-red px-2 py-1 rounded-md text-xs font-bold">
+                                                        {clase.disciplinas?.nombre}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {clase.usuarios ? `${clase.usuarios.nombre} ${clase.usuarios.apellidos}` : 'Sin asignar'}
+                                                </td>
+                                                <td className="px-6 py-4 flex items-center gap-2">
+                                                    <Users className="w-4 h-4 text-fitbox-text-muted" />
+                                                    {clase.aforo_maximo} pax
+                                                </td>
+                                                
+                                                {/* NUEVO: Botones de acciones separados por rol */}
+                                                {(isAdmin || isSocio) && (
+                                                    <td className="px-6 py-4 text-right">
+                                                        {isAdmin && (
+                                                            <button onClick={() => handleBorrarClase(clase.id_clase)} className="text-red-500 hover:text-red-400">
+                                                                <Trash2 className="w-5 h-5 inline" />
+                                                            </button>
+                                                        )}
+                                                        
+                                                        {isSocio && (
+                                                            yaReservada ? (
+                                                                <span className="text-green-500 text-xs font-bold flex items-center justify-end gap-1">
+                                                                    <CheckCircle className="w-4 h-4" /> Apuntado
+                                                                </span>
+                                                            ) : (
+                                                                <button 
+                                                                    className="bg-fitbox-red text-white px-3 py-1 rounded-md text-xs font-bold hover:bg-fitbox-red-hover transition-colors"
+                                                                    onClick={() => handleReservar(clase.id_clase)}
+                                                                >
+                                                                    Reservar
+                                                                </button>
+                                                            )
+                                                        )}
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        )
+                                    })
                                 )}
                             </tbody>
                         </table>

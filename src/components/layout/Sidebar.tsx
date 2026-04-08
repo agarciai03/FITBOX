@@ -1,13 +1,10 @@
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
-// Importamos los iconos de Lucide (La Navaja Suiza moderna)
 import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard } from 'lucide-react';
 
 export const Sidebar = () => {
     // Leemos el perfil completo desde Zustand
     const profile = useAuthStore((state) => state.profile);
-
-    // Inicializamos el hook de navegación para poder cambiar de página
     const navigate = useNavigate();
 
     // Extraemos el nombre del rol de forma segura
@@ -22,7 +19,7 @@ export const Sidebar = () => {
             </div>
 
             <nav className="flex flex-col gap-2">
-                {/* Este botón lo ven todos (Nos lleva al Dashboard) */}
+                {/* 1. BOTÓN COMÚN */}
                 <button
                     onClick={() => navigate('/dashboard')}
                     className="flex items-center gap-3 text-left p-3 rounded-lg bg-fitbox-red/10 text-fitbox-red font-semibold hover:bg-fitbox-red/20 transition-colors"
@@ -31,7 +28,7 @@ export const Sidebar = () => {
                     Inicio
                 </button>
 
-                {/* RENDERIZADO CONDICIONAL: Solo para el Administrador */}
+                {/* 2. MENÚ DEL ADMINISTRADOR */}
                 {rol === 'Administrador' && (
                     <>
                         <button
@@ -41,46 +38,13 @@ export const Sidebar = () => {
                             <Users className="w-5 h-5" />
                             Gestión de Socios
                         </button>
-                        <button className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors">
-                            <Calendar className="w-5 h-5" />
-                            Horarios y Clases
-                        </button>
-                        <button className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors">
-                            <Dumbbell className="w-5 h-5" />
-                            Inventario
-                        </button>
-                    </>
-                )}
-
-                {/* RENDERIZADO CONDICIONAL: Solo para el Monitor */}
-                {rol === 'Monitor' && (
-                    <>
-                        <button className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors">
-                            <ClipboardList className="w-5 h-5" />
-                            Mis Clases (Pasar Lista)
-                        </button>
-                        <button className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors">
-                            <Wrench className="w-5 h-5" />
-                            Reportar Avería
-                        </button>
-                    </>
-                )}
-
-                // RENDERIZADO CONDICIONAL: Solo para el Administrador
-                {rol === 'Administrador' && (
-                    <>
                         <button
-                            onClick={() => navigate('/socios')}
+                            onClick={() => navigate('/clases')}
                             className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
                         >
-                            <Users className="w-5 h-5" />
-                            Gestión de Socios
-                        </button>
-                        <button className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors">
                             <Calendar className="w-5 h-5" />
-                            Horarios y Clases
+                            Gestión de Horarios
                         </button>
-                        {/* LE AÑADIMOS EL ONCLICK A ESTE BOTÓN */}
                         <button
                             onClick={() => navigate('/maquinas')}
                             className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
@@ -91,14 +55,20 @@ export const Sidebar = () => {
                     </>
                 )}
 
-                // RENDERIZADO CONDICIONAL: Solo para el Monitor
+                {/* 3. MENÚ DEL MONITOR */}
                 {rol === 'Monitor' && (
                     <>
+                        <button
+                            onClick={() => navigate('/clases')}
+                            className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
+                        >
+                            <Calendar className="w-5 h-5" />
+                            Horarios y Clases
+                        </button>
                         <button className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors">
                             <ClipboardList className="w-5 h-5" />
                             Mis Clases (Pasar Lista)
                         </button>
-                        {/* LE AÑADIMOS EL ONCLICK A ESTE TAMBIÉN */}
                         <button
                             onClick={() => navigate('/maquinas')}
                             className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
@@ -109,39 +79,15 @@ export const Sidebar = () => {
                     </>
                 )}
 
-                {/* Para el admin */}
-                <button
-                    onClick={() => navigate('/clases')}
-                    className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
-                >
-                    <Calendar className="w-5 h-5" />
-                    Horarios y Clases
-                </button>
-
-                {/* Para el monitor */}
-                <button
-                    onClick={() => navigate('/clases')}
-                    className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
-                >
-                    <Calendar className="w-5 h-5" />
-                    Horarios y Clases
-                </button>
-
-                {/* Para el socio */}
-                <button
-                    onClick={() => navigate('/clases')}
-                    className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
-                >
-                    <Calendar className="w-5 h-5" />
-                    Horarios y Reservas
-                </button>
-
-                {/* RENDERIZADO CONDICIONAL: Solo para el Socio */}
+                {/* 4. MENÚ DEL SOCIO */}
                 {rol === 'Socio' && (
                     <>
-                        <button className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors">
+                        <button
+                            onClick={() => navigate('/clases')}
+                            className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors"
+                        >
                             <Calendar className="w-5 h-5" />
-                            Reservar Clase
+                            Horarios y Reservas
                         </button>
                         <button className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors">
                             <CreditCard className="w-5 h-5" />
