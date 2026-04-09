@@ -172,13 +172,13 @@ export const ClasesPage = () => {
 
                 <div className="flex gap-2">
                     <Button
-                        variant={vistaActiva === 'horarios' ? 'primary' : 'secondary'}
+                        variant={vistaActiva === 'horarios' ? 'default' : 'secondary'}
                         onClick={() => setVistaActiva('horarios')}
                     >
                         Calendario de Clases
                     </Button>
                     <Button
-                        variant={vistaActiva === 'rutinas' ? 'primary' : 'secondary'}
+                        variant={vistaActiva === 'rutinas' ? 'default' : 'secondary'}
                         onClick={() => setVistaActiva('rutinas')}
                     >
                         Rutinas Semanales

@@ -192,7 +192,7 @@ export const RegisterPage = () => {
                     </div>
 
                     <div className="pt-6">
-                        <Button type="submit" variant="primary" fullWidth disabled={isLoading}>
+                        <Button type="submit" variant="default" className="w-full" disabled={isLoading}>
                             {isLoading ? 'Creando ficha de socio...' : 'Completar Registro'}
                         </Button>
                     </div>

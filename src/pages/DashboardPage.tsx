@@ -1,6 +1,6 @@
 import { useAuthStore } from '../store/authStore';
 import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import { Sidebar } from '../components/layout/Sidebar';
 import { useNavigate } from 'react-router-dom'; // Añadimos esto para que el botón funcione
 
@@ -28,16 +28,16 @@ export const DashboardPage = () => {
 
                 {/* Grid de Tarjetas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    
+
                     {/* Nueva tarjeta útil conectada al Sprint 2 */}
                     <Card className="p-6">
                         <h3 className="text-xl font-bold text-white mb-2">Horarios y Clases</h3>
                         <p className="text-sm text-fitbox-text-muted mb-6">
                             Consulta los entrenamientos de esta semana y las rutinas.
                         </p>
-                        <Button 
-                            variant="primary" 
-                            fullWidth
+                        <Button
+                            variant="default"
+                            className="w-full"
                             onClick={() => navigate('/clases')}
                         >
                             Ver Calendario

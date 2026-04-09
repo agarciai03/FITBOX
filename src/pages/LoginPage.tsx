@@ -9,7 +9,7 @@ import type { AuthError } from '@supabase/supabase-js';
 // 1. Importamos nuestras piezas de "Lego" (Componentes Atómicos)
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import { Alert } from '../components/ui/Alert';
 
 // 2. Tipamos los datos del formulario (Teoría: Interfaces y Tipos)
@@ -119,12 +119,7 @@ export const LoginPage = () => {
 
                     {/* Botón Rojo (Cambiamos el texto a "Acceder") */}
                     <div className="pt-4">
-                        <Button
-                            type="submit"
-                            variant="primary"
-                            fullWidth
-                            disabled={isLoading}
-                        >
+                        <Button type="submit" variant="default" className="w-full" disabled={isLoading}>
                             {isLoading ? 'Comprobando credenciales...' : 'Acceder'}
                         </Button>
                     </div>
