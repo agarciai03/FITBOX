@@ -8,6 +8,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { MaquinasPage } from './pages/MaquinasPage';
 import { ClasesPage } from './pages/ClasesPage';
+import { PerfilPage } from './pages/PerfilPage';
 
 
 // Si el usuario no está logueado, el router lo expulsa a la pantalla inicial "/"
@@ -59,6 +60,11 @@ export const App = () => {
                   <DashboardPage />
                 </ProtectedRoute>
               }
+            />
+
+            <Route path="/perfil"
+              element={
+                <PerfilPage />}
             />
 
             {/* 2. AÑADIMOS LA RUTA PROTEGIDA DE LAS MÁQUINAS */}

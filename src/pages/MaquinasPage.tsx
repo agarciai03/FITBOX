@@ -231,12 +231,14 @@ export const MaquinasPage = () => {
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
                     <div className="bg-fitbox-card border border-neutral-800 p-6 rounded-lg w-full max-w-md space-y-4">
                         <h3 className="text-xl font-bold">Añadir nueva máquina</h3>
-                        <Input
-                            label="Nombre o modelo de la máquina"
-                            placeholder="Ej: Cinta de correr Pro 2"
-                            value={nombreNuevaMaquina}
-                            onChange={(e) => setNombreNuevaMaquina(e.target.value)}
-                        />
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-fitbox-text-muted">Nombre o modelo de la máquina</label>
+                            <Input
+                                placeholder="Ej: Cinta de correr 2"
+                                value={nombreNuevaMaquina}
+                                onChange={(e) => setNombreNuevaMaquina(e.target.value)}
+                            />
+                        </div>
                         <div className="flex gap-3 justify-end mt-6">
                             <Button variant="ghost" onClick={() => setIsCreando(false)}>Cancelar</Button>
                             <Button onClick={handleCrearMaquina}>Añadir</Button>
