@@ -9,13 +9,22 @@ import { RegisterPage } from './pages/RegisterPage';
 import { MaquinasPage } from './pages/MaquinasPage';
 import { ClasesPage } from './pages/ClasesPage';
 import { PerfilPage } from './pages/PerfilPage';
+import { Sidebar } from './components/layout/Sidebar';
 
 
-// Si el usuario no está logueado, el router lo expulsa a la pantalla inicial "/"
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAuthStore((state) => state.user);
+
   if (!user) return <Navigate to="/" replace />;
-  return <>{children}</>;
+
+  return (
+    <div className="flex flex-1 w-full relative">
+      <Sidebar />
+      <div className="flex-1 min-w-0 overflow-x-hidden">
+        {children}
+      </div>
+    </div>
+  );
 };
 
 export const App = () => {

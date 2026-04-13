@@ -3,10 +3,8 @@ import { useAuthStore } from '../store/authStore';
 import { ClassRepository, type Clase, type Disciplina, type Rutina } from '../database/repositories/ClassRepository';
 import { supabase } from '../database/supabase/Client';
 import { Button } from '../components/ui/Button';
-// NUEVO: Añadimos CheckCircle para el mensaje de éxito
-import { Calendar, Dumbbell, Trash2, Clock, Users, CheckCircle } from 'lucide-react';
+import { Calendar, Dumbbell, Trash2, Clock, CheckCircle } from 'lucide-react';
 
-// Pon esto debajo de los imports
 interface MonitorBasico {
     id_usuario: string;
     nombre: string;
@@ -14,29 +12,26 @@ interface MonitorBasico {
 }
 
 export const ClasesPage = () => {
-    // 1. Quién está mirando la pantalla
+    // --- 1. ESTADO Y VARIABLES ---
     const profile = useAuthStore((state) => state.profile);
     const rol = profile?.roles?.nombre_rol || 'Socio';
     const isAdmin = rol === 'Administrador';
-    const isSocio = rol === 'Socio'; // NUEVO: Para saber si es el cliente
+    const isSocio = rol === 'Socio';
 
-    // 2. Variables para guardar los datos de la base de datos
     const [clases, setClases] = useState<Clase[]>([]);
     const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
     const [rutinas, setRutinas] = useState<Rutina[]>([]);
+
     const [monitores, setMonitores] = useState<MonitorBasico[]>([]);
-    
-    // NUEVO: Guardamos los IDs de las clases a las que el socio YA está apuntado
     const [misReservasActivas, setMisReservasActivas] = useState<string[]>([]);
 
-    // 3. Control de la vista (Pestañas) y cargas
     const [vistaActiva, setVistaActiva] = useState<'horarios' | 'rutinas'>('horarios');
-    const [disciplinaSeleccionada, setDisciplinaSeleccionada] = useState<string>(''); // Para filtrar rutinas
+    const [disciplinaSeleccionada, setDisciplinaSeleccionada] = useState<string>('');
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null); // NUEVO: Para el mensaje de reserva correcta
 
-    // 4. Variables para la ventanita de "Crear Clase" (Solo Admin)
+    const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
     const [isCreando, setIsCreando] = useState(false);
     const [nuevaClase, setNuevaClase] = useState({
         id_disciplina: '',
@@ -47,7 +42,7 @@ export const ClasesPage = () => {
         aforo_maximo: 20
     });
 
-    // Función para cargar todo al entrar a la página
+    // --- 2. FUNCIONES DE CARGA ---
     const cargarDatos = useCallback(async () => {
         try {
             setIsLoading(true);
@@ -59,53 +54,54 @@ export const ClasesPage = () => {
             setClases(dataClases);
             setDisciplinas(dataDisciplinas);
 
-            if (dataDisciplinas.length > 0) {
+            if (dataDisciplinas.length > 0 && !disciplinaSeleccionada) {
                 setDisciplinaSeleccionada(dataDisciplinas[0].id_disciplina);
             }
 
-            const { data: dataMonitores } = await supabase
+            const { data: dataMonitores, error: errorSupabase } = await supabase
                 .from('usuarios')
                 .select('id_usuario, nombre, apellidos')
                 .eq('id_rol', 2);
 
+            if (errorSupabase) throw errorSupabase;
             if (dataMonitores) setMonitores(dataMonitores);
 
-            // Si es un socio, buscamos a qué clases está apuntado ya
             if (isSocio && profile?.id_usuario) {
                 const misReservas = await ClassRepository.getReservasBySocio(profile.id_usuario);
                 const idsClasesReservadas = misReservas.map(reserva => reserva.id_clase);
                 setMisReservasActivas(idsClasesReservadas);
             }
 
-        } catch (err) {
-            console.error(err);
-            setError('Error al cargar los datos del calendario.');
+        } catch (errorCatch) {
+            console.error("Fallo al cargar datos:", errorCatch);
+            setError('Error de conexión. No se han podido cargar las clases.');
         } finally {
             setIsLoading(false);
         }
-    }, [isSocio, profile?.id_usuario]); 
+    }, [isSocio, profile?.id_usuario, disciplinaSeleccionada]);
 
-    // Efecto para cargar las rutinas cuando cambiamos la disciplina en el desplegable
     useEffect(() => {
         if (disciplinaSeleccionada) {
             ClassRepository.getRutinasByDisciplina(disciplinaSeleccionada)
                 .then(data => setRutinas(data))
-                .catch(err => console.error("Error al cargar rutinas:", err));
+                .catch(errorCatch => {
+                    console.error("Fallo en rutinas:", errorCatch);
+                    setError("No se pudieron cargar las rutinas de esta disciplina.");
+                });
         }
     }, [disciplinaSeleccionada]);
 
-    // Arrancamos la carga inicial
     useEffect(() => {
         cargarDatos();
     }, [cargarDatos]);
 
-    // Función para que el Admin guarde la clase
+    // --- 3. ACCIONES (RESERVAR, CREAR, BORRAR) ---
+
     const handleCrearClase = async () => {
         if (!nuevaClase.id_disciplina || !nuevaClase.fecha || !nuevaClase.hora_inicio || !nuevaClase.hora_fin) {
             setError("Por favor, rellena todos los campos obligatorios.");
             return;
         }
-
         try {
             await ClassRepository.createClase({
                 id_disciplina: nuevaClase.id_disciplina,
@@ -115,170 +111,167 @@ export const ClasesPage = () => {
                 hora_fin: nuevaClase.hora_fin,
                 aforo_maximo: nuevaClase.aforo_maximo
             });
-
             setIsCreando(false);
-            cargarDatos(); // Recargamos para verla en la lista
-        } catch (err) {
-            console.error(err);
-            setError('Error al crear la clase. Revisa los datos.');
+            cargarDatos();
+        } catch (errorCatch) {
+            console.error("Error al crear:", errorCatch);
+            if (errorCatch instanceof Error) {
+                setError(errorCatch.message);
+            } else {
+                setError('Error desconocido al crear la clase.');
+            }
         }
-    };
+    }; 
 
-    // Función para que el Admin borre una clase si se equivoca
     const handleBorrarClase = async (id_clase: string) => {
         if (!window.confirm("¿Seguro que quieres borrar esta clase?")) return;
         try {
             await ClassRepository.deleteClase(id_clase);
             cargarDatos();
-        } catch (err) {
-            console.error(err);
-            setError("Error al borrar la clase.");
-        }
-    };
-
-    // SOCIO RESERVA CLASE
-    const handleReservar = async (id_clase: string) => {
-        setError(null);
-        setSuccessMessage(null);
-        
-        if (!profile?.id_usuario) return;
-
-        try {
-            await ClassRepository.reservarClase(id_clase, profile.id_usuario);
-            setSuccessMessage("¡Plaza reservada con éxito! Te esperamos.");
-            // Recargamos los datos para que el botón cambie a verde
-            cargarDatos();
-        } catch (err: unknown) { // ARREGLADO EL ERROR DEL ANY AQUI
-            if (err instanceof Error) {
-                setError(err.message);
+        } catch (errorCatch) {
+            console.error("Error al borrar:", errorCatch);
+            if (errorCatch instanceof Error) {
+                setError(errorCatch.message);
             } else {
-                setError("Error al intentar reservar la plaza.");
+                setError("No se ha podido eliminar la clase.");
             }
         }
     };
 
+    const handleReservar = async (id_clase: string) => {
+        setError(null);
+        setSuccessMessage(null);
+        if (!profile?.id_usuario) return;
+
+        try {
+            await ClassRepository.reservarClase(id_clase, profile.id_usuario);
+            setSuccessMessage("¡Plaza reservada con éxito!");
+            cargarDatos();
+        } catch (errorCatch) {
+            console.error("Error reserva:", errorCatch);
+            if (errorCatch instanceof Error) {
+                setError(errorCatch.message);
+            } else {
+                setError("Error al intentar reservar.");
+            }
+        }
+    };
+
+    // --- 4. RENDERIZADO (DISEÑO) ---
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-
-            {/* Cabecera y Botones de Pestañas */}
+            {/* Cabecera */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-fitbox-text flex items-center gap-2">
-                        <Calendar className="w-6 h-6 text-fitbox-red" />
-                        Horarios y Entrenamiento
+                    <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
+                        <Calendar className="w-8 h-8 text-fitbox-red" />
+                        HORARIOS Y <span className="text-fitbox-red">RESERVAS</span>
                     </h1>
-                    <p className="text-fitbox-text-muted mt-1">Consulta las clases disponibles y las rutinas semanales.</p>
+                    <p className="text-fitbox-text-muted mt-1">Gestiona tus entrenamientos y consulta plazas libres.</p>
                 </div>
 
                 <div className="flex gap-2">
-                    <Button
-                        variant={vistaActiva === 'horarios' ? 'default' : 'secondary'}
-                        onClick={() => setVistaActiva('horarios')}
-                    >
-                        Calendario de Clases
+                    <Button variant={vistaActiva === 'horarios' ? 'default' : 'secondary'} onClick={() => setVistaActiva('horarios')}>
+                        Calendario
                     </Button>
-                    <Button
-                        variant={vistaActiva === 'rutinas' ? 'default' : 'secondary'}
-                        onClick={() => setVistaActiva('rutinas')}
-                    >
-                        Rutinas Semanales
+                    <Button variant={vistaActiva === 'rutinas' ? 'default' : 'secondary'} onClick={() => setVistaActiva('rutinas')}>
+                        Rutinas
                     </Button>
                 </div>
             </div>
 
-            {error && (
-                <div className="p-4 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg">
-                    {error}
-                </div>
-            )}
-
-            {/* NUEVO: Mensaje de éxito al reservar */}
+            {/* Mensajes de Alerta */}
+            {error && <div className="p-4 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg font-medium">{error}</div>}
             {successMessage && (
-                <div className="p-4 bg-green-500/10 border border-green-500/50 text-green-500 rounded-lg flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5" />
-                    {successMessage}
+                <div className="p-4 bg-green-500/10 border border-green-500/50 text-green-500 rounded-lg flex items-center gap-2 font-medium">
+                    <CheckCircle className="w-5 h-5" /> {successMessage}
                 </div>
             )}
 
-            {/* PESTAÑA 1: HORARIOS */}
+            {/* TABLA DE HORARIOS */}
             {vistaActiva === 'horarios' && (
                 <div className="space-y-4">
-                    {isAdmin && (
-                        <div className="flex justify-end">
-                            <Button onClick={() => setIsCreando(true)}>+ Nueva Clase</Button>
-                        </div>
-                    )}
+                    {isAdmin && <div className="flex justify-end"><Button onClick={() => setIsCreando(true)}>+ Nueva Clase</Button></div>}
 
-                    <div className="bg-fitbox-card border border-neutral-800 rounded-lg overflow-hidden">
-                        <table className="w-full text-left text-sm text-fitbox-text">
-                            <thead className="bg-neutral-800/50 text-fitbox-text-muted uppercase text-xs">
+                    <div className="bg-fitbox-card border border-neutral-800 rounded-xl overflow-hidden shadow-2xl">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-neutral-800/50 text-fitbox-text-muted uppercase text-[10px] tracking-widest font-bold">
                                 <tr>
-                                    <th className="px-6 py-4">Fecha</th>
+                                    <th className="px-6 py-4">Día / Fecha</th>
                                     <th className="px-6 py-4">Horario</th>
                                     <th className="px-6 py-4">Disciplina</th>
-                                    <th className="px-6 py-4">Monitor</th>
-                                    <th className="px-6 py-4">Aforo</th>
-                                    {/* NUEVO: El socio también ve la columna de acciones para reservar */}
-                                    {(isAdmin || isSocio) && <th className="px-6 py-4 text-right">Acciones</th>}
+                                    <th className="px-6 py-4 text-center">Aforo / Plazas</th>
+                                    <th className="px-6 py-4 text-right">Acción</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-800">
                                 {isLoading ? (
-                                    <tr><td colSpan={6} className="px-6 py-8 text-center">Cargando calendario...</td></tr>
-                                ) : clases.length === 0 ? (
-                                    <tr><td colSpan={6} className="px-6 py-8 text-center">No hay clases programadas.</td></tr>
+                                    <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">Actualizando calendario...</td></tr>
                                 ) : (
                                     clases.map((clase) => {
-                                        // NUEVO: Comprobamos si el socio ya tiene reservada esta clase
+                                        // LOGICA DE AFORO (RF-07)
+                                        const ocupadas = clase.total_reservas || 0;
+                                        const total = clase.aforo_maximo;
+                                        const estaLlena = ocupadas >= total;
                                         const yaReservada = misReservasActivas.includes(clase.id_clase);
+                                        const porcentajeOcupado = (ocupadas / total) * 100;
 
                                         return (
                                             <tr key={clase.id_clase} className="hover:bg-neutral-800/20 transition-colors">
-                                                <td className="px-6 py-4 font-medium">{new Date(clase.fecha).toLocaleDateString()}</td>
-                                                <td className="px-6 py-4 flex items-center gap-2">
-                                                    <Clock className="w-4 h-4 text-fitbox-text-muted" />
-                                                    {clase.hora_inicio.slice(0, 5)} - {clase.hora_fin.slice(0, 5)}
+                                                <td className="px-6 py-4 font-bold text-white">
+                                                    {new Date(clase.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <span className="bg-fitbox-red/20 text-fitbox-red px-2 py-1 rounded-md text-xs font-bold">
+                                                    <div className="flex items-center gap-2 text-gray-300">
+                                                        <Clock className="w-4 h-4 text-fitbox-red" />
+                                                        {clase.hora_inicio.slice(0, 5)} - {clase.hora_fin.slice(0, 5)}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className="bg-neutral-800 text-fitbox-red px-3 py-1 rounded-full text-[11px] font-black uppercase border border-fitbox-red/20">
                                                         {clase.disciplinas?.nombre}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    {clase.usuarios ? `${clase.usuarios.nombre} ${clase.usuarios.apellidos}` : 'Sin asignar'}
+                                                    {/* BARRA DE AFORO VISUAL */}
+                                                    <div className="flex flex-col gap-1 items-center">
+                                                        <span className={`text-[11px] font-bold ${estaLlena ? 'text-red-500' : 'text-gray-400'}`}>
+                                                            {ocupadas} / {total} {estaLlena ? '(LLENO)' : 'Plazas'}
+                                                        </span>
+                                                        <div className="w-24 h-1.5 bg-neutral-800 rounded-full overflow-hidden border border-neutral-700">
+                                                            <div
+                                                                className={`h-full transition-all duration-500 ${estaLlena ? 'bg-red-600' : 'bg-fitbox-red'}`}
+                                                                style={{ width: `${porcentajeOcupado}%` }}
+                                                            ></div>
+                                                        </div>
+                                                    </div>
                                                 </td>
-                                                <td className="px-6 py-4 flex items-center gap-2">
-                                                    <Users className="w-4 h-4 text-fitbox-text-muted" />
-                                                    {clase.aforo_maximo} pax
+                                                <td className="px-6 py-4 text-right">
+                                                    {isAdmin && (
+                                                        <button onClick={() => handleBorrarClase(clase.id_clase)} className="text-red-500 hover:text-red-400 mr-4">
+                                                            <Trash2 className="w-5 h-5" />
+                                                        </button>
+                                                    )}
+
+                                                    {isSocio && (
+                                                        yaReservada ? (
+                                                            <span className="text-green-500 font-bold text-xs flex items-center justify-end gap-1">
+                                                                <CheckCircle className="w-4 h-4" /> RECUERDA ASISTIR
+                                                            </span>
+                                                        ) : (
+                                                            <Button
+                                                                disabled={estaLlena}
+                                                                size="sm"
+                                                                className={`text-[11px] font-black uppercase tracking-tighter ${estaLlena ? 'bg-neutral-800 text-gray-600' : 'bg-fitbox-red hover:bg-red-700'}`}
+                                                                onClick={() => handleReservar(clase.id_clase)}
+                                                            >
+                                                                {estaLlena ? 'Sin hueco' : 'Reservar'}
+                                                            </Button>
+                                                        )
+                                                    )}
                                                 </td>
-                                                
-                                                {/* NUEVO: Botones de acciones separados por rol */}
-                                                {(isAdmin || isSocio) && (
-                                                    <td className="px-6 py-4 text-right">
-                                                        {isAdmin && (
-                                                            <button onClick={() => handleBorrarClase(clase.id_clase)} className="text-red-500 hover:text-red-400">
-                                                                <Trash2 className="w-5 h-5 inline" />
-                                                            </button>
-                                                        )}
-                                                        
-                                                        {isSocio && (
-                                                            yaReservada ? (
-                                                                <span className="text-green-500 text-xs font-bold flex items-center justify-end gap-1">
-                                                                    <CheckCircle className="w-4 h-4" /> Apuntado
-                                                                </span>
-                                                            ) : (
-                                                                <button 
-                                                                    className="bg-fitbox-red text-white px-3 py-1 rounded-md text-xs font-bold hover:bg-fitbox-red-hover transition-colors"
-                                                                    onClick={() => handleReservar(clase.id_clase)}
-                                                                >
-                                                                    Reservar
-                                                                </button>
-                                                            )
-                                                        )}
-                                                    </td>
-                                                )}
                                             </tr>
-                                        )
+                                        );
                                     })
                                 )}
                             </tbody>
@@ -287,94 +280,80 @@ export const ClasesPage = () => {
                 </div>
             )}
 
-            {/* PESTAÑA 2: RUTINAS */}
+            {/* PESTAÑA RUTINAS */}
             {vistaActiva === 'rutinas' && (
                 <div className="space-y-6">
-                    <div className="flex items-center gap-4 bg-fitbox-card p-4 rounded-lg border border-neutral-800">
+                    <div className="flex items-center gap-4 bg-fitbox-card p-4 rounded-xl border border-neutral-800">
                         <Dumbbell className="w-6 h-6 text-fitbox-red" />
-                        <label className="font-medium">Selecciona tu deporte:</label>
+                        <label className="font-bold text-white uppercase text-sm">Disciplina:</label>
                         <select
-                            className="bg-neutral-900 border border-neutral-700 text-fitbox-text rounded-md px-3 py-2"
+                            className="bg-neutral-900 border border-neutral-700 text-white rounded-md px-3 py-2 text-sm focus:border-fitbox-red outline-none"
                             value={disciplinaSeleccionada}
                             onChange={(e) => setDisciplinaSeleccionada(e.target.value)}
                         >
-                            {disciplinas.map(d => (
-                                <option key={d.id_disciplina} value={d.id_disciplina}>{d.nombre}</option>
-                            ))}
+                            {disciplinas.map(d => <option key={d.id_disciplina} value={d.id_disciplina}>{d.nombre}</option>)}
                         </select>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {rutinas.length === 0 ? (
-                            <p className="text-fitbox-text-muted col-span-3">No hay rutinas pactadas para este deporte.</p>
-                        ) : (
-                            rutinas.map(rutina => (
-                                <div key={rutina.id_rutina} className="bg-fitbox-card p-5 rounded-lg border border-neutral-800 space-y-3 shadow-lg">
-                                    <div className="flex justify-between items-start">
-                                        <h3 className="font-bold text-lg text-fitbox-red">{rutina.dia_semana}</h3>
-                                    </div>
-                                    <p className="font-semibold text-fitbox-text">{rutina.titulo}</p>
-                                    <p className="text-sm text-fitbox-text-muted leading-relaxed">{rutina.descripcion}</p>
-                                </div>
-                            ))
-                        )}
+                        {rutinas.map(rutina => (
+                            <div key={rutina.id_rutina} className="bg-fitbox-card p-6 rounded-xl border border-neutral-800 hover:border-fitbox-red/30 transition-all">
+                                <h3 className="font-black text-fitbox-red uppercase tracking-tighter mb-1">{rutina.dia_semana}</h3>
+                                <p className="font-bold text-white mb-2">{rutina.titulo}</p>
+                                <p className="text-sm text-fitbox-text-muted leading-relaxed">{rutina.descripcion}</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
 
-            {/* MODAL: Crear Clase (Solo Admin) */}
+            {/* MODAL CREAR (Solo Admin) */}
             {isCreando && isAdmin && (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-                    <div className="bg-fitbox-card border border-neutral-800 p-6 rounded-lg w-full max-w-md space-y-4">
-                        <h3 className="text-xl font-bold">Programar Nueva Clase</h3>
+                <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                        <h3 className="text-2xl font-black text-white uppercase italic">Nueva Sesión</h3>
+                        <div className="space-y-4">
 
-                        <div className="space-y-2">
-                            <label className="text-sm text-fitbox-text-muted">Deporte / Disciplina</label>
-                            <select
-                                className="w-full bg-neutral-900 border border-neutral-700 text-fitbox-text rounded-md px-3 py-2"
-                                onChange={(e) => setNuevaClase({ ...nuevaClase, id_disciplina: e.target.value })}
-                            >
-                                <option value="">-- Selecciona --</option>
-                                {disciplinas.map(d => <option key={d.id_disciplina} value={d.id_disciplina}>{d.nombre}</option>)}
-                            </select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm text-fitbox-text-muted">Monitor (Opcional)</label>
-                            <select
-                                className="w-full bg-neutral-900 border border-neutral-700 text-fitbox-text rounded-md px-3 py-2"
-                                onChange={(e) => setNuevaClase({ ...nuevaClase, id_monitor: e.target.value })}
-                            >
-                                <option value="">-- Sin asignar --</option>
-                                {monitores.map(m => <option key={m.id_usuario} value={m.id_usuario}>{m.nombre} {m.apellidos}</option>)}
-                            </select>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm text-fitbox-text-muted">Fecha</label>
-                                <input type="date" className="w-full bg-neutral-900 border border-neutral-700 text-fitbox-text rounded-md px-3 py-2" onChange={(e) => setNuevaClase({ ...nuevaClase, fecha: e.target.value })} />
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Disciplina</label>
+                                <select className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-all" onChange={(e) => setNuevaClase({ ...nuevaClase, id_disciplina: e.target.value })}>
+                                    <option value="">Selecciona...</option>
+                                    {disciplinas.map(d => <option key={d.id_disciplina} value={d.id_disciplina}>{d.nombre}</option>)}
+                                </select>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm text-fitbox-text-muted">Aforo Máximo</label>
-                                <input type="number" defaultValue={20} className="w-full bg-neutral-900 border border-neutral-700 text-fitbox-text rounded-md px-3 py-2" onChange={(e) => setNuevaClase({ ...nuevaClase, aforo_maximo: Number(e.target.value) })} />
-                            </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm text-fitbox-text-muted">Hora Inicio</label>
-                                <input type="time" className="w-full bg-neutral-900 border border-neutral-700 text-fitbox-text rounded-md px-3 py-2" onChange={(e) => setNuevaClase({ ...nuevaClase, hora_inicio: e.target.value })} />
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monitor Asignado (Opcional)</label>
+                                <select className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-all" onChange={(e) => setNuevaClase({ ...nuevaClase, id_monitor: e.target.value })}>
+                                    <option value="">Sin Monitor</option>
+                                    {monitores.map(m => <option key={m.id_usuario} value={m.id_usuario}>{m.nombre} {m.apellidos}</option>)}
+                                </select>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm text-fitbox-text-muted">Hora Fin</label>
-                                <input type="time" className="w-full bg-neutral-900 border border-neutral-700 text-fitbox-text rounded-md px-3 py-2" onChange={(e) => setNuevaClase({ ...nuevaClase, hora_fin: e.target.value })} />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fecha</label>
+                                    <input type="date" className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none" onChange={(e) => setNuevaClase({ ...nuevaClase, fecha: e.target.value })} />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Aforo</label>
+                                    <input type="number" defaultValue={20} className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none" onChange={(e) => setNuevaClase({ ...nuevaClase, aforo_maximo: Number(e.target.value) })} />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Inicio</label>
+                                    <input type="time" className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none" onChange={(e) => setNuevaClase({ ...nuevaClase, hora_inicio: e.target.value })} />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fin</label>
+                                    <input type="time" className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none" onChange={(e) => setNuevaClase({ ...nuevaClase, hora_fin: e.target.value })} />
+                                </div>
                             </div>
                         </div>
-
-                        <div className="flex gap-3 justify-end mt-6">
-                            <Button variant="ghost" onClick={() => setIsCreando(false)}>Cancelar</Button>
-                            <Button onClick={handleCrearClase}>Guardar Clase</Button>
+                        <div className="flex gap-4 pt-4">
+                            <Button variant="ghost" className="flex-1" onClick={() => setIsCreando(false)}>Cerrar</Button>
+                            <Button className="flex-1 bg-fitbox-red" onClick={handleCrearClase}>Guardar</Button>
                         </div>
                     </div>
                 </div>

@@ -14,6 +14,7 @@ export interface Rutina {
 }
 
 export interface Clase {
+    total_reservas?: number;
     id_clase: string;
     id_disciplina: string;
     id_monitor: string | null;
@@ -32,7 +33,7 @@ export interface Reserva {
     id_socio: string;
     fecha_reserva: string;
     estado: string;
-    clases?: Clase; 
+    clases?: Clase;
 }
 
 export const ClassRepository = {
@@ -72,7 +73,8 @@ export const ClassRepository = {
         return data as Clase[];
     },
 
-    createClase: async (claseData: Omit<Clase, 'id_clase' | 'disciplinas' | 'usuarios'>): Promise<Clase> => {
+    // Añadimos 'total_reservas' a la lista de cosas que ignoramos al crear
+    createClase: async (claseData: Omit<Clase, 'id_clase' | 'disciplinas' | 'usuarios' | 'total_reservas'>): Promise<Clase> => {
         const { data, error } = await supabase
             .from('clases')
             .insert([claseData])
