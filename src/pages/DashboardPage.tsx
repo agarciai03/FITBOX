@@ -1,17 +1,31 @@
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { Card, CardContent, CardHeader } from '../components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate } from 'react-router-dom';
 import { Users, Calendar, AlertCircle } from 'lucide-react';
+import { MachineRepository } from '../database/repositories/MachineRepository';
 
 export const DashboardPage = () => {
     // Sacamos los datos del usuario logueado
     const profile = useAuthStore((state) => state.profile);
     const navigate = useNavigate();
 
+    // Variable para guardar el número de máquinas rotas 
+    const [incidencias, setIncidencias] = useState(0);
+
+    // Al cargar el Dashboard, contamos las máquinas con problemas
+    useEffect(() => {
+        MachineRepository.getAllMaquinas().then(data => {
+            // Filtramos las máquinas cuyo estado NO sea 'Correcto' y contamos cuántas hay
+            const maquinasRotas = data.filter(maquina => maquina.estado !== 'Correcto').length;
+            setIncidencias(maquinasRotas);
+        }).catch(err => console.error("Error al cargar las incidencias en el Dashboard:", err));
+    }, []);
+
     return (
         <div className="p-6 w-full max-w-7xl mx-auto">
-            
+
             {/* 1. TÍTULO Y BIENVENIDA */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-white">
@@ -22,7 +36,7 @@ export const DashboardPage = () => {
 
             {/* 2. TARJETAS DE MÉTRICAS (Las 3 de arriba) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                
+
                 {/* Tarjeta Socios */}
                 <Card className="bg-[#1a1a1a] border-neutral-800">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -49,10 +63,14 @@ export const DashboardPage = () => {
                 <Card className="bg-[#1a1a1a] border-neutral-800">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <span className="text-sm font-medium text-gray-400">INCIDENCIAS</span>
-                        <AlertCircle className="h-5 w-5 text-yellow-500" />
+                        {/* AÑADIDO: Si hay incidencias, la campanita se pone roja, si no, verde */}
+                        <AlertCircle className={`h-5 w-5 ${incidencias > 0 ? 'text-red-500' : 'text-green-500'}`} />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-white">2</div>
+                        {/* AÑADIDO: Aquí pintamos el número real de incidencias y le damos color */}
+                        <div className={`text-2xl font-bold ${incidencias > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                            {incidencias}
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -60,7 +78,7 @@ export const DashboardPage = () => {
 
             {/* 3. HORARIO Y ACCESOS (Parte de abajo) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
+
                 {/* Lista de clases para hoy */}
                 <div className="bg-[#1a1a1a] p-5 rounded-xl border border-neutral-800">
                     <h3 className="text-white font-bold mb-4">Próximas Clases</h3>
@@ -86,13 +104,13 @@ export const DashboardPage = () => {
 
                 {/* Botones de acción rápida */}
                 <div className="space-y-4">
-                    <Button 
+                    <Button
                         onClick={() => navigate('/clases')}
                         className="w-full h-16 bg-fitbox-red hover:bg-red-700 text-white font-bold text-lg"
                     >
                         RESERVAR CLASE
                     </Button>
-                    <Button 
+                    <Button
                         onClick={() => navigate('/maquinas')}
                         className="w-full h-16 bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-lg border border-neutral-700"
                     >

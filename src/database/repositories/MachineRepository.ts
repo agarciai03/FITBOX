@@ -65,5 +65,15 @@ export const MachineRepository = {
             .eq('id_maquina', id_maquina);
 
         if (error) throw error;
+    },
+
+    // NUEVO: Función para dar de baja definitivamente una máquina (Solo Admin)
+    deleteMaquina: async (id_maquina: string): Promise<void> => {
+        const { error } = await supabase
+            .from('maquinas')
+            .delete()
+            .eq('id_maquina', id_maquina);
+
+        if (error) throw error;
     }
 };
