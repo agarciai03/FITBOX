@@ -6,7 +6,7 @@ export const Sidebar = () => {
     // Leemos el perfil completo desde Zustand
     const profile = useAuthStore((state) => state.profile);
     const navigate = useNavigate();
-    const location = useLocation(); 
+    const location = useLocation();
     const pathname = location.pathname;
 
     // Extraemos el nombre del rol de forma segura
@@ -24,11 +24,10 @@ export const Sidebar = () => {
                 {/* 1. BOTÓN COMÚN */}
                 <button
                     onClick={() => navigate('/dashboard')}
-                    className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${
-                        pathname === '/dashboard'
+                    className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/dashboard'
                             ? 'bg-fitbox-red/10 text-fitbox-red' // Color activo
                             : 'text-fitbox-text hover:bg-neutral-800' // Color inactivo
-                    }`}
+                        }`}
                 >
                     <Home className="w-5 h-5" />
                     Inicio
@@ -37,35 +36,34 @@ export const Sidebar = () => {
                 {/* 2. MENÚ DEL ADMINISTRADOR */}
                 {rol === 'Administrador' && (
                     <>
+                        {/* BOTÓN DE GESTIÓN DE SOCIOS */}
                         <button
                             onClick={() => navigate('/socios')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${
-                                pathname === '/socios'
+                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/socios'
                                     ? 'bg-fitbox-red/10 text-fitbox-red'
                                     : 'text-fitbox-text hover:bg-neutral-800'
-                            }`}
+                                }`}
                         >
                             <Users className="w-5 h-5" />
                             Gestión de Socios
                         </button>
+
                         <button
                             onClick={() => navigate('/clases')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${
-                                pathname === '/clases'
+                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/clases'
                                     ? 'bg-fitbox-red/10 text-fitbox-red'
                                     : 'text-fitbox-text hover:bg-neutral-800'
-                            }`}
+                                }`}
                         >
                             <Calendar className="w-5 h-5" />
                             Gestión de Horarios
                         </button>
                         <button
                             onClick={() => navigate('/maquinas')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${
-                                pathname === '/maquinas'
+                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/maquinas'
                                     ? 'bg-fitbox-red/10 text-fitbox-red'
                                     : 'text-fitbox-text hover:bg-neutral-800'
-                            }`}
+                                }`}
                         >
                             <Dumbbell className="w-5 h-5" />
                             Inventario
@@ -78,11 +76,10 @@ export const Sidebar = () => {
                     <>
                         <button
                             onClick={() => navigate('/clases')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${
-                                pathname === '/clases'
+                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/clases'
                                     ? 'bg-fitbox-red/10 text-fitbox-red'
                                     : 'text-fitbox-text hover:bg-neutral-800'
-                            }`}
+                                }`}
                         >
                             <Calendar className="w-5 h-5" />
                             Horarios y Clases
@@ -93,11 +90,10 @@ export const Sidebar = () => {
                         </button>
                         <button
                             onClick={() => navigate('/maquinas')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${
-                                pathname === '/maquinas'
+                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/maquinas'
                                     ? 'bg-fitbox-red/10 text-fitbox-red'
                                     : 'text-fitbox-text hover:bg-neutral-800'
-                            }`}
+                                }`}
                         >
                             <Wrench className="w-5 h-5" />
                             Reportar Avería
@@ -110,11 +106,10 @@ export const Sidebar = () => {
                     <>
                         <button
                             onClick={() => navigate('/clases')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${
-                                pathname === '/clases'
+                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/clases'
                                     ? 'bg-fitbox-red/10 text-fitbox-red'
                                     : 'text-fitbox-text hover:bg-neutral-800'
-                            }`}
+                                }`}
                         >
                             <Calendar className="w-5 h-5" />
                             Horarios y Reservas

@@ -10,6 +10,8 @@ import { MaquinasPage } from './pages/MaquinasPage';
 import { ClasesPage } from './pages/ClasesPage';
 import { PerfilPage } from './pages/PerfilPage';
 import { Sidebar } from './components/layout/Sidebar';
+import { SociosPage } from './pages/SociosPage';
+
 
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -74,6 +76,16 @@ export const App = () => {
             <Route path="/perfil"
               element={
                 <PerfilPage />}
+            />
+
+            {/* RUTA PROTEGIDA DE GESTIÓN DE SOCIOS */}
+            <Route
+              path="/socios"
+              element={
+                <ProtectedRoute>
+                  <SociosPage />
+                </ProtectedRoute>
+              }
             />
 
             {/* 2. AÑADIMOS LA RUTA PROTEGIDA DE LAS MÁQUINAS */}

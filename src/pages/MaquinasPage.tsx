@@ -270,7 +270,7 @@ export const MaquinasPage = () => {
                             <div className="space-y-2 animate-in slide-in-from-top-2">
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Observaciones / Detalles</label>
                                 <textarea
-                                    className="w-full bg-neutral-900 border border-neutral-700 text-white rounded-lg px-4 py-3 outline-none min-h-[100px] resize-none focus:border-fitbox-red"
+                                    className="w-full bg-neutral-900 border border-neutral-700 text-white rounded-lg px-4 py-3 outline-none min-h-25 resize-none focus:border-fitbox-red"
                                     placeholder="Describe qué le pasa a la máquina..."
                                     value={nuevasObservaciones}
                                     onChange={(e) => setNuevasObservaciones(e.target.value)}

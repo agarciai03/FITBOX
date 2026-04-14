@@ -7,7 +7,7 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Alert } from '../components/ui/Alert';
-import { REGEX, isValidDNI } from '../components/utils/regex'; // Asegúrate de que esta ruta sea correcta
+import { REGEX, isValidDNI } from '../components/utils/regex';
 
 // Tipamos todos los campos que el usuario va a rellenar
 interface FormInputs extends RegisterData {
@@ -31,16 +31,18 @@ export const RegisterPage = () => {
         setSuccessMessage(null);
 
         try {
-            // .trim() quita los espacios fantasma de los lados
-            // .toLowerCase() fuerza todo a minúsculas
             const emailLimpio = data.email.trim().toLowerCase();
             const password = data.password as string;
 
-            // borramos la confirmación de la contraseña del paquete de datos
             delete data.confirmPassword;
 
-            // Llamamos a tu repositorio pasándole nuestro emailLimpio 
-            await AuthRepository.register(emailLimpio, password, data);
+            // Añadimos automáticamente el Rol 3 (Socio)
+            const datosConRolSeguro = {
+                ...data,
+                id_rol: 3
+            };
+
+            await AuthRepository.register(emailLimpio, password, datosConRolSeguro);
 
             setSuccessMessage('¡Registro completado! Preparando tu entorno...');
 
@@ -68,7 +70,6 @@ export const RegisterPage = () => {
                 <p className="text-fitbox-text-muted mt-2">Únete a la revolución fitness</p>
             </div>
 
-            {/* Hacemos el Card más ancho (max-w-2xl) para que quepan 2 columnas */}
             <Card className="w-full max-w-3xl p-8">
                 <h2 className="text-2xl font-bold mb-6 text-white text-center">
                     Formulario de Inscripción
@@ -83,25 +84,35 @@ export const RegisterPage = () => {
                     <div>
                         <h3 className="text-fitbox-red font-semibold mb-4 border-b border-neutral-800 pb-2">Datos Personales</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Input label="Nombre" placeholder="Ej. Alberto" error={errors.nombre?.message} {...register("nombre", { required: "Obligatorio" })} />
-                            <Input label="Apellidos" placeholder="Ej. García" error={errors.apellidos?.message} {...register("apellidos", { required: "Obligatorio" })} />
 
-                            {/* APLICAMOS VALIDACIÓN PERSONALIZADA AL DNI */}
-                            <Input
-                                label="DNI / NIE"
-                                placeholder="12345678X"
-                                error={errors.dni?.message}
-                                {...register("dni", {
-                                    required: "Obligatorio",
-                                    validate: (value) => isValidDNI(value) || "DNI no válido o letra incorrecta"
-                                })}
-                            />
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-fitbox-text-muted">Nombre</label>
+                                <Input placeholder="Ej. Alberto" {...register("nombre", { required: "Obligatorio" })} />
+                                {errors.nombre && <span className="text-xs text-red-500">{errors.nombre.message}</span>}
+                            </div>
 
-                            {/* Selector de Sexo adaptado al Dark UI */}
-                            <div className="flex flex-col w-full gap-1 mb-4">
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-fitbox-text-muted">Apellidos</label>
+                                <Input placeholder="Ej. García" {...register("apellidos", { required: "Obligatorio" })} />
+                                {errors.apellidos && <span className="text-xs text-red-500">{errors.apellidos.message}</span>}
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-fitbox-text-muted">DNI / NIE</label>
+                                <Input
+                                    placeholder="12345678X"
+                                    {...register("dni", {
+                                        required: "Obligatorio",
+                                        validate: (value) => isValidDNI(value) || "DNI no válido o letra incorrecta"
+                                    })}
+                                />
+                                {errors.dni && <span className="text-xs text-red-500">{errors.dni.message}</span>}
+                            </div>
+
+                            <div className="space-y-1">
                                 <label className="text-sm font-medium text-fitbox-text-muted">Sexo</label>
                                 <select
-                                    className={`bg-[#1e2028] border border-neutral-800 rounded-lg px-4 py-3 text-fitbox-text focus:outline-none focus:ring-2 focus:ring-fitbox-red/50 ${errors.sexo ? 'border-fitbox-red' : ''}`}
+                                    className={`w-full bg-[#1e2028] border border-neutral-800 rounded-lg px-4 py-2.5 text-fitbox-text focus:outline-none focus:ring-2 focus:ring-fitbox-red/50 ${errors.sexo ? 'border-fitbox-red' : ''}`}
                                     {...register("sexo", { required: "Selecciona una opción" })}
                                 >
                                     <option value="">Seleccionar...</option>
@@ -109,7 +120,7 @@ export const RegisterPage = () => {
                                     <option value="Femenino">Femenino</option>
                                     <option value="Otro">Otro</option>
                                 </select>
-                                {errors.sexo && <span className="text-xs font-medium text-fitbox-red mt-1">{errors.sexo.message}</span>}
+                                {errors.sexo && <span className="text-xs text-red-500">{errors.sexo.message}</span>}
                             </div>
                         </div>
                     </div>
@@ -119,32 +130,47 @@ export const RegisterPage = () => {
                         <h3 className="text-fitbox-red font-semibold mb-4 border-b border-neutral-800 pb-2">Contacto y Localización</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                            {/* APLICAMOS REGEX AL TELÉFONO */}
-                            <Input
-                                label="Teléfono"
-                                type="tel"
-                                placeholder="600 000 000"
-                                error={errors.telefono?.message}
-                                {...register("telefono", {
-                                    required: "Obligatorio",
-                                    pattern: { value: REGEX.TELEFONO, message: "Debe tener 9 dígitos válidos" }
-                                })}
-                            />
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-fitbox-text-muted">Teléfono</label>
+                                <Input
+                                    type="tel" placeholder="600 000 000"
+                                    {...register("telefono", {
+                                        required: "Obligatorio",
+                                        pattern: { value: REGEX.TELEFONO, message: "Debe tener 9 dígitos válidos" }
+                                    })}
+                                />
+                                {errors.telefono && <span className="text-xs text-red-500">{errors.telefono.message}</span>}
+                            </div>
 
-                            <Input label="País" placeholder="Ej. España" error={errors.pais?.message} {...register("pais", { required: "Obligatorio" })} />
-                            <Input label="Provincia" placeholder="Ej. Madrid" error={errors.provincia?.message} {...register("provincia", { required: "Obligatorio" })} />
-                            <Input label="Localidad" placeholder="Ej. Getafe" error={errors.localidad?.message} {...register("localidad", { required: "Obligatorio" })} />
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-fitbox-text-muted">País</label>
+                                <Input placeholder="Ej. España" {...register("pais", { required: "Obligatorio" })} />
+                                {errors.pais && <span className="text-xs text-red-500">{errors.pais.message}</span>}
+                            </div>
 
-                            {/* APLICAMOS REGEX AL CÓDIGO POSTAL */}
-                            <Input
-                                label="Código Postal"
-                                placeholder="28000"
-                                error={errors.codigo_postal?.message}
-                                {...register("codigo_postal", {
-                                    required: "Obligatorio",
-                                    pattern: { value: REGEX.CODIGO_POSTAL, message: "Código postal inválido en España" }
-                                })}
-                            />
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-fitbox-text-muted">Provincia</label>
+                                <Input placeholder="Ej. Madrid" {...register("provincia", { required: "Obligatorio" })} />
+                                {errors.provincia && <span className="text-xs text-red-500">{errors.provincia.message}</span>}
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-fitbox-text-muted">Localidad</label>
+                                <Input placeholder="Ej. Getafe" {...register("localidad", { required: "Obligatorio" })} />
+                                {errors.localidad && <span className="text-xs text-red-500">{errors.localidad.message}</span>}
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-fitbox-text-muted">Código Postal</label>
+                                <Input
+                                    placeholder="28000"
+                                    {...register("codigo_postal", {
+                                        required: "Obligatorio",
+                                        pattern: { value: REGEX.CODIGO_POSTAL, message: "Código postal inválido" }
+                                    })}
+                                />
+                                {errors.codigo_postal && <span className="text-xs text-red-500">{errors.codigo_postal.message}</span>}
+                            </div>
                         </div>
                     </div>
 
@@ -152,42 +178,42 @@ export const RegisterPage = () => {
                     <div>
                         <h3 className="text-fitbox-red font-semibold mb-4 border-b border-neutral-800 pb-2">Datos de Acceso</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                {/* APLICAMOS REGEX GMAIL AL CORREO */}
+
+                            <div className="md:col-span-2 space-y-1">
+                                <label className="text-sm font-medium text-fitbox-text-muted">Correo Electrónico</label>
                                 <Input
-                                    label="Correo Electrónico"
-                                    type="email"
-                                    placeholder="ejemplo@gmail.com"
-                                    error={errors.email?.message}
+                                    type="email" placeholder="ejemplo@gmail.com"
                                     {...register("email", {
                                         required: "Obligatorio",
-                                        pattern: { value: REGEX.EMAIL_GMAIL, message: "Solo se permiten cuentas de @gmail.com" }
+                                        pattern: { value: REGEX.EMAIL_GMAIL, message: "Solo cuentas de @gmail.com" }
                                     })}
                                 />
+                                {errors.email && <span className="text-xs text-red-500">{errors.email.message}</span>}
                             </div>
 
-                            {/* APLICAMOS REGEX A LA CONTRASEÑA */}
-                            <Input
-                                label="Contraseña"
-                                type="password"
-                                placeholder="Mínimo 6 caracteres"
-                                error={errors.password?.message}
-                                {...register("password", {
-                                    required: "Obligatorio",
-                                    pattern: { value: REGEX.PASSWORD, message: "Mínimo 6 caracteres" }
-                                })}
-                            />
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-fitbox-text-muted">Contraseña</label>
+                                <Input
+                                    type="password" placeholder="Mínimo 6 caracteres"
+                                    {...register("password", {
+                                        required: "Obligatorio",
+                                        pattern: { value: REGEX.PASSWORD, message: "Mínimo 6 caracteres" }
+                                    })}
+                                />
+                                {errors.password && <span className="text-xs text-red-500">{errors.password.message}</span>}
+                            </div>
 
-                            <Input
-                                label="Confirmar Contraseña"
-                                type="password"
-                                placeholder="Repite la contraseña"
-                                error={errors.confirmPassword?.message}
-                                {...register("confirmPassword", {
-                                    required: "Obligatorio",
-                                    validate: val => val === password || "Las contraseñas no coinciden"
-                                })}
-                            />
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-fitbox-text-muted">Confirmar Contraseña</label>
+                                <Input
+                                    type="password" placeholder="Repite la contraseña"
+                                    {...register("confirmPassword", {
+                                        required: "Obligatorio",
+                                        validate: val => val === password || "Las contraseñas no coinciden"
+                                    })}
+                                />
+                                {errors.confirmPassword && <span className="text-xs text-red-500">{errors.confirmPassword.message}</span>}
+                            </div>
                         </div>
                     </div>
 
