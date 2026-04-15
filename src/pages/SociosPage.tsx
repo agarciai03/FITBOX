@@ -3,21 +3,23 @@ import { useAuthStore } from '../store/authStore';
 import { UserRepository, type Usuario } from '../database/repositories/UserRepository';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Users, Shield, UserCheck, AlertTriangle, UserPlus, CheckCircle, Trash2, Edit2 } from 'lucide-react'; 
+import { Users, Shield, UserCheck, AlertTriangle, UserPlus, CheckCircle, Trash2, Edit2 } from 'lucide-react';
+import { supabase } from '../database/supabase/Client';
+
+// AÑADIDO: Importamos nuestro motor de validaciones
+// (Ajusta la ruta '../utils/regex' a donde tengas tu archivo regex.ts)
+import { REGEX, isValidDNI, calcularLetraDNI } from '../components/utils/regex';
 
 export const SociosPage = () => {
-    // 1. Variables de Sesión
     const profile = useAuthStore((state) => state.profile);
     const rol = profile?.roles?.nombre_rol || 'Socio';
     const isAdmin = rol === 'Administrador';
 
-    // 2. Estado de los Datos
     const [usuarios, setUsuarios] = useState<Usuario[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    // 3. Modal Añadir Staff
     const [isCreandoStaff, setIsCreandoStaff] = useState(false);
     const [nuevoStaff, setNuevoStaff] = useState({
         nombre: '',
@@ -25,13 +27,11 @@ export const SociosPage = () => {
         dni: '',
         telefono: '',
         email: '',
-        id_rol: 2 // Por defecto 2 (Monitor)
+        id_rol: 2
     });
 
-    // Modal Editar Usuario
     const [usuarioAEditar, setUsuarioAEditar] = useState<Usuario | null>(null);
 
-    // Cargar la lista de la base de datos
     const cargarUsuarios = useCallback(async () => {
         try {
             setIsLoading(true);
@@ -51,37 +51,74 @@ export const SociosPage = () => {
         }
     }, [isAdmin, cargarUsuarios]);
 
-    // Función: Añadir Staff
+    // Función: Añadir Staff (USANDO EL ARCHIVO regex.ts CENTRALIZADO)
     const handleContratarStaff = async () => {
-        if (!nuevoStaff.nombre || !nuevoStaff.apellidos || !nuevoStaff.dni || !nuevoStaff.email) {
-            setError("Por favor, rellena los campos obligatorios (Nombre, Apellidos, DNI y Correo).");
-            return;
-        }
-
         setError(null);
         setSuccessMessage(null);
 
-        const nuevoUsuarioParaLaTabla: Usuario = {
-            id_usuario: Math.random().toString(36).substring(2, 11),
-            nombre: nuevoStaff.nombre,
-            apellidos: nuevoStaff.apellidos,
-            email: nuevoStaff.email,
-            id_rol: nuevoStaff.id_rol,
-            telefono: nuevoStaff.telefono || "Sin teléfono",
-            roles: {
-                nombre_rol: nuevoStaff.id_rol === 1 ? 'Administrador' : 'Monitor'
-            }
-        };
+        const telefonoLimpio = nuevoStaff.telefono.trim();
+        const dniLimpio = nuevoStaff.dni.trim().toUpperCase();
 
-        setTimeout(() => {
-            setUsuarios([nuevoUsuarioParaLaTabla, ...usuarios]);
-            setSuccessMessage(`¡Ficha de ${nuevoStaff.nombre} ${nuevoStaff.apellidos} creada correctamente!`);
+        if (!nuevoStaff.nombre || !nuevoStaff.apellidos || !nuevoStaff.dni || !nuevoStaff.email) {
+            setError("Por favor, rellena los campos obligatorios (*).");
+            return;
+        }
+
+        if (!REGEX.TEXTO_PURO.test(nuevoStaff.nombre.trim()) || !REGEX.TEXTO_PURO.test(nuevoStaff.apellidos.trim())) {
+            setError("El nombre y los apellidos solo pueden contener letras y espacios (mínimo 2 caracteres).");
+            return;
+        }
+
+        // Validamos DNI usando la función matemática, o NIE usando la regex directa
+        if (!isValidDNI(dniLimpio) && !REGEX.NIE.test(dniLimpio)) {
+            setError("El formato del DNI o NIE no es válido, o la letra no coincide.");
+            return;
+        }
+
+        if (telefonoLimpio && !REGEX.TELEFONO.test(telefonoLimpio)) {
+            setError("El teléfono debe tener exactamente 9 números.");
+            return;
+        }
+
+        if (!REGEX.EMAIL_GENERAL.test(nuevoStaff.email.trim())) {
+            setError("El formato del correo corporativo no es válido.");
+            return;
+        }
+
+        try {
+            const { error: insertError } = await supabase
+                .from('usuarios')
+                .insert([
+                    {
+                        nombre: nuevoStaff.nombre.trim(),
+                        apellidos: nuevoStaff.apellidos.trim(),
+                        dni: dniLimpio,
+                        email: nuevoStaff.email.trim(),
+                        telefono: telefonoLimpio || "Sin teléfono",
+                        id_rol: nuevoStaff.id_rol
+                    }
+                ]);
+
+            if (insertError) throw insertError;
+
+            await cargarUsuarios();
+
+            setSuccessMessage(`¡Ficha de ${nuevoStaff.nombre.trim()} ${nuevoStaff.apellidos.trim()} creada correctamente en el sistema!`);
             setIsCreandoStaff(false);
             setNuevoStaff({ nombre: '', apellidos: '', dni: '', telefono: '', email: '', id_rol: 2 });
-        }, 1000);
+
+        } catch (errorCatch) {
+            console.error("Error al guardar staff en Supabase:", errorCatch);
+            const err = errorCatch as { code?: string; message?: string };
+
+            if (err.code === '23505') {
+                setError("Ya existe un usuario registrado con ese correo electrónico o DNI.");
+            } else {
+                setError(err.message || "Error al intentar crear el empleado en la base de datos.");
+            }
+        }
     };
 
-    // Función: Dar de baja a un usuario
     const handleBorrarUsuario = async (id_usuario: string, nombre: string) => {
         if (!window.confirm(`¿Seguro que quieres dar de baja a ${nombre} definitivamente? Esta acción no se puede deshacer.`)) return;
 
@@ -91,7 +128,7 @@ export const SociosPage = () => {
         try {
             await UserRepository.deleteUser(id_usuario);
             setSuccessMessage(`El usuario ${nombre} ha sido eliminado del sistema.`);
-            cargarUsuarios(); // Recargamos la tabla para que desaparezca
+            cargarUsuarios();
         } catch (errorCatch) {
             console.error("Error al borrar usuario:", errorCatch);
             if (errorCatch instanceof Error) setError(errorCatch.message);
@@ -99,11 +136,9 @@ export const SociosPage = () => {
         }
     };
 
-    // Función para guardar los cambios al editar un usuario
     const handleGuardarEdicion = async () => {
         if (!usuarioAEditar) return;
 
-        // Validación básica
         if (!usuarioAEditar.nombre || !usuarioAEditar.apellidos) {
             setError("El nombre y los apellidos no pueden estar vacíos.");
             return;
@@ -113,7 +148,6 @@ export const SociosPage = () => {
         setSuccessMessage(null);
 
         try {
-            // Solo enviamos los datos que se pueden modificar (no el email o el id)
             await UserRepository.updateUser(usuarioAEditar.id_usuario, {
                 nombre: usuarioAEditar.nombre,
                 apellidos: usuarioAEditar.apellidos,
@@ -122,8 +156,8 @@ export const SociosPage = () => {
             });
 
             setSuccessMessage(`Datos de ${usuarioAEditar.nombre} actualizados correctamente.`);
-            setUsuarioAEditar(null); // Cerramos el modal
-            cargarUsuarios(); // Refrescamos la tabla para ver los cambios
+            setUsuarioAEditar(null);
+            cargarUsuarios();
         } catch (errorCatch) {
             console.error("Error al actualizar usuario:", errorCatch);
             if (errorCatch instanceof Error) setError(errorCatch.message);
@@ -131,7 +165,6 @@ export const SociosPage = () => {
         }
     };
 
-    // Bloqueo de Seguridad
     if (!isAdmin) {
         return (
             <div className="p-8 text-center">
@@ -155,20 +188,27 @@ export const SociosPage = () => {
                     <p className="text-fitbox-text-muted mt-1">Base de datos de Socios y Plantilla (Staff).</p>
                 </div>
 
-                <Button onClick={() => setIsCreandoStaff(true)} className="bg-fitbox-red hover:bg-red-700 font-bold">
+                <Button
+                    onClick={() => {
+                        setIsCreandoStaff(true);
+                        setError(null);
+                        setSuccessMessage(null);
+                    }}
+                    className="bg-fitbox-red hover:bg-red-700 font-bold"
+                >
                     <UserPlus className="w-4 h-4 mr-2" /> Contratar Staff
                 </Button>
             </div>
 
-            {/* ALERTAS */}
-            {error && (
+            {/* ALERTAS GENERALES */}
+            {!isCreandoStaff && !usuarioAEditar && error && (
                 <div className="p-4 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg flex items-center gap-2 font-bold">
-                    <AlertTriangle className="w-5 h-5" /> <p>{error}</p>
+                    <AlertTriangle className="w-5 h-5 shrink-0" /> <p>{error}</p>
                 </div>
             )}
             {successMessage && (
                 <div className="p-4 bg-green-500/10 border border-green-500/50 text-green-500 rounded-lg flex items-center gap-2 font-bold">
-                    <CheckCircle className="w-5 h-5" /> <p>{successMessage}</p>
+                    <CheckCircle className="w-5 h-5 shrink-0" /> <p>{successMessage}</p>
                 </div>
             )}
 
@@ -231,7 +271,11 @@ export const SociosPage = () => {
 
                                                     {/* BOTÓN DE EDITAR */}
                                                     <button
-                                                        onClick={() => setUsuarioAEditar(user)}
+                                                        onClick={() => {
+                                                            setUsuarioAEditar(user);
+                                                            setError(null);
+                                                            setSuccessMessage(null);
+                                                        }}
                                                         className="text-blue-400 hover:text-blue-300 p-1.5 rounded-md hover:bg-blue-500/10 transition-colors"
                                                         title="Editar datos del usuario"
                                                     >
@@ -262,17 +306,23 @@ export const SociosPage = () => {
             {/* MODAL: EDITAR USUARIO */}
             {usuarioAEditar && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-lg space-y-6 shadow-2xl">
-                        <div className="border-b border-neutral-800 pb-4">
+                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col">
+                        <div className="border-b border-neutral-800 pb-4 mb-6">
                             <h3 className="text-xl font-black text-white uppercase tracking-tight">
                                 Editar Ficha: <span className="text-blue-400">{usuarioAEditar.nombre}</span>
                             </h3>
                             <p className="text-sm text-fitbox-text-muted mt-1">
-                                {usuarioAEditar.email} {/* Mostramos el email pero no dejamos editarlo por seguridad */}
+                                {usuarioAEditar.email}
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {error && (
+                            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg flex items-center gap-2 font-bold">
+                                <AlertTriangle className="w-5 h-5 shrink-0" /> <p>{error}</p>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Nombre</label>
                                 <Input
@@ -297,7 +347,13 @@ export const SociosPage = () => {
                                     type="tel"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-blue-500"
                                     value={usuarioAEditar.telefono || ''}
-                                    onChange={(e) => setUsuarioAEditar({ ...usuarioAEditar, telefono: e.target.value })}
+                                    onChange={(e) => {
+                                        // Filtro estricto: Solo números y máximo 9
+                                        const valorLimpio = e.target.value.replace(/\D/g, '');
+                                        if (valorLimpio.length <= 9) {
+                                            setUsuarioAEditar({ ...usuarioAEditar, telefono: valorLimpio });
+                                        }
+                                    }}
                                 />
                             </div>
 
@@ -315,8 +371,11 @@ export const SociosPage = () => {
                             </div>
                         </div>
 
-                        <div className="flex gap-4 pt-4 border-t border-neutral-800">
-                            <Button variant="ghost" className="flex-1" onClick={() => setUsuarioAEditar(null)}>
+                        <div className="flex gap-4 pt-4 border-t border-neutral-800 mt-auto">
+                            <Button variant="ghost" className="flex-1" onClick={() => {
+                                setUsuarioAEditar(null);
+                                setError(null);
+                            }}>
                                 Cancelar
                             </Button>
                             <Button className="flex-1 bg-blue-600 hover:bg-blue-700 font-bold" onClick={handleGuardarEdicion}>
@@ -330,15 +389,21 @@ export const SociosPage = () => {
             {/* MODAL CONTRATAR STAFF */}
             {isCreandoStaff && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-2xl space-y-6 shadow-2xl">
-                        <div className="border-b border-neutral-800 pb-4">
+                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col">
+                        <div className="border-b border-neutral-800 pb-4 mb-6">
                             <h3 className="text-2xl font-black text-white uppercase tracking-tight">
                                 Ficha de Nuevo Empleado
                             </h3>
                             <p className="text-sm text-fitbox-text-muted mt-1">Completa los datos contractuales del nuevo staff.</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {error && (
+                            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg flex items-center gap-2 font-bold">
+                                <AlertTriangle className="w-5 h-5 shrink-0" /> <p>{error}</p>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div className="md:col-span-2 space-y-2">
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Puesto Asignado *</label>
                                 <select
@@ -375,9 +440,22 @@ export const SociosPage = () => {
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">DNI / NIE *</label>
                                 <Input
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red uppercase"
-                                    placeholder="12345678X"
+                                    placeholder="Escribe 8 números..."
                                     value={nuevoStaff.dni}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, dni: e.target.value })}
+                                    onChange={(e) => {
+                                        // MAGIA DEL DNI: Quitamos todo lo que no sea letra o número
+                                        let valor = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+                                        // Si el usuario llega a 8 números, le ponemos la letra matemática automáticamente
+                                        if (/^\d{8}$/.test(valor)) {
+                                            valor = valor + calcularLetraDNI(valor);
+                                        }
+
+                                        // Limitamos a 9 caracteres máximo (8 números + 1 letra)
+                                        if (valor.length <= 9) {
+                                            setNuevoStaff({ ...nuevoStaff, dni: valor });
+                                        }
+                                    }}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -385,9 +463,16 @@ export const SociosPage = () => {
                                 <Input
                                     type="tel"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
-                                    placeholder="600 000 000"
+                                    placeholder="Ej: 600123456"
                                     value={nuevoStaff.telefono}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, telefono: e.target.value })}
+                                    onChange={(e) => {
+                                        // MAGIA DEL TELÉFONO: Forzamos a que solo puedan teclear números
+                                        const valorLimpio = e.target.value.replace(/\D/g, '');
+                                        // Y limitamos a un máximo de 9 dígitos
+                                        if (valorLimpio.length <= 9) {
+                                            setNuevoStaff({ ...nuevoStaff, telefono: valorLimpio });
+                                        }
+                                    }}
                                 />
                             </div>
 
@@ -403,7 +488,7 @@ export const SociosPage = () => {
                             </div>
                         </div>
 
-                        <div className="flex gap-4 pt-4 border-t border-neutral-800">
+                        <div className="flex gap-4 pt-4 border-t border-neutral-800 mt-auto">
                             <Button variant="ghost" className="flex-1" onClick={() => {
                                 setIsCreandoStaff(false);
                                 setError(null);

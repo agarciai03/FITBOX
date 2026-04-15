@@ -47,7 +47,6 @@ export const LoginPage = () => {
             if (error) throw error;
 
             // Si todo va bien, guardamos el usuario en Zustand y lo mandamos al Dashboard
-            // Si todo va bien, guardamos el usuario en Zustand y lo mandamos al Dashboard
             if (authData.user) {
                 await setUser(authData.user);
                 navigate('/dashboard');
@@ -67,7 +66,8 @@ export const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="flex-1 flex flex-col items-center justify-center p-4 w-full py-12 md:py-24">
+
             {/* 5. El logo del gimnasio */}
             <div className="mb-8 text-center">
                 <h1 className="text-4xl font-extrabold text-white tracking-tight">
@@ -88,34 +88,52 @@ export const LoginPage = () => {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
                     {/* Email con validación de React Hook Form */}
-                    <Input
-                        label="Correo Electrónico"
-                        type="email"
-                        placeholder="ejemplo@fitbox.com"
-                        error={errors.email?.message}
-                        {...register("email", {
-                            required: "El correo es obligatorio",
-                            pattern: {
-                                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                                message: "Dirección de correo inválida"
-                            }
-                        })}
-                    />
+                    <div className="space-y-2">
+                        <label htmlFor="email" className="text-sm font-medium leading-none text-white">
+                            Correo Electrónico
+                        </label>
+                        <Input
+                            id="email"
+                            type="email"
+                            placeholder="ejemplo@fitbox.com"
+                            {...register("email", {
+                                required: "El correo es obligatorio",
+                                pattern: {
+                                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                    message: "Dirección de correo inválida"
+                                }
+                            })}
+                        />
+                        {errors.email?.message && (
+                            <p className="text-sm font-medium text-red-500">
+                                {errors.email.message as string}
+                            </p>
+                        )}
+                    </div>
 
                     {/* Contraseña con validación */}
-                    <Input
-                        label="Contraseña"
-                        type="password"
-                        placeholder="••••••••"
-                        error={errors.password?.message}
-                        {...register("password", {
-                            required: "La contraseña es obligatoria",
-                            minLength: {
-                                value: 6,
-                                message: "La contraseña debe tener al menos 6 caracteres"
-                            }
-                        })}
-                    />
+                    <div className="space-y-2">
+                        <label htmlFor="password" className="text-sm font-medium leading-none text-white">
+                            Contraseña
+                        </label>
+                        <Input
+                            id="password"
+                            type="password"
+                            placeholder="••••••••"
+                            {...register("password", {
+                                required: "La contraseña es obligatoria",
+                                minLength: {
+                                    value: 6,
+                                    message: "La contraseña debe tener al menos 6 caracteres"
+                                }
+                            })}
+                        />
+                        {errors.password?.message && (
+                            <p className="text-sm font-medium text-red-500">
+                                {errors.password.message as string}
+                            </p>
+                        )}
+                    </div>
 
                     {/* Botón Rojo (Cambiamos el texto a "Acceder") */}
                     <div className="pt-4">

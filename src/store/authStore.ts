@@ -4,6 +4,14 @@ import type { User } from '@supabase/supabase-js';
 
 // 1. Tipamos el perfil de nuestra base de datos (Teoría de Elías: Interfaces)
 export interface UserProfile {
+    apellidos: string;
+    dni: string;
+    sexo: string;
+    telefono: string;
+    pais: string;
+    provincia: string;
+    codigo_postal: string;
+    localidad: string;
     id_usuario: string;
     nombre: string;
     email: string;

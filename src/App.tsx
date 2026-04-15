@@ -8,7 +8,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { MaquinasPage } from './pages/MaquinasPage';
 import { ClasesPage } from './pages/ClasesPage';
-import { PerfilPage } from './pages/PerfilPage';
+import { PerfilPage } from './pages/ProfilePage';
 import { Sidebar } from './components/layout/Sidebar';
 import { SociosPage } from './pages/SociosPage';
 
