@@ -7,6 +7,7 @@ export interface Usuario {
     email: string;
     id_rol: number;
     telefono: string;
+    avatar_url?: string; 
     roles?: { nombre_rol: string };
 }
 

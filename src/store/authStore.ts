@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '../database/supabase/Client';
 import type { User } from '@supabase/supabase-js';
 
-// 1. Tipamos el perfil de nuestra base de datos (Teoría de Elías: Interfaces)
+// Tipamos el perfil de nuestra base de datos 
 export interface UserProfile {
     apellidos: string;
     dni: string;
@@ -16,6 +16,7 @@ export interface UserProfile {
     nombre: string;
     email: string;
     id_rol: number;
+    avatar_url?: string;
     roles?: {
         nombre_rol: string;
     };

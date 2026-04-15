@@ -45,7 +45,7 @@ export const Sidebar = () => {
                                 }`}
                         >
                             <Users className="w-5 h-5" />
-                            Gestión de Socios
+                            Gestión de Usuarios
                         </button>
 
                         <button

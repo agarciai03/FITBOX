@@ -1,12 +1,14 @@
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { UserCircle } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export const Header = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const user = useAuthStore((state) => state.user);
 
+    // SACAR DATOS EN ZUSTAND
+    const user = useAuthStore((state) => state.user);
+    const profile = useAuthStore((state) => state.profile);
 
     const esRutaPublica = location.pathname === '/' || location.pathname === '/registro';
 
@@ -44,9 +46,21 @@ export const Header = () => {
                         >
                             <div className="text-right hidden sm:block">
                                 <p className="text-[10px] text-fitbox-text-muted uppercase font-bold tracking-wider">Mi Cuenta</p>
-                                <p className="text-sm text-white group-hover:text-fitbox-red transition-colors">{user.email}</p>
+                                {/* AÑADIDO: Muestra el nombre del perfil, si no hay nombre muestra el email como respaldo */}
+                                <p className="text-sm text-white group-hover:text-fitbox-red transition-colors capitalize">
+                                    {profile?.nombre || user.email}
+                                </p>
                             </div>
-                            <UserCircle className="w-8 h-8 text-fitbox-text-muted group-hover:text-fitbox-red transition-colors" />
+
+                            {/* Avatar en el Header */}
+                            <Avatar className="w-10 h-10 border border-neutral-700 transition-colors group-hover:border-fitbox-red">
+                                {profile?.avatar_url && (
+                                    <AvatarImage src={profile.avatar_url} className="object-cover" />
+                                )}
+                                <AvatarFallback className="bg-neutral-800 text-fitbox-text-muted font-bold group-hover:text-fitbox-red">
+                                    {profile?.nombre?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                            </Avatar>
                         </Link>
                     )}
                 </div>

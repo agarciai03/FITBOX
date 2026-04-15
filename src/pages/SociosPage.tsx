@@ -6,8 +6,7 @@ import { Input } from '../components/ui/Input';
 import { Users, Shield, UserCheck, AlertTriangle, UserPlus, CheckCircle, Trash2, Edit2 } from 'lucide-react';
 import { supabase } from '../database/supabase/Client';
 
-// AÑADIDO: Importamos nuestro motor de validaciones
-// (Ajusta la ruta '../utils/regex' a donde tengas tu archivo regex.ts)
+// Importamos nuestro motor de validaciones
 import { REGEX, isValidDNI, calcularLetraDNI } from '../components/utils/regex';
 
 export const SociosPage = () => {
@@ -21,13 +20,21 @@ export const SociosPage = () => {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const [isCreandoStaff, setIsCreandoStaff] = useState(false);
+
+    // ESTADO COMPLETO (Igual que un registro normal)
     const [nuevoStaff, setNuevoStaff] = useState({
         nombre: '',
         apellidos: '',
         dni: '',
         telefono: '',
         email: '',
-        id_rol: 2
+        password: '',
+        id_rol: 2,
+        sexo: '',
+        pais: '',
+        provincia: '',
+        localidad: '',
+        codigo_postal: ''
     });
 
     const [usuarioAEditar, setUsuarioAEditar] = useState<Usuario | null>(null);
@@ -51,7 +58,7 @@ export const SociosPage = () => {
         }
     }, [isAdmin, cargarUsuarios]);
 
-    // Función: Añadir Staff (USANDO EL ARCHIVO regex.ts CENTRALIZADO)
+    // Función: Añadir Staff (REGISTRO COMPLETO CON AUTH)
     const handleContratarStaff = async () => {
         setError(null);
         setSuccessMessage(null);
@@ -59,17 +66,18 @@ export const SociosPage = () => {
         const telefonoLimpio = nuevoStaff.telefono.trim();
         const dniLimpio = nuevoStaff.dni.trim().toUpperCase();
 
-        if (!nuevoStaff.nombre || !nuevoStaff.apellidos || !nuevoStaff.dni || !nuevoStaff.email) {
-            setError("Por favor, rellena los campos obligatorios (*).");
+        // 1. Comprobamos campos obligatorios
+        if (!nuevoStaff.nombre || !nuevoStaff.apellidos || !nuevoStaff.dni || !nuevoStaff.email || !nuevoStaff.password) {
+            setError("Por favor, rellena los campos obligatorios marcados con (*).");
             return;
         }
 
+        // 2. Validaciones REGEX
         if (!REGEX.TEXTO_PURO.test(nuevoStaff.nombre.trim()) || !REGEX.TEXTO_PURO.test(nuevoStaff.apellidos.trim())) {
             setError("El nombre y los apellidos solo pueden contener letras y espacios (mínimo 2 caracteres).");
             return;
         }
 
-        // Validamos DNI usando la función matemática, o NIE usando la regex directa
         if (!isValidDNI(dniLimpio) && !REGEX.NIE.test(dniLimpio)) {
             setError("El formato del DNI o NIE no es válido, o la letra no coincide.");
             return;
@@ -85,36 +93,65 @@ export const SociosPage = () => {
             return;
         }
 
+        if (!REGEX.PASSWORD.test(nuevoStaff.password)) {
+            setError("La contraseña debe tener al menos 6 caracteres.");
+            return;
+        }
+
+        if (nuevoStaff.codigo_postal && !REGEX.CODIGO_POSTAL.test(nuevoStaff.codigo_postal)) {
+            setError("El código postal no tiene un formato español válido (5 dígitos).");
+            return;
+        }
+
         try {
-            const { error: insertError } = await supabase
-                .from('usuarios')
-                .insert([
-                    {
+            // 3. PASO ÚNICO Y DEFINITIVO: signUp con todos los metadatos.
+            // Al meter los datos en "options.data", el Trigger automático de tu Supabase
+            // se encargará de crear la ficha en public.usuarios sin que nosotros hagamos ".insert()".
+            const { error: authError } = await supabase.auth.signUp({
+                email: nuevoStaff.email.trim(),
+                password: nuevoStaff.password,
+                options: {
+                    data: {
                         nombre: nuevoStaff.nombre.trim(),
                         apellidos: nuevoStaff.apellidos.trim(),
                         dni: dniLimpio,
-                        email: nuevoStaff.email.trim(),
-                        telefono: telefonoLimpio || "Sin teléfono",
-                        id_rol: nuevoStaff.id_rol
+                        id_rol: nuevoStaff.id_rol, // Pasamos el rol para que sea admin/monitor
+                        telefono: telefonoLimpio || null,
+                        sexo: nuevoStaff.sexo || null,
+                        pais: nuevoStaff.pais || null,
+                        provincia: nuevoStaff.provincia || null,
+                        localidad: nuevoStaff.localidad || null,
+                        codigo_postal: nuevoStaff.codigo_postal || null
                     }
-                ]);
+                }
+            });
 
-            if (insertError) throw insertError;
+            if (authError) throw authError;
 
-            await cargarUsuarios();
+            // Recargamos la tabla visualmente (damos medio segundo de margen para que el trigger acabe en la BBDD)
+            setTimeout(async () => {
+                await cargarUsuarios();
+            }, 500);
 
-            setSuccessMessage(`¡Ficha de ${nuevoStaff.nombre.trim()} ${nuevoStaff.apellidos.trim()} creada correctamente en el sistema!`);
+            setSuccessMessage(`¡La ficha de ${nuevoStaff.nombre.trim()} se ha creado correctamente! Ya puede iniciar sesión.`);
             setIsCreandoStaff(false);
-            setNuevoStaff({ nombre: '', apellidos: '', dni: '', telefono: '', email: '', id_rol: 2 });
 
-        } catch (errorCatch) {
-            console.error("Error al guardar staff en Supabase:", errorCatch);
-            const err = errorCatch as { code?: string; message?: string };
+            // Limpiamos el formulario
+            setNuevoStaff({
+                nombre: '', apellidos: '', dni: '', telefono: '', email: '', password: '',
+                id_rol: 2, sexo: '', pais: '', provincia: '', localidad: '', codigo_postal: ''
+            });
 
-            if (err.code === '23505') {
-                setError("Ya existe un usuario registrado con ese correo electrónico o DNI.");
+        } catch (errorCatch: any) {
+            console.error("Error al registrar staff:", errorCatch);
+
+            // Filtramos los errores para que el usuario sepa qué ha fallado
+            if (errorCatch.status === 400 || errorCatch.message?.includes('already registered')) {
+                setError("El correo electrónico ya está registrado en el sistema.");
+            } else if (errorCatch.code === '23505') {
+                setError("Ya existe un usuario en la base de datos con ese DNI o Correo.");
             } else {
-                setError(err.message || "Error al intentar crear el empleado en la base de datos.");
+                setError(errorCatch.message || "Error al intentar crear el empleado en la base de datos.");
             }
         }
     };
@@ -348,7 +385,6 @@ export const SociosPage = () => {
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-blue-500"
                                     value={usuarioAEditar.telefono || ''}
                                     onChange={(e) => {
-                                        // Filtro estricto: Solo números y máximo 9
                                         const valorLimpio = e.target.value.replace(/\D/g, '');
                                         if (valorLimpio.length <= 9) {
                                             setUsuarioAEditar({ ...usuarioAEditar, telefono: valorLimpio });
@@ -386,15 +422,15 @@ export const SociosPage = () => {
                 </div>
             )}
 
-            {/* MODAL CONTRATAR STAFF */}
+            {/* MODAL CONTRATAR STAFF (AHORA ES UN FORMULARIO COMPLETO TIPO REGISTRO) */}
             {isCreandoStaff && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col">
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col my-8">
                         <div className="border-b border-neutral-800 pb-4 mb-6">
                             <h3 className="text-2xl font-black text-white uppercase tracking-tight">
                                 Ficha de Nuevo Empleado
                             </h3>
-                            <p className="text-sm text-fitbox-text-muted mt-1">Completa los datos contractuales del nuevo staff.</p>
+                            <p className="text-sm text-fitbox-text-muted mt-1">Completa los datos contractuales y de acceso del nuevo staff.</p>
                         </div>
 
                         {error && (
@@ -404,6 +440,7 @@ export const SociosPage = () => {
                         )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            {/* ROL, EMAIL Y CONTRASEÑA */}
                             <div className="md:col-span-2 space-y-2">
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Puesto Asignado *</label>
                                 <select
@@ -415,7 +452,28 @@ export const SociosPage = () => {
                                     <option value={1}>Co-Administrador (Dirección)</option>
                                 </select>
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Correo Corporativo *</label>
+                                <Input
+                                    type="email"
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
+                                    placeholder="empleado@fitbox.com"
+                                    value={nuevoStaff.email}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, email: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Contraseña Temporal *</label>
+                                <Input
+                                    type="password"
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
+                                    placeholder="Mínimo 6 caracteres..."
+                                    value={nuevoStaff.password}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, password: e.target.value })}
+                                />
+                            </div>
 
+                            {/* DATOS PERSONALES */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Nombre *</label>
                                 <Input
@@ -443,22 +501,32 @@ export const SociosPage = () => {
                                     placeholder="Escribe 8 números..."
                                     value={nuevoStaff.dni}
                                     onChange={(e) => {
-                                        // MAGIA DEL DNI: Quitamos todo lo que no sea letra o número
                                         let valor = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-
-                                        // Si el usuario llega a 8 números, le ponemos la letra matemática automáticamente
                                         if (/^\d{8}$/.test(valor)) {
                                             valor = valor + calcularLetraDNI(valor);
                                         }
-
-                                        // Limitamos a 9 caracteres máximo (8 números + 1 letra)
                                         if (valor.length <= 9) {
                                             setNuevoStaff({ ...nuevoStaff, dni: valor });
                                         }
                                     }}
                                 />
                             </div>
+
                             <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Sexo</label>
+                                <select
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-all capitalize"
+                                    value={nuevoStaff.sexo}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, sexo: e.target.value })}
+                                >
+                                    <option value="" disabled>Seleccionar...</option>
+                                    <option value="Hombre">Hombre</option>
+                                    <option value="Mujer">Mujer</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+
+                            <div className="space-y-2 md:col-span-2">
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Teléfono de Contacto</label>
                                 <Input
                                     type="tel"
@@ -466,9 +534,7 @@ export const SociosPage = () => {
                                     placeholder="Ej: 600123456"
                                     value={nuevoStaff.telefono}
                                     onChange={(e) => {
-                                        // MAGIA DEL TELÉFONO: Forzamos a que solo puedan teclear números
                                         const valorLimpio = e.target.value.replace(/\D/g, '');
-                                        // Y limitamos a un máximo de 9 dígitos
                                         if (valorLimpio.length <= 9) {
                                             setNuevoStaff({ ...nuevoStaff, telefono: valorLimpio });
                                         }
@@ -476,14 +542,48 @@ export const SociosPage = () => {
                                 />
                             </div>
 
-                            <div className="md:col-span-2 space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Correo Corporativo *</label>
+                            {/* UBICACIÓN */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">País</label>
                                 <Input
-                                    type="email"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
-                                    placeholder="carlos.martinez@fitbox.com"
-                                    value={nuevoStaff.email}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, email: e.target.value })}
+                                    placeholder="Ej: España"
+                                    value={nuevoStaff.pais}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, pais: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Provincia</label>
+                                <Input
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
+                                    placeholder="Ej: Madrid"
+                                    value={nuevoStaff.provincia}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, provincia: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Localidad / Ciudad</label>
+                                <Input
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
+                                    placeholder="Ej: Móstoles"
+                                    value={nuevoStaff.localidad}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, localidad: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Código Postal</label>
+                                <Input
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
+                                    placeholder="Ej: 28930"
+                                    value={nuevoStaff.codigo_postal}
+                                    onChange={(e) => {
+                                        const valorLimpio = e.target.value.replace(/\D/g, '');
+                                        if (valorLimpio.length <= 5) {
+                                            setNuevoStaff({ ...nuevoStaff, codigo_postal: valorLimpio });
+                                        }
+                                    }}
                                 />
                             </div>
                         </div>
