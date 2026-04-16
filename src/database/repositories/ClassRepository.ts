@@ -24,9 +24,9 @@ export interface Clase {
     aforo_maximo: number;
     disciplinas?: { nombre: string };
     usuarios?: { nombre: string; apellidos: string };
+    reservas?: Reserva[]; 
 }
 
-// NUEVO TIPO PARA LAS RESERVAS
 export interface Reserva {
     id: string;
     id_clase: string;
@@ -34,6 +34,7 @@ export interface Reserva {
     fecha_reserva: string;
     estado: string;
     clases?: Clase;
+    usuarios?: { nombre: string; apellidos: string }; 
 }
 
 export const ClassRepository = {
@@ -59,12 +60,14 @@ export const ClassRepository = {
     },
 
     getAllClases: async (): Promise<Clase[]> => {
+        // Le pedimos a Supabase que cruce las Reservas y nos traiga el nombre de los Usuarios apuntados
         const { data, error } = await supabase
             .from('clases')
             .select(`
                 *,
                 disciplinas(nombre),
-                usuarios(nombre, apellidos)
+                usuarios(nombre, apellidos),
+                reservas(id, id_socio, estado, usuarios(nombre, apellidos))
             `)
             .order('fecha', { ascending: true })
             .order('hora_inicio', { ascending: true });
@@ -73,8 +76,8 @@ export const ClassRepository = {
         return data as Clase[];
     },
 
-    // Añadimos 'total_reservas' a la lista de cosas que ignoramos al crear
-    createClase: async (claseData: Omit<Clase, 'id_clase' | 'disciplinas' | 'usuarios' | 'total_reservas'>): Promise<Clase> => {
+    // Añadimos 'total_reservas' y 'reservas' a la lista de cosas que ignoramos al crear
+    createClase: async (claseData: Omit<Clase, 'id_clase' | 'disciplinas' | 'usuarios' | 'total_reservas' | 'reservas'>): Promise<Clase> => {
         const { data, error } = await supabase
             .from('clases')
             .insert([claseData])
@@ -94,7 +97,7 @@ export const ClassRepository = {
         if (error) throw error;
     },
 
-    // 1. Apuntar a un socio a una clase
+    // Apuntar a un socio a una clase
     reservarClase: async (id_clase: string, id_socio: string): Promise<Reserva> => {
         const { data, error } = await supabase
             .from('reservas')
@@ -103,7 +106,7 @@ export const ClassRepository = {
             .single();
 
         if (error) {
-            // Cazamos el error de "Duplicado" (Violación del UNIQUE constraint)
+            // Cazamos el error de "Duplicado" 
             if (error.code === '23505') {
                 throw new Error('Ya tienes una reserva activa para esta clase.');
             }
@@ -112,7 +115,7 @@ export const ClassRepository = {
         return data as Reserva;
     },
 
-    // 2. Traer las reservas activas de un socio (Para su perfil o calendario)
+    // Traer las reservas activas de un socio (Para su perfil o calendario)
     getReservasBySocio: async (id_socio: string): Promise<Reserva[]> => {
         const { data, error } = await supabase
             .from('reservas')
@@ -131,7 +134,7 @@ export const ClassRepository = {
         return data as Reserva[];
     },
 
-    // 3. Cancelar una reserva (Por si el socio no puede ir)
+    // Cancelar una reserva (Por si el socio no puede ir)
     cancelarReserva: async (id_reserva: string): Promise<void> => {
         const { error } = await supabase
             .from('reservas')
