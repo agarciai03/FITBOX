@@ -9,7 +9,7 @@ import { Button } from '../components/ui/Button';
 import { Alert } from '../components/ui/Alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera } from 'lucide-react';
-import { REGEX, isValidDNI, calcularLetraDNI } from '../components/utils/regex';
+import { REGEX, isValidDNI, limpiarDNI } from '../components/utils/regex';
 
 interface FormInputs extends RegisterData {
     confirmPassword?: string;
@@ -153,7 +153,12 @@ export const RegisterPage = () => {
                                     className={`bg-neutral-900 border-neutral-800 ${errors.nombre ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                     {...register("nombre", {
                                         required: "El nombre es obligatorio",
-                                        pattern: { value: REGEX.TEXTO_PURO, message: "Solo letras y espacios (mín. 2)" }
+                                        pattern: { value: REGEX.TEXTO_PURO, message: "Solo letras y espacios (mín. 2)" },
+                                        // Sanitización de Input. Usamos regex para eliminar todo lo que no sea letra o espacio en vivo.
+                                        onChange: (e) => {
+                                            const valorLimpio = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                                            setValue("nombre", valorLimpio, { shouldValidate: true });
+                                        }
                                     })}
                                 />
                                 {errors.nombre && <span className="text-xs text-red-500 font-medium">{errors.nombre.message}</span>}
@@ -166,7 +171,12 @@ export const RegisterPage = () => {
                                     className={`bg-neutral-900 border-neutral-800 ${errors.apellidos ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                     {...register("apellidos", {
                                         required: "Los apellidos son obligatorios",
-                                        pattern: { value: REGEX.TEXTO_PURO, message: "Solo letras y espacios" }
+                                        pattern: { value: REGEX.TEXTO_PURO, message: "Solo letras y espacios" },
+                                        // Igual que el nombre, UX fluida que no deja escribir números.
+                                        onChange: (e) => {
+                                            const valorLimpio = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                                            setValue("apellidos", valorLimpio, { shouldValidate: true });
+                                        }
                                     })}
                                 />
                                 {errors.apellidos && <span className="text-xs text-red-500 font-medium">{errors.apellidos.message}</span>}
@@ -185,12 +195,8 @@ export const RegisterPage = () => {
                                         }
                                     })}
                                     onChange={(e) => {
-                                        let valor = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                                        if (/^\d{8}$/.test(valor)) {
-                                            valor = valor + calcularLetraDNI(valor);
-                                        }
-                                        valor = valor.slice(0, 9);
-                                        setValue("dni", valor, { shouldValidate: true });
+                                        // Usamos limpiarDNI para no dejar que escriban letras por el medio
+                                        setValue("dni", limpiarDNI(e.target.value), { shouldValidate: true });
                                     }}
                                 />
                                 {errors.dni && <span className="text-xs text-red-500 font-medium">{errors.dni.message}</span>}
@@ -250,6 +256,7 @@ export const RegisterPage = () => {
                                         pattern: { value: REGEX.TELEFONO, message: "Debe tener 9 dígitos numéricos" }
                                     })}
                                     onChange={(e) => {
+                                        // \D detecta lo que NO es un número, lo elimina, y limitamos a 9 caracteres.
                                         const valorLimpio = e.target.value.replace(/\D/g, '').slice(0, 9);
                                         setValue("telefono", valorLimpio, { shouldValidate: true });
                                     }}
@@ -262,7 +269,13 @@ export const RegisterPage = () => {
                                 <Input
                                     placeholder="Ej. España"
                                     className={`bg-neutral-900 border-neutral-800 ${errors.pais ? 'border-red-500' : 'focus:border-fitbox-red'}`}
-                                    {...register("pais", { required: "Obligatorio" })}
+                                    {...register("pais", {
+                                        required: "Obligatorio",
+                                        onChange: (e) => {
+                                            const valorLimpio = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                                            setValue("pais", valorLimpio, { shouldValidate: true });
+                                        }
+                                    })}
                                 />
                                 {errors.pais && <span className="text-xs text-red-500 font-medium">{errors.pais.message}</span>}
                             </div>
@@ -272,7 +285,13 @@ export const RegisterPage = () => {
                                 <Input
                                     placeholder="Ej. Madrid"
                                     className={`bg-neutral-900 border-neutral-800 ${errors.provincia ? 'border-red-500' : 'focus:border-fitbox-red'}`}
-                                    {...register("provincia", { required: "Obligatorio" })}
+                                    {...register("provincia", {
+                                        required: "Obligatorio",
+                                        onChange: (e) => {
+                                            const valorLimpio = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                                            setValue("provincia", valorLimpio, { shouldValidate: true });
+                                        }
+                                    })}
                                 />
                                 {errors.provincia && <span className="text-xs text-red-500 font-medium">{errors.provincia.message}</span>}
                             </div>
@@ -282,7 +301,13 @@ export const RegisterPage = () => {
                                 <Input
                                     placeholder="Ej. Getafe"
                                     className={`bg-neutral-900 border-neutral-800 ${errors.localidad ? 'border-red-500' : 'focus:border-fitbox-red'}`}
-                                    {...register("localidad", { required: "Obligatorio" })}
+                                    {...register("localidad", {
+                                        required: "Obligatorio",
+                                        onChange: (e) => {
+                                            const valorLimpio = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                                            setValue("localidad", valorLimpio, { shouldValidate: true });
+                                        }
+                                    })}
                                 />
                                 {errors.localidad && <span className="text-xs text-red-500 font-medium">{errors.localidad.message}</span>}
                             </div>
@@ -297,6 +322,7 @@ export const RegisterPage = () => {
                                         pattern: { value: REGEX.CODIGO_POSTAL, message: "Código postal español inválido (5 cifras numéricas)" }
                                     })}
                                     onChange={(e) => {
+                                        // Bloqueamos a solo 5 números.
                                         const valorLimpio = e.target.value.replace(/\D/g, '').slice(0, 5);
                                         setValue("codigo_postal", valorLimpio, { shouldValidate: true });
                                     }}
@@ -319,7 +345,11 @@ export const RegisterPage = () => {
                                     className={`bg-neutral-900 border-neutral-800 ${errors.email ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                     {...register("email", {
                                         required: "El correo es obligatorio",
-                                        pattern: { value: REGEX.EMAIL_GENERAL, message: "Formato de correo inválido" }
+                                        pattern: { value: REGEX.EMAIL_GENERAL, message: "Formato de correo inválido" },
+                                        onChange: (e) => {
+                                            // Eliminamos espacios en blanco del email.
+                                            setValue("email", e.target.value.replace(/\s/g, ''), { shouldValidate: true });
+                                        }
                                     })}
                                 />
                                 {errors.email && <span className="text-xs text-red-500 font-medium">{errors.email.message}</span>}

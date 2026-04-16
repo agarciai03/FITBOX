@@ -5,9 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Users, Shield, UserCheck, AlertTriangle, UserPlus, CheckCircle, Trash2, Edit2 } from 'lucide-react';
 import { supabase } from '../database/supabase/Client';
-
-// Importamos nuestro motor de validaciones
-import { REGEX, isValidDNI, calcularLetraDNI } from '../components/utils/regex';
+import { REGEX, isValidDNI, limpiarDNI } from '../components/utils/regex';
 
 export const SociosPage = () => {
     const profile = useAuthStore((state) => state.profile);
@@ -366,7 +364,7 @@ export const SociosPage = () => {
                                     autoFocus
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-blue-500"
                                     value={usuarioAEditar.nombre}
-                                    onChange={(e) => setUsuarioAEditar({ ...usuarioAEditar, nombre: e.target.value })}
+                                    onChange={(e) => setUsuarioAEditar({ ...usuarioAEditar, nombre: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -374,7 +372,7 @@ export const SociosPage = () => {
                                 <Input
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-blue-500"
                                     value={usuarioAEditar.apellidos}
-                                    onChange={(e) => setUsuarioAEditar({ ...usuarioAEditar, apellidos: e.target.value })}
+                                    onChange={(e) => setUsuarioAEditar({ ...usuarioAEditar, apellidos: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
                                 />
                             </div>
 
@@ -459,7 +457,7 @@ export const SociosPage = () => {
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="empleado@fitbox.com"
                                     value={nuevoStaff.email}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, email: e.target.value })}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, email: e.target.value.replace(/\s/g, '') })}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -481,7 +479,7 @@ export const SociosPage = () => {
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Ej: Carlos"
                                     value={nuevoStaff.nombre}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, nombre: e.target.value })}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, nombre: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -490,7 +488,7 @@ export const SociosPage = () => {
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Ej: Martínez Gómez"
                                     value={nuevoStaff.apellidos}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, apellidos: e.target.value })}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, apellidos: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
                                 />
                             </div>
 
@@ -501,13 +499,7 @@ export const SociosPage = () => {
                                     placeholder="Escribe 8 números..."
                                     value={nuevoStaff.dni}
                                     onChange={(e) => {
-                                        let valor = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                                        if (/^\d{8}$/.test(valor)) {
-                                            valor = valor + calcularLetraDNI(valor);
-                                        }
-                                        if (valor.length <= 9) {
-                                            setNuevoStaff({ ...nuevoStaff, dni: valor });
-                                        }
+                                        setNuevoStaff({ ...nuevoStaff, dni: limpiarDNI(e.target.value) });
                                     }}
                                 />
                             </div>
@@ -549,7 +541,7 @@ export const SociosPage = () => {
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Ej: España"
                                     value={nuevoStaff.pais}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, pais: e.target.value })}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, pais: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -558,7 +550,7 @@ export const SociosPage = () => {
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Ej: Madrid"
                                     value={nuevoStaff.provincia}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, provincia: e.target.value })}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, provincia: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
                                 />
                             </div>
 
@@ -568,7 +560,7 @@ export const SociosPage = () => {
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Ej: Móstoles"
                                     value={nuevoStaff.localidad}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, localidad: e.target.value })}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, localidad: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
                                 />
                             </div>
 

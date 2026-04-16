@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/Button';
-import { Alert } from '@/components/ui/Alert'; 
+import { Alert } from '@/components/ui/Alert';
 import { LogOut, Save, Camera, CheckCircle } from 'lucide-react';
 import { supabase } from '../database/supabase/Client';
 import { REGEX } from '../components/utils/regex';
@@ -60,8 +60,8 @@ export const PerfilPage = () => {
     const inicial = profile.nombre ? profile.nombre.charAt(0).toUpperCase() : 'F';
 
     const handleLogout = async () => {
-        await logout(); 
-        navigate('/'); 
+        await logout();
+        navigate('/');
     };
 
     // 3. FUNCIÓN: SUBIR FOTO DE AVATAR A SUPABASE STORAGE
@@ -154,15 +154,15 @@ export const PerfilPage = () => {
             // Actualizamos Zustand para que el Header cambie en tiempo real sin F5
             const { data: authData } = await supabase.auth.getUser();
             if (authData.user) {
-                await setUser(authData.user); 
+                await setUser(authData.user);
             }
-            
+
             setSuccessMessage("¡Tus datos han sido actualizados correctamente!");
 
         } catch (err: any) {
             // AHORA LA CONSOLA NOS DIRÁ EL ERROR EXACTO DE POSTGRES
             console.error("Error exacto de Supabase:", err.message, err.details, err.hint);
-            
+
             // Si el error dice algo de "avatar_url", avisamos al usuario
             if (err.message?.includes('avatar_url')) {
                 setError("Falta crear la columna 'avatar_url' (text) en la tabla 'usuarios' de Supabase.");
@@ -189,7 +189,7 @@ export const PerfilPage = () => {
                     {/* Agrupamos Avatar y Textos juntos a la izquierda */}
                     <div className="flex items-center gap-5 w-full sm:w-auto">
 
-                        {/* NUEVO: Input oculto de cámara envuelto en un Label interactivo */}
+                        {/* Input oculto de cámara envuelto en un Label interactivo */}
                         <label className="cursor-pointer relative group block shrink-0">
                             <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-2 border-fitbox-red shadow-lg transition-opacity group-hover:opacity-50">
                                 {formData.avatar_url && (
@@ -203,12 +203,12 @@ export const PerfilPage = () => {
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Camera className="w-8 h-8 text-white" />
                             </div>
-                            <input 
-                                type="file" 
-                                accept="image/*" 
-                                className="hidden" 
-                                onChange={handleAvatarUpload} 
-                                disabled={isLoading} 
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleAvatarUpload}
+                                disabled={isLoading}
                             />
                         </label>
 
@@ -234,7 +234,7 @@ export const PerfilPage = () => {
                 </div>
 
                 <CardContent className="space-y-10 p-6 sm:p-8">
-                    
+
                     {/* ALERTAS DE GUARDADO */}
                     {error && <Alert type="error" message={error} />}
                     {successMessage && (
@@ -259,7 +259,7 @@ export const PerfilPage = () => {
                                 <Label className="text-fitbox-text-muted font-bold text-xs uppercase tracking-wider">Estado</Label>
                                 <Input value="Activo" readOnly className="bg-green-500/10 border-green-500/20 text-green-400 font-bold cursor-default focus-visible:ring-0 focus-visible:border-green-500/20" />
                             </div>
-                            
+
                             <div className="space-y-2 md:col-span-3">
                                 <Label className="text-fitbox-text-muted font-bold text-xs uppercase tracking-wider">DNI / NIE</Label>
                                 <Input value={profile.dni || 'No especificado'} readOnly className={readOnlyInputStyle} />
@@ -276,20 +276,32 @@ export const PerfilPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                             <div className="space-y-2">
                                 <Label htmlFor="nombre" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Nombre</Label>
-                                <Input id="nombre" value={formData.nombre} onChange={(e) => setFormData({ ...formData, nombre: e.target.value })} className={editableInputStyle} />
+                                <Input
+                                    id="nombre"
+                                    value={formData.nombre}
+                                    // Usamos replace para eliminar cualquier número antes de actualizar el estado.
+                                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    className={editableInputStyle}
+                                />
                             </div>
 
                             <div className="space-y-2">
                                 <Label htmlFor="apellidos" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Apellidos</Label>
-                                <Input id="apellidos" value={formData.apellidos} onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })} className={editableInputStyle} />
+                                <Input
+                                    id="apellidos"
+                                    value={formData.apellidos}
+                                    // Igual que el nombre, protección pura frente a errores tipográficos de los usuarios.
+                                    onChange={(e) => setFormData({ ...formData, apellidos: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    className={editableInputStyle}
+                                />
                             </div>
 
                             <div className="space-y-2">
                                 <Label htmlFor="sexo" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Sexo</Label>
-                                <select 
-                                    id="sexo" 
-                                    value={formData.sexo} 
-                                    onChange={(e) => setFormData({ ...formData, sexo: e.target.value })} 
+                                <select
+                                    id="sexo"
+                                    value={formData.sexo}
+                                    onChange={(e) => setFormData({ ...formData, sexo: e.target.value })}
                                     className={`w-full h-10 px-3 py-2 rounded-md ${editableInputStyle} capitalize`}
                                 >
                                     <option value="" disabled>Seleccionar...</option>
@@ -301,14 +313,15 @@ export const PerfilPage = () => {
 
                             <div className="space-y-2">
                                 <Label htmlFor="telefono" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Teléfono de Contacto</Label>
-                                <Input 
-                                    id="telefono" type="tel" placeholder="600000000" 
-                                    value={formData.telefono} 
+                                <Input
+                                    id="telefono" type="tel" placeholder="600000000"
+                                    value={formData.telefono}
                                     onChange={(e) => {
-                                        const valorLimpio = e.target.value.replace(/\D/g, ''); 
+                                        // \D detecta lo que NO es un número, lo elimina, y limitamos a 9 caracteres.
+                                        const valorLimpio = e.target.value.replace(/\D/g, '');
                                         if (valorLimpio.length <= 9) setFormData({ ...formData, telefono: valorLimpio });
-                                    }} 
-                                    className={editableInputStyle} 
+                                    }}
+                                    className={editableInputStyle}
                                 />
                             </div>
                         </div>
@@ -323,29 +336,46 @@ export const PerfilPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
                             <div className="space-y-2 lg:col-span-2">
                                 <Label htmlFor="pais" className="text-gray-300 font-bold text-xs uppercase tracking-wider">País</Label>
-                                <Input id="pais" value={formData.pais} onChange={(e) => setFormData({ ...formData, pais: e.target.value })} className={editableInputStyle} />
+                                <Input
+                                    id="pais"
+                                    value={formData.pais}
+                                    // No permitimos números en campos de localización.
+                                    onChange={(e) => setFormData({ ...formData, pais: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    className={editableInputStyle}
+                                />
                             </div>
 
                             <div className="space-y-2 lg:col-span-2">
                                 <Label htmlFor="provincia" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Provincia</Label>
-                                <Input id="provincia" value={formData.provincia} onChange={(e) => setFormData({ ...formData, provincia: e.target.value })} className={editableInputStyle} />
+                                <Input
+                                    id="provincia"
+                                    value={formData.provincia}
+                                    onChange={(e) => setFormData({ ...formData, provincia: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    className={editableInputStyle}
+                                />
                             </div>
 
                             <div className="space-y-2 lg:col-span-3">
                                 <Label htmlFor="localidad" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Localidad / Ciudad</Label>
-                                <Input id="localidad" value={formData.localidad} onChange={(e) => setFormData({ ...formData, localidad: e.target.value })} className={editableInputStyle} />
+                                <Input
+                                    id="localidad"
+                                    value={formData.localidad}
+                                    onChange={(e) => setFormData({ ...formData, localidad: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    className={editableInputStyle}
+                                />
                             </div>
 
                             <div className="space-y-2">
                                 <Label htmlFor="cp" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Código Postal</Label>
-                                <Input 
-                                    id="cp" placeholder="06800" 
-                                    value={formData.codigo_postal} 
+                                <Input
+                                    id="cp" placeholder="06800"
+                                    value={formData.codigo_postal}
                                     onChange={(e) => {
-                                        const valorLimpio = e.target.value.replace(/\D/g, ''); 
+                                        // Forzamos máximo 5 dígitos puramente numéricos.
+                                        const valorLimpio = e.target.value.replace(/\D/g, '');
                                         if (valorLimpio.length <= 5) setFormData({ ...formData, codigo_postal: valorLimpio });
-                                    }} 
-                                    className={editableInputStyle} 
+                                    }}
+                                    className={editableInputStyle}
                                 />
                             </div>
                         </div>
@@ -353,8 +383,8 @@ export const PerfilPage = () => {
 
                     {/* BOTÓN DE GUARDAR */}
                     <div className="pt-6 border-t border-neutral-800 flex justify-end">
-                        <Button 
-                            onClick={handleGuardarCambios} 
+                        <Button
+                            onClick={handleGuardarCambios}
                             disabled={isLoading}
                             className="bg-fitbox-red hover:bg-red-700 text-white font-bold px-8 py-6 h-auto text-lg w-full sm:w-auto shadow-lg"
                         >

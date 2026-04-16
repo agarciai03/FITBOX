@@ -5,12 +5,12 @@ import { supabase } from '../database/supabase/Client';
 import { useAuthStore } from '../store/authStore';
 import type { AuthError } from '@supabase/supabase-js';
 
-
 // 1. Importamos nuestras piezas de "Lego" (Componentes Atómicos)
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '../components/ui/Alert';
+import { REGEX } from '../components/utils/regex';
 
 // 2. Tipamos los datos del formulario (Teoría: Interfaces y Tipos)
 interface LoginFormInputs {
@@ -30,6 +30,7 @@ export const LoginPage = () => {
     const {
         register,
         handleSubmit,
+        setValue, // Importamos setValue para poder inyectar datos limpios al estado de React Hook Form
         formState: { errors }
     } = useForm<LoginFormInputs>();
 
@@ -99,8 +100,12 @@ export const LoginPage = () => {
                             {...register("email", {
                                 required: "El correo es obligatorio",
                                 pattern: {
-                                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                    value: REGEX.EMAIL_GENERAL,
                                     message: "Dirección de correo inválida"
+                                },
+                                // Bloqueamos los espacios en blanco en vivo
+                                onChange: (e) => {
+                                    setValue("email", e.target.value.replace(/\s/g, ''), { shouldValidate: true });
                                 }
                             })}
                         />
