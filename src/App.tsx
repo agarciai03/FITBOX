@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { Header } from './components/layout/Header';
@@ -11,19 +11,116 @@ import { ClasesPage } from './pages/ClasesPage';
 import { PerfilPage } from './pages/ProfilePage';
 import { Sidebar } from './components/layout/Sidebar';
 import { SociosPage } from './pages/SociosPage';
+import { PagosPage } from './pages/PagosPage'; // <-- AÑADIDO: Importamos la nueva página
 
+// Componentes para el Paywall de Stripe 
+import { Card } from './components/ui/Card';
+import { Input } from './components/ui/Input';
+import { Button } from './components/ui/Button';
+import { CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
+import { supabase } from './database/supabase/Client';
+
+// Modal bloqueador tipo Stripe 
+const PaymentModal = ({ profile }: { profile: any }) => {
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [cvc, setCvc] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const { checkSession } = useAuthStore();
+
+  const handlePay = async () => {
+    setError(null);
+    setLoading(true);
+
+    // Simulamos 2 segundos de procesado con el banco
+    setTimeout(async () => {
+      const cleanCard = cardNumber.replace(/\s/g, '');
+      // Código universal de prueba de Stripe: 4242 4242...
+      if (cleanCard === '4242424242424242') {
+        setSuccess(true);
+        try {
+          // Si la tarjeta es válida, activamos su cuenta en Supabase
+          await supabase.from('usuarios').update({ estado_pago: 'activo' }).eq('id_usuario', profile.id_usuario);
+          setTimeout(() => {
+            checkSession(); // Refrescamos la sesión para que desaparezca el candado
+          }, 2000);
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        setError('Tarjeta denegada. Usa la tarjeta de prueba: 4242 4242 4242 4242');
+        setLoading(false);
+      }
+    }, 2000);
+  };
+
+  if (success) {
+    return (
+      <Card className="p-8 max-w-md w-full bg-green-900/20 border-green-500 flex flex-col items-center justify-center space-y-4 animate-in zoom-in duration-500 shadow-2xl shadow-green-500/20">
+        <CheckCircle className="w-20 h-20 text-green-500 animate-bounce" />
+        <h2 className="text-2xl font-black text-white text-center uppercase tracking-tight">¡Pago Completado!</h2>
+        <p className="text-green-400 text-center font-medium">Tu membresía ha sido activada. Redirigiendo a tu entorno...</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="p-8 max-w-md w-full bg-neutral-950 border-neutral-800 flex flex-col items-center shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-in slide-in-from-bottom-8">
+      <div className="w-16 h-16 bg-fitbox-red rounded-full flex items-center justify-center mb-6 shadow-lg shadow-fitbox-red/50">
+        <CreditCard className="w-8 h-8 text-white" />
+      </div>
+      <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-1">Membresía <span className="text-fitbox-red">FITBOX</span></h2>
+      <p className="text-gray-400 text-sm text-center mb-8">Para acceder a la plataforma debes completar el pago de tu cuota mensual de inscripción.</p>
+
+      {error && <div className="w-full p-3 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg mb-6 flex items-center gap-2 text-sm font-bold"><AlertCircle className="w-4 h-4 shrink-0" /> {error}</div>}
+
+      <div className="w-full space-y-4">
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Número de tarjeta (Usa 4242...)</label>
+          <Input placeholder="0000 0000 0000 0000" maxLength={19} className="bg-neutral-900 border-neutral-800 text-lg tracking-widest font-mono" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} />
+        </div>
+        <div className="flex gap-4">
+          <div className="space-y-1 flex-1">
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Caducidad</label>
+            <Input placeholder="MM/YY" maxLength={5} className="bg-neutral-900 border-neutral-800 font-mono" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+          </div>
+          <div className="space-y-1 flex-1">
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">CVC</label>
+            <Input placeholder="123" maxLength={3} type="password" className="bg-neutral-900 border-neutral-800 font-mono" value={cvc} onChange={(e) => setCvc(e.target.value)} />
+          </div>
+        </div>
+        <Button onClick={handlePay} disabled={loading} className="w-full bg-fitbox-red hover:bg-red-700 text-white font-black py-6 text-lg mt-4 shadow-lg">
+          {loading ? 'PROCESANDO PAGO...' : 'PAGAR 19.99 €'}
+        </Button>
+      </div>
+    </Card>
+  );
+};
 
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAuthStore((state) => state.user);
+  const profile = useAuthStore((state) => state.profile);
 
   if (!user) return <Navigate to="/" replace />;
+
+  const isSocio = profile?.roles?.nombre_rol === 'Socio';
+  const isPendiente = (profile as any)?.estado_pago === 'pendiente';
 
   return (
     <div className="flex flex-1 w-full relative">
       <Sidebar />
-      <div className="flex-1 min-w-0 overflow-x-hidden">
+      <div className="flex-1 min-w-0 overflow-x-hidden relative">
         {children}
+
+        {isSocio && isPendiente && (
+          <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+            <PaymentModal profile={profile} />
+          </div>
+        )}
+
       </div>
     </div>
   );
@@ -32,12 +129,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 export const App = () => {
   const { checkSession, isLoading } = useAuthStore();
 
-  // Al abrir la web, le preguntamos a Supabase si ya teníamos una sesión guardada
   useEffect(() => {
     checkSession();
   }, [checkSession]);
 
-  // Mientras Supabase responde (tarda milisegundos), mostramos una pantalla de carga oscura
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-fitbox-bg">
@@ -51,19 +146,15 @@ export const App = () => {
 
   return (
     <BrowserRouter>
-      {/* Contenedor principal: flex-col y min-h-screen para que el Footer se quede siempre abajo */}
       <div className="min-h-screen flex flex-col bg-fitbox-bg font-sans">
 
         <Header />
 
-        {/* main actua como contenedor expansible donde se cargan las páginas */}
         <main className="grow flex flex-col">
           <Routes>
-            {/* Ruta Pública (Login) */}
             <Route path="/" element={<LoginPage />} />
             <Route path="/registro" element={<RegisterPage />} />
 
-            {/* Rutas Privadas (Solo entras si pasas el ProtectedRoute) */}
             <Route
               path="/dashboard"
               element={
@@ -78,7 +169,6 @@ export const App = () => {
                 <PerfilPage />}
             />
 
-            {/* RUTA PROTEGIDA DE GESTIÓN DE SOCIOS */}
             <Route
               path="/socios"
               element={
@@ -88,7 +178,6 @@ export const App = () => {
               }
             />
 
-            {/* 2. AÑADIMOS LA RUTA PROTEGIDA DE LAS MÁQUINAS */}
             <Route
               path="/maquinas"
               element={
@@ -103,6 +192,16 @@ export const App = () => {
               element={
                 <ProtectedRoute>
                   <ClasesPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* RUTA DE PAGOS */}
+            <Route
+              path="/pagos"
+              element={
+                <ProtectedRoute>
+                  <PagosPage />
                 </ProtectedRoute>
               }
             />
