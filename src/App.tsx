@@ -11,14 +11,14 @@ import { ClasesPage } from './pages/ClasesPage';
 import { PerfilPage } from './pages/ProfilePage';
 import { Sidebar } from './components/layout/Sidebar';
 import { SociosPage } from './pages/SociosPage';
-import { PagosPage } from './pages/PagosPage'; // <-- AÑADIDO: Importamos la nueva página
-
-// Componentes para el Paywall de Stripe 
+import { PagosPage } from './pages/PagosPage';
+import { GestionPagosPage } from './pages/GestionPagosPage'; // <-- AÑADIDO: Importamos la nueva página de Admin/Monitor
 import { Card } from './components/ui/Card';
 import { Input } from './components/ui/Input';
 import { Button } from './components/ui/Button';
 import { CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from './database/supabase/Client';
+import { PaymentRepository } from './database/repositories/PaymentRepository';
 
 // Modal bloqueador tipo Stripe 
 const PaymentModal = ({ profile }: { profile: any }) => {
@@ -37,17 +37,24 @@ const PaymentModal = ({ profile }: { profile: any }) => {
     // Simulamos 2 segundos de procesado con el banco
     setTimeout(async () => {
       const cleanCard = cardNumber.replace(/\s/g, '');
-      // Código universal de prueba de Stripe: 4242 4242...
       if (cleanCard === '4242424242424242') {
         setSuccess(true);
         try {
-          // Si la tarjeta es válida, activamos su cuenta en Supabase
+          // 1. Activamos la cuenta en Supabase
           await supabase.from('usuarios').update({ estado_pago: 'activo' }).eq('id_usuario', profile.id_usuario);
+
+          // 2. AÑADIDO: Guardamos el recibo real en la tabla `pagos`
+          await PaymentRepository.registrarPago(
+            profile.id_usuario,
+            19.99,
+            "Membresía Mensual FITBOX"
+          );
+
           setTimeout(() => {
-            checkSession(); // Refrescamos la sesión para que desaparezca el candado
+            checkSession();
           }, 2000);
         } catch (err) {
-          console.error(err);
+          console.error("Error al procesar alta de pago:", err);
         }
       } else {
         setError('Tarjeta denegada. Usa la tarjeta de prueba: 4242 4242 4242 4242');
@@ -196,12 +203,21 @@ export const App = () => {
               }
             />
 
-            {/* RUTA DE PAGOS */}
             <Route
               path="/pagos"
               element={
                 <ProtectedRoute>
                   <PagosPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* GESTIÓN DE PAGOS*/}
+            <Route
+              path="/gestion-pagos"
+              element={
+                <ProtectedRoute>
+                  <GestionPagosPage />
                 </ProtectedRoute>
               }
             />

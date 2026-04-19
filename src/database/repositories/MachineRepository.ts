@@ -12,6 +12,9 @@ export interface Maquina {
     observaciones: string | null;
     id_monitor_reporte: string | null;
     fecha_registro: string;
+    // NUEVO: Añadimos los campos para el manual interactivo sin tocar lo anterior
+    descripcion?: string | null;
+    tutorial_url?: string | null;
 }
 
 export const MachineRepository = {
@@ -28,11 +31,12 @@ export const MachineRepository = {
     },
 
     // Función para cuando el admin compre una máquina nueva y la añada
-    createMaquina: async (nombre: string): Promise<Maquina> => {
-        // Solo mandamos el nombre, la base de datos ya le pone el estado "Correcto" sola
+    // MODIFICADO: Ahora acepta la descripción y el enlace al video
+    createMaquina: async (nombre: string, descripcion?: string, tutorial_url?: string): Promise<Maquina> => {
+        // Solo mandamos el nombre y los datos nuevos, la base de datos ya le pone el estado "Correcto" sola
         const { data, error } = await supabase
             .from('maquinas')
-            .insert([{ nombre }])
+            .insert([{ nombre, descripcion, tutorial_url }])
             .select()
             .single();
 

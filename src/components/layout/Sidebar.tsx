@@ -25,13 +25,27 @@ export const Sidebar = () => {
                 <button
                     onClick={() => navigate('/dashboard')}
                     className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/dashboard'
-                            ? 'bg-fitbox-red/10 text-fitbox-red' // Color activo
-                            : 'text-fitbox-text hover:bg-neutral-800' // Color inactivo
+                        ? 'bg-fitbox-red/10 text-fitbox-red' // Color activo
+                        : 'text-fitbox-text hover:bg-neutral-800' // Color inactivo
                         }`}
                 >
                     <Home className="w-5 h-5" />
                     Inicio
                 </button>
+
+                {/* --- NUEVO: BOTÓN DE CONTROL DE CAJA (SOLO ADMIN Y MONITOR) --- */}
+                {(rol === 'Administrador' || rol === 'Monitor') && (
+                    <button
+                        onClick={() => navigate('/gestion-pagos')}
+                        className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/gestion-pagos'
+                            ? 'bg-fitbox-red/10 text-fitbox-red'
+                            : 'text-fitbox-text hover:bg-neutral-800'
+                            }`}
+                    >
+                        <CreditCard className="w-5 h-5" />
+                        Control de Caja
+                    </button>
+                )}
 
                 {/* 2. MENÚ DEL ADMINISTRADOR */}
                 {rol === 'Administrador' && (
@@ -40,8 +54,8 @@ export const Sidebar = () => {
                         <button
                             onClick={() => navigate('/socios')}
                             className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/socios'
-                                    ? 'bg-fitbox-red/10 text-fitbox-red'
-                                    : 'text-fitbox-text hover:bg-neutral-800'
+                                ? 'bg-fitbox-red/10 text-fitbox-red'
+                                : 'text-fitbox-text hover:bg-neutral-800'
                                 }`}
                         >
                             <Users className="w-5 h-5" />
@@ -51,8 +65,8 @@ export const Sidebar = () => {
                         <button
                             onClick={() => navigate('/clases')}
                             className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/clases'
-                                    ? 'bg-fitbox-red/10 text-fitbox-red'
-                                    : 'text-fitbox-text hover:bg-neutral-800'
+                                ? 'bg-fitbox-red/10 text-fitbox-red'
+                                : 'text-fitbox-text hover:bg-neutral-800'
                                 }`}
                         >
                             <Calendar className="w-5 h-5" />
@@ -61,8 +75,8 @@ export const Sidebar = () => {
                         <button
                             onClick={() => navigate('/maquinas')}
                             className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/maquinas'
-                                    ? 'bg-fitbox-red/10 text-fitbox-red'
-                                    : 'text-fitbox-text hover:bg-neutral-800'
+                                ? 'bg-fitbox-red/10 text-fitbox-red'
+                                : 'text-fitbox-text hover:bg-neutral-800'
                                 }`}
                         >
                             <Dumbbell className="w-5 h-5" />
@@ -77,8 +91,8 @@ export const Sidebar = () => {
                         <button
                             onClick={() => navigate('/clases')}
                             className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/clases'
-                                    ? 'bg-fitbox-red/10 text-fitbox-red'
-                                    : 'text-fitbox-text hover:bg-neutral-800'
+                                ? 'bg-fitbox-red/10 text-fitbox-red'
+                                : 'text-fitbox-text hover:bg-neutral-800'
                                 }`}
                         >
                             <Calendar className="w-5 h-5" />
@@ -91,8 +105,8 @@ export const Sidebar = () => {
                         <button
                             onClick={() => navigate('/maquinas')}
                             className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/maquinas'
-                                    ? 'bg-fitbox-red/10 text-fitbox-red'
-                                    : 'text-fitbox-text hover:bg-neutral-800'
+                                ? 'bg-fitbox-red/10 text-fitbox-red'
+                                : 'text-fitbox-text hover:bg-neutral-800'
                                 }`}
                         >
                             <Wrench className="w-5 h-5" />
@@ -107,14 +121,20 @@ export const Sidebar = () => {
                         <button
                             onClick={() => navigate('/clases')}
                             className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/clases'
-                                    ? 'bg-fitbox-red/10 text-fitbox-red'
-                                    : 'text-fitbox-text hover:bg-neutral-800'
+                                ? 'bg-fitbox-red/10 text-fitbox-red'
+                                : 'text-fitbox-text hover:bg-neutral-800'
                                 }`}
                         >
                             <Calendar className="w-5 h-5" />
                             Horarios y Reservas
                         </button>
-                        <button className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors">
+                        <button
+                            onClick={() => navigate('/pagos')}
+                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/pagos'
+                                ? 'bg-fitbox-red/10 text-fitbox-red'
+                                : 'text-fitbox-text hover:bg-neutral-800'
+                                }`}
+                        >
                             <CreditCard className="w-5 h-5" />
                             Mis Pagos
                         </button>

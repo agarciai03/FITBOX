@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { MachineRepository, type EstadoMaquina, type Maquina } from '../database/repositories/MachineRepository';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Dumbbell, AlertTriangle, CheckCircle, Info, Trash2 } from 'lucide-react'; // Añadido Trash2
+import { Dumbbell, AlertTriangle, CheckCircle, Info, Trash2, ExternalLink, BookOpen } from 'lucide-react'; // Añadidos iconos nuevos
 
 export const MaquinasPage = () => {
     // 1. Sacamos los datos del usuario que ha iniciado sesión
@@ -26,6 +26,12 @@ export const MaquinasPage = () => {
     // 4. Variables para la ventanita de "Añadir Máquina" (Solo Admin)
     const [isCreando, setIsCreando] = useState(false);
     const [nombreNuevaMaquina, setNombreNuevaMaquina] = useState('');
+    // NUEVO: Variables para la info extra de la máquina
+    const [descripcionNuevaMaquina, setDescripcionNuevaMaquina] = useState('');
+    const [tutorialNuevaMaquina, setTutorialNuevaMaquina] = useState('');
+
+    // 5. NUEVO: Variable para la ventanita de "Ver Instrucciones"
+    const [maquinaParaLeer, setMaquinaParaLeer] = useState<Maquina | null>(null);
 
     // Función que se ejecuta nada más abrir la página para traer las máquinas
     const cargarMaquinas = useCallback(async () => {
@@ -79,9 +85,12 @@ export const MaquinasPage = () => {
         setSuccessMessage(null);
 
         try {
-            await MachineRepository.createMaquina(nombreNuevaMaquina);
+            // MODIFICADO: Le pasamos los nuevos campos al repositorio
+            await MachineRepository.createMaquina(nombreNuevaMaquina, descripcionNuevaMaquina, tutorialNuevaMaquina);
             setIsCreando(false);
             setNombreNuevaMaquina('');
+            setDescripcionNuevaMaquina(''); // Reseteamos
+            setTutorialNuevaMaquina(''); // Reseteamos
             setSuccessMessage("Máquina añadida al inventario");
             cargarMaquinas(); // Recargamos para verla en la lista
         } catch (errorCatch) {
@@ -181,7 +190,15 @@ export const MaquinasPage = () => {
 
                                     return (
                                         <tr key={maq.id_maquina} className={`hover:bg-neutral-800/20 transition-colors ${esDefectuoso ? 'bg-red-900/5' : ''}`}>
-                                            <td className="px-6 py-4 font-bold text-white text-base">{maq.nombre}</td>
+                                            <td className="px-6 py-4 font-bold text-white text-base">
+                                                {maq.nombre}
+                                                {/* NUEVO: Icono de que tiene manual o vídeo disponible */}
+                                                {(maq.descripcion || maq.tutorial_url) && (
+                                                    <span className="ml-2 text-blue-400" title="Contiene instrucciones de uso">
+                                                        <BookOpen className="w-4 h-4 inline" />
+                                                    </span>
+                                                )}
+                                            </td>
                                             <td className="px-6 py-4">
                                                 {/* Cartelitos de Estado Visuales */}
                                                 {esCorrecto && (
@@ -213,6 +230,19 @@ export const MaquinasPage = () => {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 text-right">
+
+                                                {/* NUEVO BOTÓN: Ver instrucciones (Añadido sin borrar nada) */}
+                                                {(maq.descripcion || maq.tutorial_url) && (
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="sm"
+                                                        className="font-bold text-[11px] uppercase tracking-tighter mr-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20"
+                                                        onClick={() => setMaquinaParaLeer(maq)}
+                                                    >
+                                                        <BookOpen className="w-3.5 h-3.5 mr-1.5 inline" /> Info
+                                                    </Button>
+                                                )}
+
                                                 {/* Botón que abre la ventanita para actualizar */}
                                                 <Button
                                                     variant="secondary"
@@ -242,6 +272,38 @@ export const MaquinasPage = () => {
                     </table>
                 </div>
             </div>
+
+            {/* NUEVA VENTANITA (MODAL): Ver Instrucciones de la Máquina */}
+            {maquinaParaLeer && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-lg space-y-6 shadow-2xl">
+                        <div className="border-b border-neutral-800 pb-4">
+                            <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-2">
+                                <Dumbbell className="text-blue-400" /> {maquinaParaLeer.nombre}
+                            </h3>
+                            <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest">Manual de uso</p>
+                        </div>
+
+                        {maquinaParaLeer.descripcion && (
+                            <div className="text-gray-300 leading-relaxed text-sm bg-neutral-900/50 p-4 rounded-lg border border-neutral-800">
+                                {maquinaParaLeer.descripcion}
+                            </div>
+                        )}
+
+                        {maquinaParaLeer.tutorial_url && (
+                            <a href={maquinaParaLeer.tutorial_url} target="_blank" rel="noreferrer" className="block">
+                                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                                    <ExternalLink className="w-4 h-4 mr-2" /> Ver Vídeo Tutorial
+                                </Button>
+                            </a>
+                        )}
+
+                        <div className="pt-2">
+                            <Button variant="secondary" className="w-full" onClick={() => setMaquinaParaLeer(null)}>Cerrar</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* VENTANITA (MODAL): Para cambiar el estado de la máquina */}
             {maquinaSeleccionada && (
@@ -288,24 +350,49 @@ export const MaquinasPage = () => {
 
             {/* VENTANITA (MODAL): Para crear máquina nueva (Admin) */}
             {isCreando && isAdmin && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-sm space-y-6 shadow-2xl">
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-2xl my-8">
                         <h3 className="text-xl font-black text-white uppercase tracking-tight border-b border-neutral-800 pb-2">
                             Nueva Máquina
                         </h3>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Nombre o modelo</label>
-                            <Input
-                                autoFocus
-                                className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-colors"
-                                placeholder="Ej: Cinta de correr 2"
-                                value={nombreNuevaMaquina}
-                                onChange={(e) => setNombreNuevaMaquina(e.target.value)}
-                            />
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Nombre o modelo *</label>
+                                <Input
+                                    autoFocus
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-colors"
+                                    placeholder="Ej: Cinta de correr 2"
+                                    value={nombreNuevaMaquina}
+                                    onChange={(e) => setNombreNuevaMaquina(e.target.value)}
+                                />
+                            </div>
+
+                            {/* NUEVOS CAMPOS AÑADIDOS AL FORMULARIO */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Enlace Video Tutorial (Opcional)</label>
+                                <Input
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-colors"
+                                    placeholder="https://youtube.com/..."
+                                    value={tutorialNuevaMaquina}
+                                    onChange={(e) => setTutorialNuevaMaquina(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Descripción y consejos (Opcional)</label>
+                                <textarea
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none min-h-[100px] resize-none focus:border-fitbox-red"
+                                    placeholder="Instrucciones sobre cómo sentarse, ajustar el peso..."
+                                    value={descripcionNuevaMaquina}
+                                    onChange={(e) => setDescripcionNuevaMaquina(e.target.value)}
+                                />
+                            </div>
                         </div>
+
                         <div className="flex gap-4 pt-2">
                             <Button variant="ghost" className="flex-1" onClick={() => setIsCreando(false)}>Cancelar</Button>
-                            <Button className="flex-1 bg-fitbox-red hover:bg-red-700" onClick={handleCrearMaquina}>Añadir</Button>
+                            <Button className="flex-1 bg-fitbox-red hover:bg-red-700 font-bold" onClick={handleCrearMaquina}>Añadir al Gimnasio</Button>
                         </div>
                     </div>
                 </div>
