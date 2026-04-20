@@ -7,9 +7,14 @@ export interface Usuario {
     email: string;
     id_rol: number;
     telefono: string;
-    avatar_url?: string; 
+    avatar_url?: string;
     roles?: { nombre_rol: string };
 }
+
+const generateDefaultAvatar = (nombre: string = '', apellidos: string = '') => {
+    const nameQuery = encodeURIComponent(`${nombre} ${apellidos}`.trim() || 'User');
+    return `https://ui-avatars.com/api/?name=${nameQuery}&background=ef4444&color=fff&bold=true`;
+};
 
 export const UserRepository = {
     // Traer todos los usuarios del gimnasio
@@ -39,7 +44,12 @@ export const UserRepository = {
 
     // Actualizar datos de un usuario
     updateUser: async (id_usuario: string, datosNuevos: Partial<Usuario>): Promise<void> => {
-        // Le pasamos solo los campos que queremos actualizar
+        // Si se intenta actualizar el avatar pero viene vacío o nulo
+        if (Object.prototype.hasOwnProperty.call(datosNuevos, 'avatar_url') && (!datosNuevos.avatar_url || datosNuevos.avatar_url.trim() === '')) {
+            // Generamos la imagen por defecto
+            datosNuevos.avatar_url = generateDefaultAvatar(datosNuevos.nombre, datosNuevos.apellidos);
+        }
+
         const { error } = await supabase
             .from('usuarios')
             .update(datosNuevos)

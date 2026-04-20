@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { ClassRepository, type Clase, type Disciplina, type Rutina } from '../database/repositories/ClassRepository';
+import { ClassRepository, type Clase, type Disciplina } from '../database/repositories/ClassRepository';
 import { supabase } from '../database/supabase/Client';
 import { Button } from '../components/ui/Button';
-import { Calendar, Dumbbell, Trash2, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, Trash2, Clock, CheckCircle, CalendarX2, Plus } from 'lucide-react';
 
 interface MonitorBasico {
     id_usuario: string;
@@ -12,23 +12,19 @@ interface MonitorBasico {
 }
 
 export const ClasesPage = () => {
-    // --- 1. ESTADO Y VARIABLES ---
     const profile = useAuthStore((state) => state.profile);
     const rol = profile?.roles?.nombre_rol || 'Socio';
+
     const isAdmin = rol === 'Administrador';
+    const isMonitor = rol === 'Monitor';
     const isSocio = rol === 'Socio';
+    const canManage = isAdmin || isMonitor;
 
     const [clases, setClases] = useState<Clase[]>([]);
     const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
-    const [rutinas, setRutinas] = useState<Rutina[]>([]);
-
     const [monitores, setMonitores] = useState<MonitorBasico[]>([]);
     const [misReservasActivas, setMisReservasActivas] = useState<string[]>([]);
-
-    const [vistaActiva, setVistaActiva] = useState<'horarios' | 'rutinas'>('horarios');
-    const [disciplinaSeleccionada, setDisciplinaSeleccionada] = useState<string>('');
     const [isLoading, setIsLoading] = useState(true);
-
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -42,13 +38,10 @@ export const ClasesPage = () => {
         aforo_maximo: 20
     });
 
-    // Reloj virtual para evaluar las clases en tiempo real
     const [ahora, setAhora] = useState(new Date());
 
-    // --- 2. FUNCIONES DE CARGA ---
     const cargarDatos = useCallback(async () => {
         try {
-            // Evitamos el parpadeo del Spinner si los datos se actualizan por el Socket (tiempo real)
             if (clases.length === 0) setIsLoading(true);
             setError(null);
 
@@ -57,10 +50,6 @@ export const ClasesPage = () => {
 
             setClases(dataClases);
             setDisciplinas(dataDisciplinas);
-
-            if (dataDisciplinas.length > 0 && !disciplinaSeleccionada) {
-                setDisciplinaSeleccionada(dataDisciplinas[0].id_disciplina);
-            }
 
             const { data: dataMonitores, error: errorSupabase } = await supabase
                 .from('usuarios')
@@ -82,52 +71,30 @@ export const ClasesPage = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [isSocio, profile?.id_usuario, disciplinaSeleccionada, clases.length]);
-
-    useEffect(() => {
-        if (disciplinaSeleccionada) {
-            ClassRepository.getRutinasByDisciplina(disciplinaSeleccionada)
-                .then(data => setRutinas(data))
-                .catch(errorCatch => {
-                    console.error("Fallo en rutinas:", errorCatch);
-                    setError("No se pudieron cargar las rutinas de esta disciplina.");
-                });
-        }
-    }, [disciplinaSeleccionada]);
+    }, [isSocio, profile?.id_usuario, clases.length]);
 
     useEffect(() => {
         cargarDatos();
     }, [cargarDatos]);
 
-    // Ticker (Actualiza el reloj interno cada 10 segundos)
     useEffect(() => {
-        const interval = setInterval(() => {
-            setAhora(new Date());
-        }, 10000);
+        const interval = setInterval(() => setAhora(new Date()), 10000);
         return () => clearInterval(interval);
     }, []);
 
-    // Conexión WebSocket para TIEMPO REAL
     useEffect(() => {
         const channel = supabase.channel('realtime-reservas')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'reservas' }, () => {
-                cargarDatos(); // Alguien ha reservado o cancelado -> Actualizar todo al instante
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, () => {
-                cargarDatos(); // Administrador ha creado o borrado una clase -> Actualizar al instante
-            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'reservas' }, cargarDatos)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, cargarDatos)
             .subscribe();
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
+        return () => { supabase.removeChannel(channel); };
     }, [cargarDatos]);
 
-    // Limpiador de Supabase. Si pasaron 2 horas de su fin, se borra de Supabase permanentemente.
     useEffect(() => {
-        if (isAdmin && clases.length > 0) {
+        if (canManage && clases.length > 0) {
             const cleanup = async () => {
-                const limiteBorrado = new Date(ahora.getTime() - 2 * 60 * 60 * 1000); // Hace 2 horas
+                const limiteBorrado = new Date(ahora.getTime() - 2 * 60 * 60 * 1000);
                 for (const clase of clases) {
                     const fechaFinClase = new Date(`${clase.fecha}T${clase.hora_fin}`);
                     if (fechaFinClase < limiteBorrado) {
@@ -141,10 +108,8 @@ export const ClasesPage = () => {
             };
             cleanup();
         }
-    }, [isAdmin, clases, ahora]);
+    }, [canManage, clases, ahora]);
 
-
-    // --- 3. ACCIONES (RESERVAR, CREAR, BORRAR) ---
 
     const handleCrearClase = async () => {
         if (!nuevaClase.id_disciplina || !nuevaClase.fecha || !nuevaClase.hora_inicio || !nuevaClase.hora_fin) {
@@ -164,11 +129,8 @@ export const ClasesPage = () => {
             cargarDatos();
         } catch (errorCatch) {
             console.error("Error al crear:", errorCatch);
-            if (errorCatch instanceof Error) {
-                setError(errorCatch.message);
-            } else {
-                setError('Error desconocido al crear la clase.');
-            }
+            if (errorCatch instanceof Error) setError(errorCatch.message);
+            else setError('Error desconocido al crear la clase.');
         }
     };
 
@@ -179,11 +141,8 @@ export const ClasesPage = () => {
             cargarDatos();
         } catch (errorCatch) {
             console.error("Error al borrar:", errorCatch);
-            if (errorCatch instanceof Error) {
-                setError(errorCatch.message);
-            } else {
-                setError("No se ha podido eliminar la clase.");
-            }
+            if (errorCatch instanceof Error) setError(errorCatch.message);
+            else setError("No se ha podido eliminar la clase.");
         }
     };
 
@@ -198,18 +157,13 @@ export const ClasesPage = () => {
             cargarDatos();
         } catch (errorCatch) {
             console.error("Error reserva:", errorCatch);
-            if (errorCatch instanceof Error) {
-                setError(errorCatch.message);
-            } else {
-                setError("Error al intentar reservar.");
-            }
+            if (errorCatch instanceof Error) setError(errorCatch.message);
+            else setError("Error al intentar reservar.");
         }
     };
 
-    // --- 4. RENDERIZADO (DISEÑO) ---
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-            {/* Cabecera */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
@@ -218,18 +172,8 @@ export const ClasesPage = () => {
                     </h1>
                     <p className="text-fitbox-text-muted mt-1">Gestiona tus entrenamientos y consulta plazas libres.</p>
                 </div>
-
-                <div className="flex gap-2">
-                    <Button variant={vistaActiva === 'horarios' ? 'default' : 'secondary'} onClick={() => setVistaActiva('horarios')}>
-                        Calendario
-                    </Button>
-                    <Button variant={vistaActiva === 'rutinas' ? 'default' : 'secondary'} onClick={() => setVistaActiva('rutinas')}>
-                        Rutinas
-                    </Button>
-                </div>
             </div>
 
-            {/* Mensajes de Alerta */}
             {error && <div className="p-4 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg font-medium">{error}</div>}
             {successMessage && (
                 <div className="p-4 bg-green-500/10 border border-green-500/50 text-green-500 rounded-lg flex items-center gap-2 font-medium">
@@ -237,11 +181,37 @@ export const ClasesPage = () => {
                 </div>
             )}
 
-            {/* TABLA DE HORARIOS */}
-            {vistaActiva === 'horarios' && (
-                <div className="space-y-4">
-                    {isAdmin && <div className="flex justify-end"><Button onClick={() => setIsCreando(true)}>+ Nueva Clase</Button></div>}
+            <div className="space-y-4">
+                {canManage && (
+                    <div className="flex justify-end">
+                        <Button
+                            onClick={() => setIsCreando(true)}
+                            className="bg-white text-black hover:bg-fitbox-red hover:text-white font-black transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] border border-white/20 px-6 py-5 rounded-xl flex items-center gap-2 uppercase italic tracking-tighter"
+                        >
+                            <Plus className="w-5 h-5 stroke-[3px]" />
+                            Programar Sesión
+                        </Button>
+                    </div>
+                )}
 
+                {!isLoading && clases.length === 0 ? (
+                    <div className="bg-fitbox-card border border-neutral-800 rounded-xl p-12 flex flex-col items-center justify-center text-center shadow-2xl animate-in fade-in duration-500">
+                        <div className="w-20 h-20 bg-neutral-900 rounded-full flex items-center justify-center mb-6 border border-neutral-800">
+                            <CalendarX2 className="w-10 h-10 text-gray-500" />
+                        </div>
+                        <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">No hay <span className="text-fitbox-red">clases programadas</span></h2>
+                        <p className="text-gray-400 max-w-md mb-8">
+                            {canManage
+                                ? "Actualmente el calendario está vacío. Como parte del equipo, puedes crear la primera sesión ahora mismo."
+                                : "El gimnasio no tiene ninguna sesión programada en este momento. Vuelve a consultar más tarde."}
+                        </p>
+                        {canManage && (
+                            <Button onClick={() => setIsCreando(true)} className="bg-fitbox-red hover:bg-red-700 shadow-lg shadow-fitbox-red/20 font-bold px-8">
+                                CREAR CLASE
+                            </Button>
+                        )}
+                    </div>
+                ) : (
                     <div className="bg-fitbox-card border border-neutral-800 rounded-xl overflow-hidden shadow-2xl">
                         <table className="w-full text-left text-sm">
                             <thead className="bg-neutral-800/50 text-fitbox-text-muted uppercase text-[10px] tracking-widest font-bold">
@@ -254,19 +224,16 @@ export const ClasesPage = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-800">
-                                {isLoading && clases.length === 0 ? (
+                                {isLoading ? (
                                     <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">Actualizando calendario...</td></tr>
                                 ) : (
                                     clases.map((clase) => {
-                                        // Lógica Inteligente para calcular caducidad, aforo y asistentes
                                         const reservasActivas = clase.reservas?.filter(r => r.estado === 'activa') || [];
                                         const ocupadas = reservasActivas.length;
                                         const total = clase.aforo_maximo;
                                         const estaLlena = ocupadas >= total;
                                         const yaReservada = misReservasActivas.includes(clase.id_clase);
                                         const porcentajeOcupado = (ocupadas / total) * 100;
-
-                                        // Comprobación de hora para caducarla
                                         const fechaFinClase = new Date(`${clase.fecha}T${clase.hora_fin}`);
                                         const estaFinalizada = ahora > fechaFinClase;
 
@@ -287,7 +254,6 @@ export const ClasesPage = () => {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    {/* BARRA DE AFORO VISUAL */}
                                                     <div className="flex flex-col gap-1 items-center">
                                                         <span className={`text-[11px] font-bold ${estaFinalizada ? 'text-gray-500' : estaLlena ? 'text-red-500' : 'text-gray-400'}`}>
                                                             {estaFinalizada ? 'CLASE FINALIZADA' : `${ocupadas} / ${total} ${estaLlena ? '(LLENO)' : 'Plazas'}`}
@@ -299,8 +265,6 @@ export const ClasesPage = () => {
                                                             ></div>
                                                         </div>
                                                     </div>
-
-                                                    {/* LISTA DE ASISTENTES EN TIEMPO REAL */}
                                                     <div className="mt-3 flex flex-wrap gap-1 justify-center max-w-62.5 mx-auto">
                                                         {reservasActivas.length > 0 ? (
                                                             reservasActivas.map(r => (
@@ -315,13 +279,12 @@ export const ClasesPage = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    {isAdmin && (
+                                                    {canManage && (
                                                         <button onClick={() => handleBorrarClase(clase.id_clase)} className="text-red-500 hover:text-red-400 mr-4">
                                                             <Trash2 className="w-5 h-5" />
                                                         </button>
                                                     )}
 
-                                                    {/* Bloqueo visual si está finalizada */}
                                                     {estaFinalizada ? (
                                                         <span className="text-gray-500 font-bold text-[10px] px-3 py-1.5 border border-gray-700 rounded-md bg-gray-900/50 uppercase tracking-widest inline-block">
                                                             Completada
@@ -350,38 +313,10 @@ export const ClasesPage = () => {
                             </tbody>
                         </table>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
-            {/* PESTAÑA RUTINAS */}
-            {vistaActiva === 'rutinas' && (
-                <div className="space-y-6">
-                    <div className="flex items-center gap-4 bg-fitbox-card p-4 rounded-xl border border-neutral-800">
-                        <Dumbbell className="w-6 h-6 text-fitbox-red" />
-                        <label className="font-bold text-white uppercase text-sm">Disciplina:</label>
-                        <select
-                            className="bg-neutral-900 border border-neutral-700 text-white rounded-md px-3 py-2 text-sm focus:border-fitbox-red outline-none"
-                            value={disciplinaSeleccionada}
-                            onChange={(e) => setDisciplinaSeleccionada(e.target.value)}
-                        >
-                            {disciplinas.map(d => <option key={d.id_disciplina} value={d.id_disciplina}>{d.nombre}</option>)}
-                        </select>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {rutinas.map(rutina => (
-                            <div key={rutina.id_rutina} className="bg-fitbox-card p-6 rounded-xl border border-neutral-800 hover:border-fitbox-red/30 transition-all">
-                                <h3 className="font-black text-fitbox-red uppercase tracking-tighter mb-1">{rutina.dia_semana}</h3>
-                                <p className="font-bold text-white mb-2">{rutina.titulo}</p>
-                                <p className="text-sm text-fitbox-text-muted leading-relaxed">{rutina.descripcion}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* MODAL CREAR (Solo Admin) */}
-            {isCreando && isAdmin && (
+            {isCreando && canManage && (
                 <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                     <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
                         <h3 className="text-2xl font-black text-white uppercase italic">Nueva Sesión</h3>

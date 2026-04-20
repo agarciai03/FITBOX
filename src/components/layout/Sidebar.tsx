@@ -1,6 +1,6 @@
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard } from 'lucide-react';
+import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard, Activity } from 'lucide-react'; // Añadido Activity
 
 export const Sidebar = () => {
     // Leemos el perfil completo desde Zustand
@@ -73,6 +73,16 @@ export const Sidebar = () => {
                             Gestión de Horarios
                         </button>
                         <button
+                            onClick={() => navigate('/rutinas')}
+                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/rutinas'
+                                ? 'bg-fitbox-red/10 text-fitbox-red'
+                                : 'text-fitbox-text hover:bg-neutral-800'
+                                }`}
+                        >
+                            <Activity className="w-5 h-5" />
+                            Planes de Entrenamiento
+                        </button>
+                        <button
                             onClick={() => navigate('/maquinas')}
                             className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/maquinas'
                                 ? 'bg-fitbox-red/10 text-fitbox-red'
@@ -98,9 +108,25 @@ export const Sidebar = () => {
                             <Calendar className="w-5 h-5" />
                             Horarios y Clases
                         </button>
-                        <button className="flex items-center gap-3 text-left p-3 rounded-lg text-fitbox-text hover:bg-neutral-800 transition-colors">
+                        <button
+                            onClick={() => navigate('/mis-clases')}
+                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/mis-clases'
+                                ? 'bg-fitbox-red/10 text-fitbox-red'
+                                : 'text-fitbox-text hover:bg-neutral-800'
+                                }`}
+                        >
                             <ClipboardList className="w-5 h-5" />
                             Mis Clases (Pasar Lista)
+                        </button>
+                        <button
+                            onClick={() => navigate('/rutinas')}
+                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/rutinas'
+                                ? 'bg-fitbox-red/10 text-fitbox-red'
+                                : 'text-fitbox-text hover:bg-neutral-800'
+                                }`}
+                        >
+                            <Activity className="w-5 h-5" />
+                            Planes de Entrenamiento
                         </button>
                         <button
                             onClick={() => navigate('/maquinas')}
@@ -127,6 +153,16 @@ export const Sidebar = () => {
                         >
                             <Calendar className="w-5 h-5" />
                             Horarios y Reservas
+                        </button>
+                        <button
+                            onClick={() => navigate('/rutinas')}
+                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/rutinas'
+                                ? 'bg-fitbox-red/10 text-fitbox-red'
+                                : 'text-fitbox-text hover:bg-neutral-800'
+                                }`}
+                        >
+                            <Activity className="w-5 h-5" />
+                            Planes de Entrenamiento
                         </button>
                         <button
                             onClick={() => navigate('/pagos')}

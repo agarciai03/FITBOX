@@ -34,7 +34,12 @@ export interface Reserva {
     fecha_reserva: string;
     estado: string;
     clases?: Clase;
-    usuarios?: { nombre: string; apellidos: string }; 
+    asistencia?: boolean | null; 
+    usuarios?: {
+        nombre: string;
+        apellidos: string;
+        email?: string; 
+    };
 }
 
 export const ClassRepository = {

@@ -12,13 +12,15 @@ import { PerfilPage } from './pages/ProfilePage';
 import { Sidebar } from './components/layout/Sidebar';
 import { SociosPage } from './pages/SociosPage';
 import { PagosPage } from './pages/PagosPage';
-import { GestionPagosPage } from './pages/GestionPagosPage'; // <-- AÑADIDO: Importamos la nueva página de Admin/Monitor
+import { GestionPagosPage } from './pages/GestionPagosPage';
 import { Card } from './components/ui/Card';
 import { Input } from './components/ui/Input';
 import { Button } from './components/ui/Button';
 import { CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from './database/supabase/Client';
 import { PaymentRepository } from './database/repositories/PaymentRepository';
+import { MisClasesPage } from './pages/MisClasesPage';
+import { RutinasPage } from './pages/RutinasPage';
 
 // Modal bloqueador tipo Stripe 
 const PaymentModal = ({ profile }: { profile: any }) => {
@@ -40,10 +42,10 @@ const PaymentModal = ({ profile }: { profile: any }) => {
       if (cleanCard === '4242424242424242') {
         setSuccess(true);
         try {
-          // 1. Activamos la cuenta en Supabase
+          // Activamos la cuenta en Supabase
           await supabase.from('usuarios').update({ estado_pago: 'activo' }).eq('id_usuario', profile.id_usuario);
 
-          // 2. AÑADIDO: Guardamos el recibo real en la tabla `pagos`
+          // Guardamos el recibo real en la tabla `pagos`
           await PaymentRepository.registrarPago(
             profile.id_usuario,
             19.99,
@@ -199,6 +201,25 @@ export const App = () => {
               element={
                 <ProtectedRoute>
                   <ClasesPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* --- NUEVA RUTA PARA RUTINAS --- */}
+            <Route
+              path="/rutinas"
+              element={
+                <ProtectedRoute>
+                  <RutinasPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/mis-clases"
+              element={
+                <ProtectedRoute>
+                  <MisClasesPage />
                 </ProtectedRoute>
               }
             />
