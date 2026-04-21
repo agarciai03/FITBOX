@@ -1,0 +1,13 @@
+{
+    "menu": {
+        "inicio": "Home",
+        "gestion_usuarios": "User Management",
+        "gestion_horarios": "Schedule Management",
+        "inventario": "Inventory",
+        "mis_pagos": "My Payments",
+        "mi_cuenta": "My Account"
+    },
+    "header": {
+        "cambiar_idioma": "Change Language"
+    }
+}

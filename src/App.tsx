@@ -121,7 +121,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex flex-1 w-full relative">
       <Sidebar />
-      <div className="flex-1 min-w-0 overflow-x-hidden relative">
+      <div className="flex-1 min-w-0 overflow-x-hidden relative transition-all duration-300">
         {children}
 
         {isSocio && isPendiente && (
@@ -140,12 +140,21 @@ export const App = () => {
 
   useEffect(() => {
     checkSession();
+
+    // Sincronización inicial del tema para evitar flash blanco
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
   }, [checkSession]);
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-fitbox-bg">
-        <h1 className="text-3xl font-bold text-white mb-4 animate-pulse">
+        <h1 className="text-3xl font-bold text-fitbox-text mb-4 animate-pulse">
           FIT<span className="text-fitbox-red">BOX</span>
         </h1>
         <p className="text-fitbox-text-muted">Conectando con el servidor...</p>
@@ -155,7 +164,7 @@ export const App = () => {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen flex flex-col bg-fitbox-bg font-sans">
+      <div className="min-h-screen flex flex-col bg-fitbox-bg text-fitbox-text font-sans transition-colors duration-300">
 
         <Header />
 
@@ -205,7 +214,6 @@ export const App = () => {
               }
             />
 
-            {/* --- NUEVA RUTA PARA RUTINAS --- */}
             <Route
               path="/rutinas"
               element={
@@ -233,7 +241,6 @@ export const App = () => {
               }
             />
 
-            {/* GESTIÓN DE PAGOS*/}
             <Route
               path="/gestion-pagos"
               element={

@@ -1,0 +1,13 @@
+{
+    "menu": {
+        "inicio": "Inicio",
+        "gestion_usuarios": "Gestión de Usuarios",
+        "gestion_horarios": "Gestión de Horarios",
+        "inventario": "Inventario",
+        "mis_pagos": "Mis Pagos",
+        "mi_cuenta": "Mi Cuenta"
+    },
+    "header": {
+        "cambiar_idioma": "Cambiar Idioma"
+    }
+}

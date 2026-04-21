@@ -1,6 +1,7 @@
+import { useState } from 'react'; // AÑADIDO: useState para controlar si está abierto o cerrado
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard, Activity } from 'lucide-react'; // Añadido Activity
+import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard, Activity, ChevronLeft, ChevronRight } from 'lucide-react'; // AÑADIDO: Flechitas
 
 export const Sidebar = () => {
     // Leemos el perfil completo desde Zustand
@@ -9,88 +10,108 @@ export const Sidebar = () => {
     const location = useLocation();
     const pathname = location.pathname;
 
+    // AÑADIDO: Estado para saber si el menú está colapsado (cerrado) o no
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
     // Extraemos el nombre del rol de forma segura
     const rol = profile?.roles?.nombre_rol || 'Socio';
 
     return (
-        <aside className="w-64 bg-fitbox-card border-r border-neutral-800 min-h-screen p-4 hidden md:flex md:flex-col">
-            <div className="mb-6">
-                <p className="text-xs font-bold text-fitbox-text-muted uppercase tracking-wider">
-                    Menú - {rol}
-                </p>
+        <aside className={`bg-fitbox-card border-r border-neutral-800 min-h-screen p-4 hidden md:flex md:flex-col transition-all duration-300 relative ${isCollapsed ? 'w-20 items-center' : 'w-64'}`}>
+
+            {/* CABECERA DEL MENÚ Y BOTÓN DE COLAPSAR */}
+            <div className={`flex items-center mb-6 w-full ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+                {!isCollapsed && (
+                    <p className="text-xs font-bold text-fitbox-text-muted uppercase tracking-wider truncate">
+                        Menú - {rol}
+                    </p>
+                )}
+                {/* Botón para abrir/cerrar */}
+                <button
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className="text-gray-400 hover:text-white transition-colors p-1.5 rounded-md hover:bg-neutral-800"
+                    title={isCollapsed ? "Expandir menú" : "Ocultar menú"}
+                >
+                    {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                </button>
             </div>
 
-            <nav className="flex flex-col gap-2">
+            <nav className="flex flex-col gap-2 w-full">
                 {/* 1. BOTÓN COMÚN */}
                 <button
+                    title="Inicio"
                     onClick={() => navigate('/dashboard')}
-                    className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/dashboard'
+                    className={`flex items-center p-3 rounded-lg font-semibold transition-all overflow-hidden ${pathname === '/dashboard'
                         ? 'bg-fitbox-red/10 text-fitbox-red' // Color activo
                         : 'text-fitbox-text hover:bg-neutral-800' // Color inactivo
-                        }`}
+                        } ${isCollapsed ? 'justify-center' : 'gap-3 text-left'}`}
                 >
-                    <Home className="w-5 h-5" />
-                    Inicio
+                    <Home className="w-5 h-5 shrink-0" />
+                    {!isCollapsed && <span className="truncate">Inicio</span>}
                 </button>
 
                 {/* --- NUEVO: BOTÓN DE CONTROL DE CAJA (SOLO ADMIN Y MONITOR) --- */}
                 {(rol === 'Administrador' || rol === 'Monitor') && (
                     <button
+                        title="Control de Caja"
                         onClick={() => navigate('/gestion-pagos')}
-                        className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/gestion-pagos'
+                        className={`flex items-center p-3 rounded-lg font-semibold transition-all overflow-hidden ${pathname === '/gestion-pagos'
                             ? 'bg-fitbox-red/10 text-fitbox-red'
                             : 'text-fitbox-text hover:bg-neutral-800'
-                            }`}
+                            } ${isCollapsed ? 'justify-center' : 'gap-3 text-left'}`}
                     >
-                        <CreditCard className="w-5 h-5" />
-                        Control de Caja
+                        <CreditCard className="w-5 h-5 shrink-0" />
+                        {!isCollapsed && <span className="truncate">Control de Caja</span>}
                     </button>
                 )}
 
                 {/* 2. MENÚ DEL ADMINISTRADOR */}
                 {rol === 'Administrador' && (
                     <>
-                        {/* BOTÓN DE GESTIÓN DE SOCIOS */}
                         <button
+                            title="Gestión de Usuarios"
                             onClick={() => navigate('/socios')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/socios'
+                            className={`flex items-center p-3 rounded-lg font-semibold transition-all overflow-hidden ${pathname === '/socios'
                                 ? 'bg-fitbox-red/10 text-fitbox-red'
                                 : 'text-fitbox-text hover:bg-neutral-800'
-                                }`}
+                                } ${isCollapsed ? 'justify-center' : 'gap-3 text-left'}`}
                         >
-                            <Users className="w-5 h-5" />
-                            Gestión de Usuarios
+                            <Users className="w-5 h-5 shrink-0" />
+                            {!isCollapsed && <span className="truncate">Gestión de Usuarios</span>}
                         </button>
 
                         <button
+                            title="Gestión de Horarios"
                             onClick={() => navigate('/clases')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/clases'
+                            className={`flex items-center p-3 rounded-lg font-semibold transition-all overflow-hidden ${pathname === '/clases'
                                 ? 'bg-fitbox-red/10 text-fitbox-red'
                                 : 'text-fitbox-text hover:bg-neutral-800'
-                                }`}
+                                } ${isCollapsed ? 'justify-center' : 'gap-3 text-left'}`}
                         >
-                            <Calendar className="w-5 h-5" />
-                            Gestión de Horarios
+                            <Calendar className="w-5 h-5 shrink-0" />
+                            {!isCollapsed && <span className="truncate">Gestión de Horarios</span>}
                         </button>
                         <button
+                            title="Planes de Entrenamiento"
                             onClick={() => navigate('/rutinas')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/rutinas'
+                            className={`flex items-center p-3 rounded-lg font-semibold transition-all overflow-hidden ${pathname === '/rutinas'
                                 ? 'bg-fitbox-red/10 text-fitbox-red'
                                 : 'text-fitbox-text hover:bg-neutral-800'
-                                }`}
+                                } ${isCollapsed ? 'justify-center' : 'gap-3 text-left'}`}
                         >
-                            <Activity className="w-5 h-5" />
-                            Planes de Entrenamiento
+                            <Activity className="w-5 h-5 shrink-0" />
+                            {!isCollapsed && <span className="truncate">Planes de Entrenamiento</span>}
                         </button>
                         <button
+                            title="Inventario"
                             onClick={() => navigate('/maquinas')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/maquinas'
+                            className={`flex items-center p-3 rounded-lg font-semibold transition-all overflow-hidden ${pathname === '/maquinas'
                                 ? 'bg-fitbox-red/10 text-fitbox-red'
                                 : 'text-fitbox-text hover:bg-neutral-800'
-                                }`}
+                                } ${isCollapsed ? 'justify-center' : 'gap-3 text-left'}`}
                         >
-                            <Dumbbell className="w-5 h-5" />
-                            Inventario
+                            <Dumbbell className="w-5 h-5 shrink-0" />
+                            {!isCollapsed && <span className="truncate">Inventario</span>}
                         </button>
                     </>
                 )}
@@ -99,44 +120,48 @@ export const Sidebar = () => {
                 {rol === 'Monitor' && (
                     <>
                         <button
+                            title="Horarios y Clases"
                             onClick={() => navigate('/clases')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/clases'
+                            className={`flex items-center p-3 rounded-lg font-semibold transition-all overflow-hidden ${pathname === '/clases'
                                 ? 'bg-fitbox-red/10 text-fitbox-red'
                                 : 'text-fitbox-text hover:bg-neutral-800'
-                                }`}
+                                } ${isCollapsed ? 'justify-center' : 'gap-3 text-left'}`}
                         >
-                            <Calendar className="w-5 h-5" />
-                            Horarios y Clases
+                            <Calendar className="w-5 h-5 shrink-0" />
+                            {!isCollapsed && <span className="truncate">Horarios y Clases</span>}
                         </button>
                         <button
+                            title="Mis Clases (Pasar Lista)"
                             onClick={() => navigate('/mis-clases')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/mis-clases'
+                            className={`flex items-center p-3 rounded-lg font-semibold transition-all overflow-hidden ${pathname === '/mis-clases'
                                 ? 'bg-fitbox-red/10 text-fitbox-red'
                                 : 'text-fitbox-text hover:bg-neutral-800'
-                                }`}
+                                } ${isCollapsed ? 'justify-center' : 'gap-3 text-left'}`}
                         >
-                            <ClipboardList className="w-5 h-5" />
-                            Mis Clases (Pasar Lista)
+                            <ClipboardList className="w-5 h-5 shrink-0" />
+                            {!isCollapsed && <span className="truncate">Mis Clases (Pasar Lista)</span>}
                         </button>
                         <button
+                            title="Planes de Entrenamiento"
                             onClick={() => navigate('/rutinas')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/rutinas'
+                            className={`flex items-center p-3 rounded-lg font-semibold transition-all overflow-hidden ${pathname === '/rutinas'
                                 ? 'bg-fitbox-red/10 text-fitbox-red'
                                 : 'text-fitbox-text hover:bg-neutral-800'
-                                }`}
+                                } ${isCollapsed ? 'justify-center' : 'gap-3 text-left'}`}
                         >
-                            <Activity className="w-5 h-5" />
-                            Planes de Entrenamiento
+                            <Activity className="w-5 h-5 shrink-0" />
+                            {!isCollapsed && <span className="truncate">Planes de Entrenamiento</span>}
                         </button>
                         <button
+                            title="Reportar Avería"
                             onClick={() => navigate('/maquinas')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/maquinas'
+                            className={`flex items-center p-3 rounded-lg font-semibold transition-all overflow-hidden ${pathname === '/maquinas'
                                 ? 'bg-fitbox-red/10 text-fitbox-red'
                                 : 'text-fitbox-text hover:bg-neutral-800'
-                                }`}
+                                } ${isCollapsed ? 'justify-center' : 'gap-3 text-left'}`}
                         >
-                            <Wrench className="w-5 h-5" />
-                            Reportar Avería
+                            <Wrench className="w-5 h-5 shrink-0" />
+                            {!isCollapsed && <span className="truncate">Reportar Avería</span>}
                         </button>
                     </>
                 )}
@@ -145,34 +170,37 @@ export const Sidebar = () => {
                 {rol === 'Socio' && (
                     <>
                         <button
+                            title="Horarios y Reservas"
                             onClick={() => navigate('/clases')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/clases'
+                            className={`flex items-center p-3 rounded-lg font-semibold transition-all overflow-hidden ${pathname === '/clases'
                                 ? 'bg-fitbox-red/10 text-fitbox-red'
                                 : 'text-fitbox-text hover:bg-neutral-800'
-                                }`}
+                                } ${isCollapsed ? 'justify-center' : 'gap-3 text-left'}`}
                         >
-                            <Calendar className="w-5 h-5" />
-                            Horarios y Reservas
+                            <Calendar className="w-5 h-5 shrink-0" />
+                            {!isCollapsed && <span className="truncate">Horarios y Reservas</span>}
                         </button>
                         <button
+                            title="Planes de Entrenamiento"
                             onClick={() => navigate('/rutinas')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/rutinas'
+                            className={`flex items-center p-3 rounded-lg font-semibold transition-all overflow-hidden ${pathname === '/rutinas'
                                 ? 'bg-fitbox-red/10 text-fitbox-red'
                                 : 'text-fitbox-text hover:bg-neutral-800'
-                                }`}
+                                } ${isCollapsed ? 'justify-center' : 'gap-3 text-left'}`}
                         >
-                            <Activity className="w-5 h-5" />
-                            Planes de Entrenamiento
+                            <Activity className="w-5 h-5 shrink-0" />
+                            {!isCollapsed && <span className="truncate">Planes de Entrenamiento</span>}
                         </button>
                         <button
+                            title="Mis Pagos"
                             onClick={() => navigate('/pagos')}
-                            className={`flex items-center gap-3 text-left p-3 rounded-lg font-semibold transition-colors ${pathname === '/pagos'
+                            className={`flex items-center p-3 rounded-lg font-semibold transition-all overflow-hidden ${pathname === '/pagos'
                                 ? 'bg-fitbox-red/10 text-fitbox-red'
                                 : 'text-fitbox-text hover:bg-neutral-800'
-                                }`}
+                                } ${isCollapsed ? 'justify-center' : 'gap-3 text-left'}`}
                         >
-                            <CreditCard className="w-5 h-5" />
-                            Mis Pagos
+                            <CreditCard className="w-5 h-5 shrink-0" />
+                            {!isCollapsed && <span className="truncate">Mis Pagos</span>}
                         </button>
                     </>
                 )}
