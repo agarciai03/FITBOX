@@ -9,6 +9,8 @@ export interface Usuario {
     telefono: string;
     avatar_url?: string;
     roles?: { nombre_rol: string };
+    xp?: number;
+    nivel?: number;
 }
 
 const generateDefaultAvatar = (nombre: string = '', apellidos: string = '') => {
@@ -25,7 +27,7 @@ export const UserRepository = {
                 *,
                 roles(nombre_rol)
             `)
-            .order('id_rol', { ascending: true }) // Primero Administradores(1), Monitores(2), Socios(3)
+            .order('id_rol', { ascending: true })
             .order('nombre', { ascending: true });
 
         if (error) throw error;
@@ -44,9 +46,7 @@ export const UserRepository = {
 
     // Actualizar datos de un usuario
     updateUser: async (id_usuario: string, datosNuevos: Partial<Usuario>): Promise<void> => {
-        // Si se intenta actualizar el avatar pero viene vacío o nulo
         if (Object.prototype.hasOwnProperty.call(datosNuevos, 'avatar_url') && (!datosNuevos.avatar_url || datosNuevos.avatar_url.trim() === '')) {
-            // Generamos la imagen por defecto
             datosNuevos.avatar_url = generateDefaultAvatar(datosNuevos.nombre, datosNuevos.apellidos);
         }
 
@@ -56,5 +56,39 @@ export const UserRepository = {
             .eq('id_usuario', id_usuario);
 
         if (error) throw error;
+    },
+
+    // NUEVO: Sistema de Gamificación - Sumar XP y comprobar subida de Nivel
+    sumarExperiencia: async (id_usuario: string, cantidadXp: number = 50) => {
+        try {
+            const { data: user, error: fetchError } = await supabase
+                .from('usuarios')
+                .select('xp, nivel')
+                .eq('id_usuario', id_usuario)
+                .single();
+
+            if (fetchError) throw fetchError;
+
+            // CORRECCIÓN ESLINT: Cambiado let por const porque no se reasigna
+            const nuevaXp = (user?.xp || 0) + cantidadXp;
+            let nuevoNivel = user?.nivel || 1;
+
+            const xpParaSiguienteNivel = nuevoNivel * 200;
+            if (nuevaXp >= xpParaSiguienteNivel) {
+                nuevoNivel += 1;
+            }
+
+            const { error: updateError } = await supabase
+                .from('usuarios')
+                .update({ xp: nuevaXp, nivel: nuevoNivel })
+                .eq('id_usuario', id_usuario);
+
+            if (updateError) throw updateError;
+
+            return { nuevaXp, nuevoNivel };
+        } catch (error) {
+            console.error("Error al sumar XP:", error);
+            throw error;
+        }
     }
 };
