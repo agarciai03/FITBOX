@@ -70,6 +70,20 @@ export const PerfilPage = () => {
             const file = event.target.files?.[0];
             if (!file) return;
 
+            // --- VALIDACIONES DE SEGURIDAD DEL AVATAR ---
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                setError("Formato no válido. Solo se permiten imágenes (JPG, JPEG, PNG, WEBP).");
+                return;
+            }
+
+            const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSizeInBytes) {
+                setError("La imagen es demasiado pesada. El tamaño máximo es 5MB.");
+                return;
+            }
+            // --------------------------------------------
+
             setIsLoading(true);
             setError(null);
 
@@ -205,7 +219,7 @@ export const PerfilPage = () => {
                             </div>
                             <input
                                 type="file"
-                                accept="image/*"
+                                accept="image/jpeg, image/png, image/jpg, image/webp"
                                 className="hidden"
                                 onChange={handleAvatarUpload}
                                 disabled={isLoading}
@@ -249,18 +263,13 @@ export const PerfilPage = () => {
                             Cuenta y Seguridad <span className="text-xs text-gray-500 font-normal ml-2">(Seguridad)</span>
                         </h3>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-                            <div className="space-y-2 md:col-span-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                            <div className="space-y-2">
                                 <Label className="text-fitbox-text-muted font-bold text-xs uppercase tracking-wider">Correo Electrónico</Label>
                                 <Input value={profile.email || 'No especificado'} readOnly className={readOnlyInputStyle} />
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-fitbox-text-muted font-bold text-xs uppercase tracking-wider">Estado</Label>
-                                <Input value="Activo" readOnly className="bg-green-500/10 border-green-500/20 text-green-400 font-bold cursor-default focus-visible:ring-0 focus-visible:border-green-500/20" />
-                            </div>
-
-                            <div className="space-y-2 md:col-span-3">
                                 <Label className="text-fitbox-text-muted font-bold text-xs uppercase tracking-wider">DNI / NIE</Label>
                                 <Input value={profile.dni || 'No especificado'} readOnly className={readOnlyInputStyle} />
                             </div>

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
-import { LoginPage } from './pages/LoginPage';
+import { LoginPage } from './pages/LoginPage'; // Tu nueva landing/login
 import { DashboardPage } from './pages/DashboardPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { MaquinasPage } from './pages/MaquinasPage';
@@ -16,13 +16,13 @@ import { GestionPagosPage } from './pages/GestionPagosPage';
 import { Card } from './components/ui/Card';
 import { Input } from './components/ui/Input';
 import { Button } from './components/ui/Button';
-import { CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
+import { CreditCard, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'; // <-- AÑADIDO Loader2
 import { supabase } from './database/supabase/Client';
 import { PaymentRepository } from './database/repositories/PaymentRepository';
 import { MisClasesPage } from './pages/MisClasesPage';
 import { RutinasPage } from './pages/RutinasPage';
 
-// Modal bloqueador tipo Stripe 
+// --- Modal bloqueador tipo Stripe ---
 const PaymentModal = ({ profile }: { profile: any }) => {
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -36,25 +36,14 @@ const PaymentModal = ({ profile }: { profile: any }) => {
     setError(null);
     setLoading(true);
 
-    // Simulamos 2 segundos de procesado con el banco
     setTimeout(async () => {
       const cleanCard = cardNumber.replace(/\s/g, '');
       if (cleanCard === '4242424242424242') {
         setSuccess(true);
         try {
-          // Activamos la cuenta en Supabase
           await supabase.from('usuarios').update({ estado_pago: 'activo' }).eq('id_usuario', profile.id_usuario);
-
-          // Guardamos el recibo real en la tabla `pagos`
-          await PaymentRepository.registrarPago(
-            profile.id_usuario,
-            19.99,
-            "Membresía Mensual FITBOX"
-          );
-
-          setTimeout(() => {
-            checkSession();
-          }, 2000);
+          await PaymentRepository.registrarPago(profile.id_usuario, 19.99, "Membresía Mensual FITBOX");
+          setTimeout(() => { checkSession(); }, 2000);
         } catch (err) {
           console.error("Error al procesar alta de pago:", err);
         }
@@ -108,7 +97,6 @@ const PaymentModal = ({ profile }: { profile: any }) => {
   );
 };
 
-
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAuthStore((state) => state.user);
   const profile = useAuthStore((state) => state.profile);
@@ -123,25 +111,25 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       <Sidebar />
       <div className="flex-1 min-w-0 overflow-x-hidden relative transition-all duration-300">
         {children}
-
         {isSocio && isPendiente && (
           <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
             <PaymentModal profile={profile} />
           </div>
         )}
-
       </div>
     </div>
   );
 };
 
-export const App = () => {
+// --- COMPONENTE INTERNO ---
+const AppContent = () => {
+  const location = useLocation();
   const { checkSession, isLoading } = useAuthStore();
+
+  const isPublicRoute = location.pathname === '/' || location.pathname === '/registro';
 
   useEffect(() => {
     checkSession();
-
-    // Sincronización inicial del tema para evitar flash blanco
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'light') {
       document.documentElement.classList.remove('dark');
@@ -153,110 +141,63 @@ export const App = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-fitbox-bg">
-        <h1 className="text-3xl font-bold text-fitbox-text mb-4 animate-pulse">
-          FIT<span className="text-fitbox-red">BOX</span>
-        </h1>
-        <p className="text-fitbox-text-muted">Conectando con el servidor...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-950 relative overflow-hidden">
+        {/* Fondo sutil integrado */}
+        <div className="absolute inset-0 bg-linear-to-br from-neutral-950 via-red-900/10 to-neutral-950 z-0"></div>
+
+        <div className="relative z-10 flex flex-col items-center space-y-8 animate-in fade-in zoom-in duration-500">
+          {/* Logo con efecto de resplandor */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-fitbox-red blur-2xl opacity-20 animate-pulse"></div>
+            <h1 className="text-6xl font-black text-white italic tracking-tighter relative z-10 uppercase">
+              FIT<span className="text-fitbox-red">BOX</span>
+            </h1>
+          </div>
+
+          {/* Spinner y Texto */}
+          <div className="flex flex-col items-center space-y-4">
+            <Loader2 className="w-10 h-10 text-fitbox-red animate-spin" />
+            <p className="text-gray-400 font-bold uppercase tracking-widest text-xs animate-pulse">
+              Cargando aplicación...
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
+    <div className="min-h-screen flex flex-col bg-fitbox-bg text-fitbox-text font-sans transition-colors duration-300">
+
+      {!isPublicRoute && <Header />}
+
+      <main className="grow flex flex-col">
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/registro" element={<RegisterPage />} />
+          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          <Route path="/perfil" element={<ProtectedRoute><PerfilPage /></ProtectedRoute>} />
+          <Route path="/socios" element={<ProtectedRoute><SociosPage /></ProtectedRoute>} />
+          <Route path="/maquinas" element={<ProtectedRoute><MaquinasPage /></ProtectedRoute>} />
+          <Route path="/clases" element={<ProtectedRoute><ClasesPage /></ProtectedRoute>} />
+          <Route path="/rutinas" element={<ProtectedRoute><RutinasPage /></ProtectedRoute>} />
+          <Route path="/mis-clases" element={<ProtectedRoute><MisClasesPage /></ProtectedRoute>} />
+          <Route path="/pagos" element={<ProtectedRoute><PagosPage /></ProtectedRoute>} />
+          <Route path="/gestion-pagos" element={<ProtectedRoute><GestionPagosPage /></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+
+      {!isPublicRoute && <Footer />}
+
+    </div>
+  );
+};
+
+export const App = () => {
+  return (
     <BrowserRouter>
-      <div className="min-h-screen flex flex-col bg-fitbox-bg text-fitbox-text font-sans transition-colors duration-300">
-
-        <Header />
-
-        <main className="grow flex flex-col">
-          <Routes>
-            <Route path="/" element={<LoginPage />} />
-            <Route path="/registro" element={<RegisterPage />} />
-
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route path="/perfil"
-              element={
-                <PerfilPage />}
-            />
-
-            <Route
-              path="/socios"
-              element={
-                <ProtectedRoute>
-                  <SociosPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/maquinas"
-              element={
-                <ProtectedRoute>
-                  <MaquinasPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/clases"
-              element={
-                <ProtectedRoute>
-                  <ClasesPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/rutinas"
-              element={
-                <ProtectedRoute>
-                  <RutinasPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/mis-clases"
-              element={
-                <ProtectedRoute>
-                  <MisClasesPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/pagos"
-              element={
-                <ProtectedRoute>
-                  <PagosPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/gestion-pagos"
-              element={
-                <ProtectedRoute>
-                  <GestionPagosPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </main>
-
-        <Footer />
-
-      </div>
+      <AppContent />
     </BrowserRouter>
   );
 };
