@@ -1,14 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { CreditCard, CheckCircle, AlertTriangle, Receipt, Download, X, AlertCircle, Users } from 'lucide-react';
 import { PaymentRepository, type Pago } from '../database/repositories/PaymentRepository';
-import { useTranslation } from 'react-i18next';
 
 export const PagosPage = () => {
-    const { t } = useTranslation();
     const profile = useAuthStore((state) => state.profile);
     const rol = profile?.roles?.nombre_rol || 'Socio';
     const isAdminOrMonitor = rol === 'Administrador' || rol === 'Monitor';
@@ -31,8 +29,8 @@ export const PagosPage = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [modalSuccess, setModalSuccess] = useState(false);
 
-    // Cargar pagos 100% reales desde Supabase
-    const cargarPagos = async () => {
+    // 🔧 FIX 2: Envolvemos en useCallback para que useEffect no se queje
+    const cargarPagos = useCallback(async () => {
         if (!profile?.id_usuario) return;
         setIsLoadingPagos(true);
         try {
@@ -50,11 +48,11 @@ export const PagosPage = () => {
         } finally {
             setIsLoadingPagos(false);
         }
-    };
+    }, [profile?.id_usuario, isAdminOrMonitor]);
 
     useEffect(() => {
         cargarPagos();
-    }, [profile?.id_usuario, isAdminOrMonitor]);
+    }, [cargarPagos]);
 
     const handleGuardarTarjeta = async () => {
         setModalError(null);
@@ -92,7 +90,9 @@ export const PagosPage = () => {
                     window.location.reload();
                 }, 2000);
             }
-        } catch (err) {
+        } catch (err: any) {
+            // 🔧 FIX 3: Usamos la variable 'err' para que no chille
+            console.error("Error al guardar tarjeta:", err);
             setModalError('Error al guardar en base de datos.');
         } finally {
             setIsSaving(false);
