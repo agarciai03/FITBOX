@@ -3,9 +3,11 @@ import { useAuthStore } from '../store/authStore';
 import { MachineRepository, type EstadoMaquina, type Maquina } from '../database/repositories/MachineRepository';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Dumbbell, AlertTriangle, CheckCircle, Info, Trash2, ExternalLink, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
+import { Dumbbell, AlertTriangle, CheckCircle, Info, Trash2, ExternalLink, BookOpen, Plus, X, Settings } from 'lucide-react';
+import { Card } from '../components/ui/Card';
+import { Alert } from '../components/ui/Alert';
 
-// Función inteligente para clasificar las máquinas según su nombre
+// Función inteligente para clasificar las máquinas
 const getCategoria = (nombre: string): string => {
     const n = nombre.toLowerCase();
     if (['saco', 'aqua bag', 'pera', 'bob', 'ring', 'escudos', 'manoplas', 'combas', 'espejos', 'asaltos'].some(k => n.includes(k))) return 'Boxeo';
@@ -17,45 +19,35 @@ const getCategoria = (nombre: string): string => {
 const CATEGORIAS = ['Sala de Máquinas', 'Boxeo', 'Jiu Jitsu BJJ', 'CrossFit'];
 
 export const MaquinasPage = () => {
-    // 1. Sacamos los datos del usuario que ha iniciado sesión
+    // 1. Doble check de seguridad para garantizar que el ADMIN tenga todo el poder
     const profile = useAuthStore((state) => state.profile);
     const rol = profile?.roles?.nombre_rol || 'Socio';
-    const isAdmin = rol === 'Administrador';
-    const idUsuario = profile?.id_usuario;
+    const idRol = profile?.id_rol;
 
-    // 2. Variables para guardar nuestras máquinas y controlar si está cargando
+    const isAdmin = rol === 'Administrador' || idRol === 1;
+    const isMonitor = rol === 'Monitor' || idRol === 2;
+    const isStaff = isAdmin || isMonitor;
+
     const [maquinas, setMaquinas] = useState<Maquina[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    // Estado para controlar qué desplegable está abierto
-    const [seccionesAbiertas, setSeccionesAbiertas] = useState<Record<string, boolean>>({
-        'Sala de Máquinas': true,
-        'Boxeo': false,
-        'Jiu Jitsu BJJ': false,
-        'CrossFit': false
-    });
+    // Pestaña activa
+    const [categoriaActiva, setCategoriaActiva] = useState<string>('Sala de Máquinas');
 
-    const toggleSeccion = (categoria: string) => {
-        setSeccionesAbiertas(prev => ({ ...prev, [categoria]: !prev[categoria] }));
-    };
-
-    // 3. Variables para la ventanita de "Cambiar Estado"
+    // Modales
     const [maquinaSeleccionada, setMaquinaSeleccionada] = useState<Maquina | null>(null);
     const [nuevoEstado, setNuevoEstado] = useState<EstadoMaquina>('Correcto');
     const [nuevasObservaciones, setNuevasObservaciones] = useState('');
 
-    // 4. Variables para la ventanita de "Añadir Máquina" (Solo Admin)
     const [isCreando, setIsCreando] = useState(false);
     const [nombreNuevaMaquina, setNombreNuevaMaquina] = useState('');
     const [descripcionNuevaMaquina, setDescripcionNuevaMaquina] = useState('');
     const [tutorialNuevaMaquina, setTutorialNuevaMaquina] = useState('');
 
-    // 5. Variable para la ventanita de "Ver Instrucciones"
     const [maquinaParaLeer, setMaquinaParaLeer] = useState<Maquina | null>(null);
 
-    // Función que se ejecuta nada más abrir la página para traer las máquinas
     const cargarMaquinas = useCallback(async () => {
         try {
             setIsLoading(true);
@@ -63,378 +55,416 @@ export const MaquinasPage = () => {
             setMaquinas(data);
         } catch (errorCatch) {
             console.error("Error al cargar máquinas:", errorCatch);
-            setError('Fallo al cargar el inventario');
+            setError('Fallo al cargar el inventario desde el servidor.');
         } finally {
             setIsLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        if (rol !== 'Socio') {
+        if (isStaff) {
             cargarMaquinas();
         }
-    }, [rol, cargarMaquinas]);
+    }, [isStaff, cargarMaquinas]);
 
-    // Función para guardar el cambio de estado
     const handleActualizarEstado = async () => {
-        if (!maquinaSeleccionada || !idUsuario) return;
-        setError(null);
-        setSuccessMessage(null);
+        if (!maquinaSeleccionada || !profile?.id_usuario) return;
+        setError(null); setSuccessMessage(null);
 
         try {
             await MachineRepository.updateEstado(
                 maquinaSeleccionada.id_maquina,
                 nuevoEstado,
                 nuevasObservaciones,
-                idUsuario
+                profile.id_usuario
             );
             setMaquinaSeleccionada(null);
-            setSuccessMessage("Estado actualizado correctamente");
+            setSuccessMessage("Estado de la máquina actualizado correctamente.");
             cargarMaquinas();
-        } catch (errorCatch) {
-            console.error("Error al actualizar:", errorCatch);
-            if (errorCatch instanceof Error) setError(errorCatch.message);
-            else setError('No se pudo actualizar el estado');
+        } catch (errorCatch: any) {
+            setError(errorCatch.message || 'No se pudo actualizar el estado.');
         }
     };
 
-    // Función para que el Admin cree una máquina
     const handleCrearMaquina = async () => {
         if (!nombreNuevaMaquina.trim()) return;
-        setError(null);
-        setSuccessMessage(null);
+        setError(null); setSuccessMessage(null);
 
         try {
             await MachineRepository.createMaquina(nombreNuevaMaquina, descripcionNuevaMaquina, tutorialNuevaMaquina);
             setIsCreando(false);
-            setNombreNuevaMaquina('');
-            setDescripcionNuevaMaquina('');
-            setTutorialNuevaMaquina('');
-            setSuccessMessage("Máquina añadida al inventario");
+            setNombreNuevaMaquina(''); setDescripcionNuevaMaquina(''); setTutorialNuevaMaquina('');
+            setSuccessMessage("Máquina registrada con éxito en el sistema.");
+
+            // Redirigir automáticamente a la categoría de la máquina recién creada
+            setCategoriaActiva(getCategoria(nombreNuevaMaquina));
             cargarMaquinas();
-        } catch (errorCatch) {
-            console.error("Error al crear:", errorCatch);
-            if (errorCatch instanceof Error) setError(errorCatch.message);
-            else setError('Error al crear la máquina');
+        } catch (errorCatch: any) {
+            setError(errorCatch.message || 'Error al intentar crear la máquina.');
         }
     };
 
-    // Función para dar de baja la máquina (Solo Admin)
-    const handleBorrarMaquina = async (id_maquina: string) => {
-        if (!window.confirm("¿Seguro que quieres borrar definitivamente esta máquina del gimnasio?")) return;
-        setError(null);
-        setSuccessMessage(null);
+    const handleBorrarMaquina = async (id_maquina: string, nombre: string) => {
+        if (!window.confirm(`ATENCIÓN: ¿Seguro que quieres borrar DEFINITIVAMENTE "${nombre}" del gimnasio?`)) return;
+        setError(null); setSuccessMessage(null);
 
         try {
             await MachineRepository.deleteMaquina(id_maquina);
-            setSuccessMessage("Máquina eliminada correctamente");
+            setSuccessMessage("Máquina eliminada del inventario.");
             cargarMaquinas();
-        } catch (errorCatch) {
-            console.error("Error al borrar:", errorCatch);
-            if (errorCatch instanceof Error) setError(errorCatch.message);
-            else setError('Error al intentar borrar la máquina');
+        } catch (errorCatch: any) {
+            setError(errorCatch.message || 'Error al intentar borrar la máquina.');
         }
     };
 
-    // --- BLOQUEO DE SEGURIDAD JUNIOR ---
-    if (rol === 'Socio') {
+    // BLOQUEO ABSOLUTO PARA SOCIOS
+    if (!isStaff) {
         return (
-            <div className="p-8 text-center">
-                <div className="inline-block p-4 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg font-bold">
-                    <AlertTriangle className="w-6 h-6 inline-block mb-1 mr-2" />
-                    Acceso denegado. Inventario exclusivo para Monitores y Administradores.
-                </div>
+            <div className="p-8 text-center flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in duration-500">
+                <AlertTriangle className="w-20 h-20 text-fitbox-red mb-6 opacity-20" />
+                <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2">ZONA RESTRINGIDA</h2>
+                <p className="text-gray-400 max-w-md">
+                    El inventario técnico es exclusivo para la plantilla de Monitores y Dirección.
+                </p>
             </div>
         );
     }
 
-    return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
+    const maquinasCategoriaActual = maquinas.filter(m => getCategoria(m.nombre) === categoriaActiva);
 
-            {/* Cabecera de la página */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    return (
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 relative">
+
+            {/* CABECERA */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-neutral-800 pb-6">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-white flex items-center gap-3 uppercase tracking-tight">
-                        <Dumbbell className="w-8 h-8 text-fitbox-red" />
-                        INVENTARIO DE <span className="text-fitbox-red">MÁQUINAS</span>
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-white flex items-center gap-3 uppercase tracking-tight">
+                        <Settings className="w-8 h-8 md:w-10 md:h-10 text-fitbox-red" />
+                        INVENTARIO <span className="text-fitbox-red">EQUIPAMIENTO</span>
                     </h1>
-                    <p className="text-fitbox-text-muted mt-1">Control, averías y mantenimiento del gimnasio</p>
+                    <p className="text-fitbox-text-muted mt-2 text-sm md:text-base">
+                        Control de averías, alta de material y mantenimiento técnico del club.
+                    </p>
                 </div>
 
                 {isAdmin && (
-                    <Button onClick={() => setIsCreando(true)} className="bg-fitbox-red hover:bg-red-700 font-bold shadow-lg shadow-fitbox-red/20">
-                        + Añadir Máquina
+                    <Button
+                        onClick={() => setIsCreando(true)}
+                        className="bg-fitbox-red hover:bg-red-700 text-white font-bold w-full md:w-auto shadow-lg shadow-fitbox-red/20 py-6"
+                    >
+                        <Plus className="w-5 h-5 mr-2" /> Registrar Equipamiento
                     </Button>
                 )}
             </div>
 
-            {/* Mensajes de Alerta y Éxito */}
-            {error && (
-                <div className="p-4 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg flex items-center gap-2 font-bold">
-                    <AlertTriangle className="w-5 h-5" /> <p>{error}</p>
-                </div>
-            )}
+            {/* ALERTAS */}
+            {error && <Alert type="error" message={error} />}
             {successMessage && (
-                <div className="p-4 bg-green-500/10 border border-green-500/50 text-green-500 rounded-lg flex items-center gap-2 font-bold">
-                    <CheckCircle className="w-5 h-5" /> <p>{successMessage}</p>
+                <div className="p-4 bg-green-500/10 border border-green-500/30 text-green-400 rounded-lg flex items-center gap-3 font-bold animate-in slide-in-from-top-2">
+                    <CheckCircle className="w-5 h-5 shrink-0" /> <p>{successMessage}</p>
                 </div>
             )}
 
-            {/* CONTENIDO PRINCIPAL: ACORDEONES POR DISCIPLINA */}
-            {isLoading ? (
-                <div className="p-12 text-center text-gray-500 bg-fitbox-card border border-neutral-800 rounded-xl">Cargando inventario...</div>
-            ) : maquinas.length === 0 ? (
-                <div className="p-12 text-center text-gray-500 bg-fitbox-card border border-neutral-800 rounded-xl">El gimnasio no tiene máquinas registradas.</div>
-            ) : (
-                <div className="space-y-4">
-                    {CATEGORIAS.map((categoria) => {
-                        // Filtramos las máquinas que pertenecen a esta categoría
-                        const maquinasCategoria = maquinas.filter(m => getCategoria(m.nombre) === categoria);
-                        if (maquinasCategoria.length === 0) return null; // Si no hay máquinas de esto, no mostramos el bloque
-
-                        const isOpen = seccionesAbiertas[categoria];
+            {/* SELECTOR DE CATEGORÍAS (TABS) */}
+            <div className="space-y-4">
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                    {CATEGORIAS.map(cat => {
+                        const cantidad = maquinas.filter(m => getCategoria(m.nombre) === cat).length;
+                        const activa = categoriaActiva === cat;
 
                         return (
-                            <div key={categoria} className="bg-fitbox-card border border-neutral-800 rounded-xl overflow-hidden shadow-xl transition-all">
-                                {/* BOTÓN DESPLEGABLE */}
-                                <button
-                                    onClick={() => toggleSeccion(categoria)}
-                                    className="w-full flex items-center justify-between p-5 bg-neutral-900/80 hover:bg-neutral-800 transition-colors focus:outline-none"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <h2 className="text-lg font-black text-white uppercase tracking-tight">{categoria}</h2>
-                                        <span className="bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20 px-2 py-0.5 rounded-full text-xs font-bold">
-                                            {maquinasCategoria.length} equipos
-                                        </span>
-                                    </div>
-                                    {isOpen ? <ChevronUp className="w-5 h-5 text-fitbox-red" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
-                                </button>
-
-                                {/* TABLA (Solo se muestra si isOpen es true) */}
-                                {isOpen && (
-                                    <div className="overflow-x-auto border-t border-neutral-800">
-                                        <table className="w-full text-left text-sm">
-                                            <thead className="bg-neutral-800/50 text-fitbox-text-muted uppercase text-[10px] tracking-widest font-bold">
-                                                <tr>
-                                                    <th className="px-6 py-4">Equipamiento</th>
-                                                    <th className="px-6 py-4">Estado Actual</th>
-                                                    <th className="px-6 py-4">Última Avería</th>
-                                                    <th className="px-6 py-4">Observaciones / Detalles</th>
-                                                    <th className="px-6 py-4 text-right">Acciones</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-neutral-800">
-                                                {maquinasCategoria.map((maq) => {
-                                                    const esCorrecto = maq.estado === 'Correcto';
-                                                    const esDefectuoso = maq.estado === 'Defectuoso';
-                                                    const esObs = maq.estado === 'Correcto pero con observaciones';
-
-                                                    return (
-                                                        <tr key={maq.id_maquina} className={`hover:bg-neutral-800/20 transition-colors ${esDefectuoso ? 'bg-red-900/5' : ''}`}>
-                                                            <td className="px-6 py-4 font-bold text-white text-base flex items-center gap-2">
-                                                                {maq.nombre}
-                                                                {(maq.descripcion || maq.tutorial_url) && (
-                                                                    <span className="text-blue-400" title="Contiene instrucciones de uso">
-                                                                        <BookOpen className="w-4 h-4" />
-                                                                    </span>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                {esCorrecto && (
-                                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-green-500/10 text-green-500 border border-green-500/20">
-                                                                        <CheckCircle className="w-3.5 h-3.5" /> CORRECTO
-                                                                    </span>
-                                                                )}
-                                                                {esDefectuoso && (
-                                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-red-500/10 text-red-500 border border-red-500/20">
-                                                                        <AlertTriangle className="w-3.5 h-3.5" /> DEFECTUOSO
-                                                                    </span>
-                                                                )}
-                                                                {esObs && (
-                                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
-                                                                        <Info className="w-3.5 h-3.5" /> OBSERVACIONES
-                                                                    </span>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-6 py-4 text-fitbox-text-muted font-medium">
-                                                                {maq.fecha_averia ? new Date(maq.fecha_averia).toLocaleDateString() : '-'}
-                                                            </td>
-                                                            <td className="px-6 py-4 max-w-xs">
-                                                                {(!esCorrecto && maq.observaciones) ? (
-                                                                    <p className={`text-sm italic ${esDefectuoso ? 'text-red-400' : 'text-yellow-400'}`}>
-                                                                        "{maq.observaciones}"
-                                                                    </p>
-                                                                ) : (
-                                                                    <span className="text-gray-600 text-xs">-</span>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-6 py-4 text-right">
-                                                                <div className="flex items-center justify-end gap-2">
-                                                                    {(maq.descripcion || maq.tutorial_url) && (
-                                                                        <Button
-                                                                            variant="secondary"
-                                                                            size="sm"
-                                                                            className="font-bold text-[11px] uppercase tracking-tighter bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20"
-                                                                            onClick={() => setMaquinaParaLeer(maq)}
-                                                                        >
-                                                                            <BookOpen className="w-3.5 h-3.5 mr-1.5 inline" /> Info
-                                                                        </Button>
-                                                                    )}
-
-                                                                    <Button
-                                                                        variant="secondary"
-                                                                        size="sm"
-                                                                        className="font-bold text-[11px] uppercase tracking-tighter"
-                                                                        onClick={() => {
-                                                                            setMaquinaSeleccionada(maq);
-                                                                            setNuevoEstado(maq.estado);
-                                                                            setNuevasObservaciones(maq.observaciones || '');
-                                                                        }}
-                                                                    >
-                                                                        Reportar
-                                                                    </Button>
-
-                                                                    {isAdmin && (
-                                                                        <button onClick={() => handleBorrarMaquina(maq.id_maquina)} className="text-red-500 hover:text-red-400 p-1.5 rounded-md hover:bg-red-500/10 transition-colors ml-1">
-                                                                            <Trash2 className="w-4 h-4 inline" />
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </div>
+                            <button
+                                key={cat}
+                                onClick={() => setCategoriaActiva(cat)}
+                                className={`px-6 py-3 rounded-xl font-black text-sm uppercase tracking-wider whitespace-nowrap transition-all duration-300 border flex items-center gap-2 ${activa
+                                        ? 'bg-fitbox-red border-fitbox-red text-white shadow-lg shadow-fitbox-red/20'
+                                        : 'bg-neutral-900 border-neutral-800 text-gray-500 hover:bg-neutral-800 hover:text-white'
+                                    }`}
+                            >
+                                {cat}
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] ${activa ? 'bg-white/20 text-white' : 'bg-neutral-800 text-gray-400'}`}>
+                                    {cantidad}
+                                </span>
+                            </button>
                         );
                     })}
                 </div>
-            )}
+            </div>
 
-            {/* NUEVA VENTANITA (MODAL): Ver Instrucciones de la Máquina */}
-            {maquinaParaLeer && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-lg space-y-6 shadow-2xl">
-                        <div className="border-b border-neutral-800 pb-4">
-                            <h3 className="text-2xl font-black text-white uppercase italic flex items-center gap-2">
-                                <Dumbbell className="text-blue-400" /> {maquinaParaLeer.nombre}
-                            </h3>
-                            <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest">Manual de uso</p>
-                        </div>
+            {/* TABLA DE INVENTARIO */}
+            {isLoading ? (
+                <div className="py-20 text-center flex flex-col items-center">
+                    <Dumbbell className="w-12 h-12 text-fitbox-red animate-spin mx-auto mb-4" />
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Cargando base de datos...</p>
+                </div>
+            ) : maquinasCategoriaActual.length === 0 ? (
+                <div className="py-20 text-center border border-dashed border-neutral-800 rounded-2xl bg-neutral-900/20 flex flex-col items-center">
+                    <Settings className="w-16 h-16 text-neutral-800 mb-4" />
+                    <h3 className="text-xl font-bold text-white mb-2">Categoría Vacía</h3>
+                    <p className="text-sm text-gray-500 max-w-md">
+                        {isAdmin ? 'No hay máquinas registradas en esta sección. Añade la primera desde el botón superior.' : 'No hay equipamiento disponible aquí.'}
+                    </p>
+                </div>
+            ) : (
+                <div className="bg-neutral-950/80 border border-neutral-800 rounded-2xl overflow-hidden shadow-xl animate-in fade-in slide-in-from-bottom-4">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-neutral-900/80 text-gray-400 uppercase text-[10px] tracking-widest font-bold border-b border-neutral-800">
+                                <tr>
+                                    <th className="px-6 py-5 whitespace-nowrap">Equipo y Manuales</th>
+                                    <th className="px-6 py-5 whitespace-nowrap">Estado Técnico</th>
+                                    <th className="px-6 py-5 whitespace-nowrap">Registro Avería</th>
+                                    <th className="px-6 py-5">Reporte / Observaciones</th>
+                                    <th className="px-6 py-5 text-right whitespace-nowrap">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-neutral-800/50">
+                                {maquinasCategoriaActual.map((maq) => {
+                                    const esCorrecto = maq.estado === 'Correcto';
+                                    const esDefectuoso = maq.estado === 'Defectuoso';
+                                    const esObs = maq.estado === 'Correcto pero con observaciones';
 
-                        {maquinaParaLeer.descripcion && (
-                            <div className="text-gray-300 leading-relaxed text-sm bg-neutral-900/50 p-4 rounded-lg border border-neutral-800">
-                                {maquinaParaLeer.descripcion}
-                            </div>
-                        )}
+                                    return (
+                                        <tr key={maq.id_maquina} className={`hover:bg-neutral-900/50 transition-colors ${esDefectuoso ? 'bg-red-950/10' : ''}`}>
 
-                        {maquinaParaLeer.tutorial_url && (
-                            <a href={maquinaParaLeer.tutorial_url} target="_blank" rel="noreferrer" className="block">
-                                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold">
-                                    <ExternalLink className="w-4 h-4 mr-2" /> Ver Vídeo Tutorial
-                                </Button>
-                            </a>
-                        )}
+                                            {/* NOMBRE E INFO */}
+                                            <td className="px-6 py-5">
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`font-black text-base uppercase tracking-tight ${esDefectuoso ? 'text-red-400' : 'text-white'}`}>
+                                                        {maq.nombre}
+                                                    </span>
+                                                    {(maq.descripcion || maq.tutorial_url) && (
+                                                        <button
+                                                            onClick={() => setMaquinaParaLeer(maq)}
+                                                            className="text-blue-400 hover:text-white p-1.5 bg-blue-500/10 rounded-md transition-colors border border-blue-500/20 hover:bg-blue-500/30"
+                                                            title="Ver manual y tutorial"
+                                                        >
+                                                            <BookOpen className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
 
-                        <div className="pt-2">
-                            <Button variant="secondary" className="w-full" onClick={() => setMaquinaParaLeer(null)}>Cerrar</Button>
-                        </div>
+                                            {/* ESTADO (BADGES) */}
+                                            <td className="px-6 py-5">
+                                                {esCorrecto && (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-wider">
+                                                        <CheckCircle className="w-3.5 h-3.5" /> 100% Operativa
+                                                    </span>
+                                                )}
+                                                {esDefectuoso && (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-red-500/10 text-red-500 border border-red-500/20 uppercase tracking-wider">
+                                                        <AlertTriangle className="w-3.5 h-3.5 animate-pulse" /> Fuera de Servicio
+                                                    </span>
+                                                )}
+                                                {esObs && (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 uppercase tracking-wider whitespace-nowrap">
+                                                        <Info className="w-3.5 h-3.5" /> Revisión Pendiente
+                                                    </span>
+                                                )}
+                                            </td>
+
+                                            {/* FECHA AVERÍA */}
+                                            <td className="px-6 py-5 text-gray-500 font-bold text-[11px] tracking-wider uppercase">
+                                                {maq.fecha_averia ? new Date(maq.fecha_averia).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '-- / -- / ----'}
+                                            </td>
+
+                                            {/* OBSERVACIONES */}
+                                            <td className="px-6 py-5 max-w-62.5 truncate">
+                                                {(!esCorrecto && maq.observaciones) ? (
+                                                    <span className={`text-sm italic font-medium ${esDefectuoso ? 'text-red-400' : 'text-yellow-400'}`} title={maq.observaciones}>
+                                                        "{maq.observaciones}"
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-neutral-700">-</span>
+                                                )}
+                                            </td>
+
+                                            {/* BOTONES DE ACCIÓN */}
+                                            <td className="px-6 py-5 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="sm"
+                                                        className="h-9 px-4 font-black text-[10px] uppercase tracking-wider bg-neutral-800 text-gray-300 hover:bg-neutral-700 hover:text-white border-none shadow-md"
+                                                        onClick={() => {
+                                                            setMaquinaSeleccionada(maq);
+                                                            setNuevoEstado(maq.estado);
+                                                            setNuevasObservaciones(maq.observaciones || '');
+                                                        }}
+                                                    >
+                                                        Gestionar Estado
+                                                    </Button>
+
+                                                    {isAdmin && (
+                                                        <button
+                                                            onClick={() => handleBorrarMaquina(maq.id_maquina, maq.nombre)}
+                                                            className="text-neutral-500 hover:text-white p-2.5 rounded-lg hover:bg-red-600 transition-colors shadow-md"
+                                                            title="Eliminar DEFINITIVAMENTE del inventario"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             )}
 
-            {/* VENTANITA (MODAL): Para cambiar el estado de la máquina */}
-            {maquinaSeleccionada && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-[0_0_50px_rgba(239,68,68,0.2)]">
-                        <h3 className="text-xl font-bold text-white border-b border-neutral-800 pb-2">
-                            Actualizar: <span className="text-fitbox-red">{maquinaSeleccionada.nombre}</span>
-                        </h3>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Estado Actual</label>
-                            <select
-                                className="w-full bg-neutral-900 border border-neutral-700 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
-                                value={nuevoEstado}
-                                onChange={(e) => setNuevoEstado(e.target.value as EstadoMaquina)}
-                            >
-                                <option value="Correcto">✅ Correcto (Operativa)</option>
-                                <option value="Defectuoso">❌ Defectuoso (Avería)</option>
-                                <option value="Correcto pero con observaciones">⚠️ Correcto pero con observaciones</option>
-                            </select>
-                        </div>
-
-                        {nuevoEstado !== 'Correcto' && (
-                            <div className="space-y-2 animate-in slide-in-from-top-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Observaciones / Detalles</label>
-                                <textarea
-                                    className="w-full bg-neutral-900 border border-neutral-700 text-white rounded-lg px-4 py-3 outline-none min-h-25 resize-none focus:border-fitbox-red"
-                                    placeholder="Describe qué le pasa a la máquina..."
-                                    value={nuevasObservaciones}
-                                    onChange={(e) => setNuevasObservaciones(e.target.value)}
-                                />
-                            </div>
-                        )}
-
-                        <div className="flex gap-4 pt-4">
-                            <Button variant="ghost" className="flex-1" onClick={() => setMaquinaSeleccionada(null)}>Cancelar</Button>
-                            <Button className="flex-1 bg-fitbox-red hover:bg-red-700 font-bold shadow-lg" onClick={handleActualizarEstado}>Guardar Cambios</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* VENTANITA (MODAL): Para crear máquina nueva (Admin) */}
+            {/* MODAL: CREAR MÁQUINA NUEVA (Solo Admin) */}
             {isCreando && isAdmin && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-2xl my-8">
-                        <h3 className="text-xl font-black text-white uppercase tracking-tight border-b border-neutral-800 pb-2">
-                            Nueva Máquina
-                        </h3>
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+                    <Card className="bg-neutral-950 border border-neutral-800 p-6 md:p-8 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-fitbox-red to-red-900"></div>
 
-                        <div className="space-y-4">
+                        <button onClick={() => setIsCreando(false)} className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors">
+                            <X className="w-6 h-6" />
+                        </button>
+
+                        <div className="mb-6">
+                            <h3 className="text-2xl font-black text-white uppercase tracking-tight italic">
+                                Registrar <span className="text-fitbox-red">Máquina</span>
+                            </h3>
+                            <p className="text-sm text-gray-400 mt-1">Incorpora nuevo material a la base de datos.</p>
+                        </div>
+
+                        <div className="space-y-5">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Nombre o modelo *</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Nombre / Modelo Oficial *</label>
                                 <Input
                                     autoFocus
-                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-colors"
-                                    placeholder="Ej: Cinta de correr 2"
+                                    className="w-full bg-neutral-900 border-neutral-800 text-white px-4 py-3 outline-none focus:border-fitbox-red font-bold transition-colors"
+                                    placeholder="Ej: Press de Banca Olímpico"
                                     value={nombreNuevaMaquina}
                                     onChange={(e) => setNombreNuevaMaquina(e.target.value)}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Enlace Video Tutorial (Opcional)</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">URL Vídeo Tutorial (Opcional)</label>
                                 <Input
-                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-colors"
-                                    placeholder="https://youtube.com/..."
+                                    className="w-full bg-neutral-900 border-neutral-800 text-white px-4 py-3 outline-none focus:border-fitbox-red transition-colors"
+                                    placeholder="Enlace a YouTube, Vimeo..."
                                     value={tutorialNuevaMaquina}
                                     onChange={(e) => setTutorialNuevaMaquina(e.target.value)}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Descripción y consejos (Opcional)</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ficha Técnica / Instrucciones (Opcional)</label>
                                 <textarea
-                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none min-h-25 resize-none focus:border-fitbox-red"
-                                    placeholder="Instrucciones sobre cómo sentarse, ajustar el peso..."
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none min-h-30 resize-y focus:border-fitbox-red placeholder:text-neutral-600 text-sm"
+                                    placeholder="Pautas de uso, precauciones de seguridad, peso máximo..."
                                     value={descripcionNuevaMaquina}
                                     onChange={(e) => setDescripcionNuevaMaquina(e.target.value)}
                                 />
                             </div>
                         </div>
 
-                        <div className="flex gap-4 pt-2">
-                            <Button variant="ghost" className="flex-1" onClick={() => setIsCreando(false)}>Cancelar</Button>
-                            <Button className="flex-1 bg-fitbox-red hover:bg-red-700 font-bold shadow-lg" onClick={handleCrearMaquina}>Añadir al Gimnasio</Button>
+                        <div className="flex gap-4 pt-6 mt-4">
+                            <Button variant="ghost" className="flex-1 text-gray-400 hover:text-white hover:bg-neutral-900 font-bold" onClick={() => setIsCreando(false)}>Cancelar</Button>
+                            <Button className="flex-1 bg-fitbox-red hover:bg-red-700 font-bold shadow-lg shadow-fitbox-red/20 text-white" onClick={handleCrearMaquina}>
+                                Guardar Máquina
+                            </Button>
                         </div>
-                    </div>
+                    </Card>
                 </div>
             )}
+
+            {/* MODAL: CAMBIAR ESTADO (Averías) */}
+            {maquinaSeleccionada && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+                    <Card className="bg-neutral-950 border border-neutral-800 p-6 md:p-8 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden">
+
+                        <div className={`absolute top-0 left-0 w-full h-1 transition-colors duration-500 ${nuevoEstado === 'Correcto' ? 'bg-green-500' :
+                                nuevoEstado === 'Defectuoso' ? 'bg-red-500' : 'bg-yellow-500'
+                            }`}></div>
+
+                        <h3 className="text-xl font-bold text-white mb-6 pr-6 leading-tight">
+                            Gestión: <span className="text-fitbox-red uppercase">{maquinaSeleccionada.nombre}</span>
+                        </h3>
+
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Cambiar Estado Técnico</label>
+                                <select
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white font-bold rounded-lg px-4 py-4 outline-none focus:border-fitbox-red transition-all"
+                                    value={nuevoEstado}
+                                    onChange={(e) => setNuevoEstado(e.target.value as EstadoMaquina)}
+                                >
+                                    <option value="Correcto">✅ OPERATIVA (100% Funcional)</option>
+                                    <option value="Correcto pero con observaciones">⚠️ REVISIÓN PENDIENTE (Posible falla)</option>
+                                    <option value="Defectuoso">❌ AVERIADA (Fuera de servicio)</option>
+                                </select>
+                            </div>
+
+                            {nuevoEstado !== 'Correcto' && (
+                                <div className="space-y-2 animate-in slide-in-from-top-2">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Reporte del problema</label>
+                                    <textarea
+                                        className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none min-h-30 resize-y focus:border-fitbox-red placeholder:text-neutral-600 text-sm font-medium"
+                                        placeholder="Detalla qué pieza falla, si hay ruido extraño, cable suelto..."
+                                        value={nuevasObservaciones}
+                                        onChange={(e) => setNuevasObservaciones(e.target.value)}
+                                    />
+                                </div>
+                            )}
+
+                            <div className="flex gap-4 pt-4 mt-2">
+                                <Button variant="ghost" className="flex-1 text-gray-400 hover:text-white hover:bg-neutral-900 font-bold" onClick={() => setMaquinaSeleccionada(null)}>Cancelar</Button>
+                                <Button className="flex-1 bg-fitbox-red hover:bg-red-700 font-bold shadow-lg shadow-fitbox-red/20 text-white" onClick={handleActualizarEstado}>
+                                    Confirmar Estado
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            )}
+
+            {/* MODAL: VER MANUAL / TUTORIAL */}
+            {maquinaParaLeer && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+                    <Card className="bg-neutral-950 border border-neutral-800 p-6 md:p-8 rounded-2xl w-full max-w-lg shadow-2xl relative">
+                        <button onClick={() => setMaquinaParaLeer(null)} className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors">
+                            <X className="w-6 h-6" />
+                        </button>
+
+                        <div className="mb-6 pr-8 border-b border-neutral-800 pb-4">
+                            <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter flex items-center gap-3">
+                                <BookOpen className="text-blue-400 w-6 h-6" /> {maquinaParaLeer.nombre}
+                            </h3>
+                            <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest font-bold">Ficha Técnica Oficial</p>
+                        </div>
+
+                        <div className="space-y-6">
+                            {maquinaParaLeer.descripcion && (
+                                <div className="space-y-2">
+                                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Instrucciones de Uso</h4>
+                                    <div className="text-gray-300 leading-relaxed text-sm bg-neutral-900/50 p-5 rounded-xl border border-neutral-800/50 whitespace-pre-wrap font-medium">
+                                        {maquinaParaLeer.descripcion}
+                                    </div>
+                                </div>
+                            )}
+
+                            {maquinaParaLeer.tutorial_url && (
+                                <div className="pt-2">
+                                    <a href={maquinaParaLeer.tutorial_url} target="_blank" rel="noreferrer" className="block">
+                                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 text-md shadow-lg shadow-blue-500/20">
+                                            <ExternalLink className="w-5 h-5 mr-2" /> Abrir Vídeo Tutorial
+                                        </Button>
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+                </div>
+            )}
+
         </div>
     );
 };

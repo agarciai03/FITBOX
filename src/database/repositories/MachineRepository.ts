@@ -79,5 +79,5 @@ export const MachineRepository = {
             .eq('id_maquina', id_maquina);
 
         if (error) throw error;
-    }
+    },
 };
