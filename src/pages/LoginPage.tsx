@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../database/supabase/Client';
 import { useAuthStore } from '../store/authStore';
-import type { AuthError } from '@supabase/supabase-js';
 
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -35,7 +34,7 @@ export const LoginPage = () => {
     const [authError, setAuthError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    const { register, handleSubmit, formState: { errors } } = useForm<LoginFormInputs>();
+    const { register, handleSubmit } = useForm<LoginFormInputs>();
 
     const onSubmit = async (data: LoginFormInputs) => {
         setIsLoading(true);
@@ -73,7 +72,7 @@ export const LoginPage = () => {
         try {
             await AuthRepository.sendResetPasswordEmail(resetEmail);
             setResetSuccess(true);
-        } catch (error: any) {
+        } catch {
             setAuthError("No se pudo enviar el correo de recuperación. Verifica el email.");
         } finally {
             setResetLoading(false);
@@ -86,7 +85,7 @@ export const LoginPage = () => {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,#450a0a,transparent)] opacity-40 pointer-events-none"></div>
 
             {/* Contenido Landing */}
-            <main className="relative z-10 flex-grow flex flex-col items-center justify-center px-4 pt-20 pb-32">
+            <main className="relative z-10 grow flex flex-col items-center justify-center px-4 pt-20 pb-32">
                 <div className="text-center space-y-6 max-w-4xl">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-950/30 border border-red-900/50 rounded-full text-fitbox-red text-xs font-bold uppercase tracking-widest animate-fade-in">
                         <Flame className="w-3 h-3" />
@@ -137,10 +136,10 @@ export const LoginPage = () => {
 
             {/* --- MODAL DE LOGIN --- */}
             {showLoginModal && (
-                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+                <div className="fixed inset-0 z-100 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
                     <div className="w-full max-w-md relative">
                         <Card className="p-8 shadow-2xl bg-neutral-950/90 border-neutral-800 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-fitbox-red via-red-600 to-red-900"></div>
+                            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-fitbox-red via-red-600 to-red-900"></div>
 
                             <button onClick={() => setShowLoginModal(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
                                 <X className="w-6 h-6" />
@@ -216,7 +215,7 @@ export const LoginPage = () => {
 
             {/* --- NUEVO MODAL DE RECUPERACIÓN --- */}
             {showResetModal && (
-                <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-110 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
                     <Card className="w-full max-w-md p-8 bg-neutral-950/90 border-neutral-800 relative overflow-hidden shadow-2xl">
                         <div className="absolute top-0 left-0 w-full h-1 bg-fitbox-red"></div>
                         <button onClick={() => { setShowResetModal(false); setResetSuccess(false); }} className="absolute top-4 right-4 text-gray-500 hover:text-white">

@@ -48,7 +48,7 @@ export const ResetPasswordPage = () => {
             await AuthRepository.updatePassword(password);
             await logout();
             setSuccess(true);
-        } catch (err: any) {
+        } catch {
             setServerError("El enlace de recuperación es inválido o ha caducado. Vuelve a solicitar un enlace desde el login.");
         } finally {
             setLoading(false);
@@ -62,7 +62,7 @@ export const ResetPasswordPage = () => {
 
             <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in duration-500">
                 <Card className="p-8 shadow-2xl bg-neutral-950/90 border-neutral-800 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-fitbox-red via-red-600 to-red-900"></div>
+                    <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-fitbox-red via-red-600 to-red-900"></div>
 
                     <div className="text-center mb-8">
                         <div className="w-16 h-16 bg-red-950/30 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-900/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
