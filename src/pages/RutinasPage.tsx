@@ -14,7 +14,6 @@ const ORDEN_DIAS: Record<string, number> = {
 };
 
 export const RutinasPage = () => {
-    // Control de roles: Admin y Monitor tienen los mismos permisos aquí
     const profile = useAuthStore((state) => state.profile);
     const rol = profile?.roles?.nombre_rol || 'Socio';
     const isAdminOrMonitor = rol === 'Administrador' || rol === 'Monitor';
@@ -24,7 +23,6 @@ export const RutinasPage = () => {
     const [disciplinaSeleccionada, setDisciplinaSeleccionada] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
 
-    // Estados del Modal de Creación
     const [showModal, setShowModal] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
@@ -35,7 +33,6 @@ export const RutinasPage = () => {
         descripcion: ''
     });
 
-    // 1. CARGAR DISCIPLINAS
     useEffect(() => {
         ClassRepository.getAllDisciplinas()
             .then(data => {
@@ -48,17 +45,13 @@ export const RutinasPage = () => {
             });
     }, []);
 
-    // 2. CARGAR RUTINAS DE SUPABASE
     const cargarRutinas = useCallback(async (id_disciplina: string) => {
         if (!id_disciplina) return;
         try {
             const data = await ClassRepository.getRutinasByDisciplina(id_disciplina);
-
-            // Ordenamos las rutinas lógicamente de Lunes a Domingo
             const rutinasOrdenadas = [...data].sort((a, b) => {
                 return (ORDEN_DIAS[a.dia_semana] || 8) - (ORDEN_DIAS[b.dia_semana] || 8);
             });
-
             setRutinas(rutinasOrdenadas);
         } catch (errorCatch) {
             console.error("Fallo en rutinas:", errorCatch);
@@ -70,8 +63,6 @@ export const RutinasPage = () => {
         cargarRutinas(disciplinaSeleccionada);
     }, [disciplinaSeleccionada, cargarRutinas]);
 
-
-    // 3. CREAR NUEVA RUTINA EN SUPABASE
     const handleCrearRutina = async () => {
         setModalError(null);
 
@@ -94,7 +85,6 @@ export const RutinasPage = () => {
 
             if (dbError) throw dbError;
 
-            // Limpiamos el modal y recargamos las rutinas visuales
             setShowModal(false);
             setNuevaRutina({ dia_semana: 'Lunes', titulo: '', descripcion: '' });
             cargarRutinas(disciplinaSeleccionada);
@@ -107,15 +97,12 @@ export const RutinasPage = () => {
         }
     };
 
-    // 4. BORRAR RUTINA DE SUPABASE
     const handleBorrarRutina = async (id_rutina: string, titulo: string) => {
         if (!window.confirm(`¿Estás seguro de que quieres borrar el plan de entrenamiento: "${titulo}"?`)) return;
 
         try {
             const { error: dbError } = await supabase.from('rutinas').delete().eq('id_rutina', id_rutina);
             if (dbError) throw dbError;
-
-            // Recargamos la vista
             cargarRutinas(disciplinaSeleccionada);
         } catch (err) {
             console.error("Error al borrar:", err);
@@ -123,10 +110,15 @@ export const RutinasPage = () => {
         }
     };
 
+    // --- NUEVA LÓGICA DE DÍAS PERMITIDOS ---
+    const isSalaMaquinas = disciplinas.find(d => d.id_disciplina === disciplinaSeleccionada)?.nombre === 'Sala de Máquinas';
+    const diasPermitidos = isSalaMaquinas
+        ? Object.keys(ORDEN_DIAS) // Lunes a Domingo
+        : Object.keys(ORDEN_DIAS).filter(dia => dia !== 'Sábado' && dia !== 'Domingo'); // Solo Lunes a Viernes
+
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
 
-            {/* CABECERA */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-neutral-800 pb-6">
                 <div>
                     <h1 className="text-3xl md:text-4xl font-extrabold text-white flex items-center gap-3 uppercase tracking-tight">
@@ -142,7 +134,10 @@ export const RutinasPage = () => {
 
                 {isAdminOrMonitor && disciplinaSeleccionada && (
                     <Button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => {
+                            setNuevaRutina({ dia_semana: 'Lunes', titulo: '', descripcion: '' });
+                            setShowModal(true);
+                        }}
                         className="bg-fitbox-red hover:bg-red-700 text-white font-bold w-full md:w-auto shadow-lg shadow-fitbox-red/20 py-6"
                     >
                         <Plus className="w-5 h-5 mr-2" /> Añadir Nueva Rutina
@@ -152,7 +147,6 @@ export const RutinasPage = () => {
 
             {error && <Alert type="error" message={error} />}
 
-            {/* SELECTOR DE DISCIPLINAS (Estilo Premium con Tabs) */}
             <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-2">
                     <Dumbbell className="w-5 h-5 text-gray-500" />
@@ -165,8 +159,8 @@ export const RutinasPage = () => {
                             key={d.id_disciplina}
                             onClick={() => setDisciplinaSeleccionada(d.id_disciplina)}
                             className={`px-6 py-3 rounded-xl font-black text-sm uppercase tracking-wider whitespace-nowrap transition-all duration-300 border ${disciplinaSeleccionada === d.id_disciplina
-                                    ? 'bg-fitbox-red border-fitbox-red text-white shadow-lg shadow-fitbox-red/20'
-                                    : 'bg-neutral-900 border-neutral-800 text-gray-500 hover:bg-neutral-800 hover:text-white'
+                                ? 'bg-fitbox-red border-fitbox-red text-white shadow-lg shadow-fitbox-red/20'
+                                : 'bg-neutral-900 border-neutral-800 text-gray-500 hover:bg-neutral-800 hover:text-white'
                                 }`}
                         >
                             {d.nombre}
@@ -175,7 +169,6 @@ export const RutinasPage = () => {
                 </div>
             </div>
 
-            {/* GRID DE RUTINAS */}
             {rutinas.length === 0 ? (
                 <div className="py-20 text-center text-gray-500 border border-dashed border-neutral-800 rounded-2xl bg-neutral-900/20 flex flex-col items-center">
                     <Calendar className="w-16 h-16 mx-auto mb-4 text-neutral-800" />
@@ -191,10 +184,8 @@ export const RutinasPage = () => {
                     {rutinas.map(rutina => (
                         <Card key={rutina.id_rutina} className="bg-neutral-950/80 p-0 border-neutral-800 hover:border-neutral-600 transition-all relative group overflow-hidden flex flex-col h-full shadow-xl">
 
-                            {/* Brillo rojo decorativo de fondo */}
                             <div className="absolute -top-20 -right-20 w-40 h-40 bg-fitbox-red/10 rounded-full blur-3xl group-hover:bg-fitbox-red/20 transition-colors pointer-events-none"></div>
 
-                            {/* Cabecera de la Tarjeta */}
                             <div className="p-6 pb-4 flex justify-between items-start border-b border-neutral-800/50 bg-black/20">
                                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-950/30 border border-fitbox-red/30 rounded-lg">
                                     <Calendar className="w-3.5 h-3.5 text-fitbox-red" />
@@ -212,7 +203,6 @@ export const RutinasPage = () => {
                                 )}
                             </div>
 
-                            {/* Contenido de la Tarjeta */}
                             <div className="p-6 grow flex flex-col">
                                 <h3 className="text-xl font-black text-white mb-3 leading-tight uppercase">
                                     {rutina.titulo}
@@ -220,7 +210,6 @@ export const RutinasPage = () => {
 
                                 <div className="w-8 h-1 bg-fitbox-red mb-4 rounded-full"></div>
 
-                                {/* El texto mantiene los saltos de línea originales gracias a whitespace-pre-wrap */}
                                 <p className="text-sm text-gray-400 leading-relaxed whitespace-pre-wrap grow">
                                     {rutina.descripcion}
                                 </p>
@@ -230,12 +219,10 @@ export const RutinasPage = () => {
                 </div>
             )}
 
-            {/* MODAL CREAR RUTINA (Solo Admin/Monitor) */}
             {showModal && isAdminOrMonitor && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
                     <Card className="max-w-lg w-full bg-neutral-950 border-neutral-800 p-6 sm:p-8 relative shadow-2xl overflow-hidden">
 
-                        {/* Detalle decorativo superior */}
                         <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-fitbox-red via-red-600 to-red-900"></div>
 
                         <button
@@ -266,7 +253,8 @@ export const RutinasPage = () => {
                                     value={nuevaRutina.dia_semana}
                                     onChange={(e) => setNuevaRutina({ ...nuevaRutina, dia_semana: e.target.value })}
                                 >
-                                    {Object.keys(ORDEN_DIAS).map(dia => (
+                                    {/* Mapeamos SOLO los días permitidos según la regla */}
+                                    {diasPermitidos.map(dia => (
                                         <option key={dia} value={dia}>{dia}</option>
                                     ))}
                                 </select>

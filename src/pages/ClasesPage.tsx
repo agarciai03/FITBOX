@@ -116,6 +116,19 @@ export const ClasesPage = () => {
             setError("Por favor, rellena todos los campos obligatorios.");
             return;
         }
+
+        // --- NUEVA VALIDACIÓN DE FINES DE SEMANA ---
+        const disciplinaElegida = disciplinas.find(d => d.id_disciplina === nuevaClase.id_disciplina);
+        if (disciplinaElegida && disciplinaElegida.nombre !== 'Sala de Máquinas') {
+            const fechaSeleccionada = new Date(nuevaClase.fecha);
+            const diaSemana = fechaSeleccionada.getDay(); // 0 = Domingo, 6 = Sábado
+            if (diaSemana === 0 || diaSemana === 6) {
+                setError(`La disciplina "${disciplinaElegida.nombre}" solo puede programarse de Lunes a Viernes.`);
+                return;
+            }
+        }
+        // ---------------------------------------------
+
         try {
             await ClassRepository.createClase({
                 id_disciplina: nuevaClase.id_disciplina,
@@ -126,6 +139,7 @@ export const ClasesPage = () => {
                 aforo_maximo: nuevaClase.aforo_maximo
             });
             setIsCreando(false);
+            setNuevaClase({ id_disciplina: '', id_monitor: '', fecha: '', hora_inicio: '', hora_fin: '', aforo_maximo: 20 });
             cargarDatos();
         } catch (errorCatch) {
             console.error("Error al crear:", errorCatch);
@@ -185,7 +199,10 @@ export const ClasesPage = () => {
                 {canManage && (
                     <div className="flex justify-end">
                         <Button
-                            onClick={() => setIsCreando(true)}
+                            onClick={() => {
+                                setIsCreando(true);
+                                setError(null);
+                            }}
                             className="bg-white text-black hover:bg-fitbox-red hover:text-white font-black transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] border border-white/20 px-6 py-5 rounded-xl flex items-center gap-2 uppercase italic tracking-tighter"
                         >
                             <Plus className="w-5 h-5 stroke-[3px]" />
@@ -341,7 +358,16 @@ export const ClasesPage = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fecha</label>
-                                    <input type="date" className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none" onChange={(e) => setNuevaClase({ ...nuevaClase, fecha: e.target.value })} />
+                                    <input
+                                        type="date"
+                                        className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none"
+                                        value={nuevaClase.fecha}
+                                        onChange={(e) => setNuevaClase({ ...nuevaClase, fecha: e.target.value })}
+                                    />
+                                    {/* PEQUEÑO TEXTO DE AYUDA VISUAL */}
+                                    {nuevaClase.id_disciplina && disciplinas.find(d => d.id_disciplina === nuevaClase.id_disciplina)?.nombre !== 'Sala de Máquinas' && (
+                                        <p className="text-[10px] text-fitbox-red italic mt-1 font-bold">Solo de Lunes a Viernes</p>
+                                    )}
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Aforo</label>

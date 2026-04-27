@@ -57,23 +57,5 @@ export const PaymentRepository = {
             }]);
 
         if (error) throw error;
-    },
-
-    // 4. Vincular tarjeta real (Guardando máscara y caducidad real en BBDD)
-    vincularTarjeta: async (id_usuario: string, numero: string, caducidad: string): Promise<void> => {
-        // En un entorno de producción estricto, el número crudo se envía a Stripe y guardamos el token.
-        // Aquí guardamos la máscara real de la tarjeta y la caducidad (ahora SÍ se usa) en Supabase.
-        const ultimos4 = numero.slice(-4);
-        const tarjetaEnmascarada = `**** **** **** ${ultimos4} (Exp: ${caducidad})`;
-
-        const { error } = await supabase
-            .from('usuarios')
-            .update({
-                metodo_pago: tarjetaEnmascarada,
-                estado_pago: 'activo'
-            })
-            .eq('id_usuario', id_usuario);
-
-        if (error) throw error;
     }
 };

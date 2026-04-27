@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
-import { CreditCard, CheckCircle, AlertTriangle, Receipt, Download, X, AlertCircle, Users } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Receipt, Download, Users, CreditCard } from 'lucide-react';
 import { PaymentRepository, type Pago } from '../database/repositories/PaymentRepository';
 
 export const PagosPage = () => {
@@ -11,35 +9,20 @@ export const PagosPage = () => {
     const rol = profile?.roles?.nombre_rol || 'Socio';
     const isAdminOrMonitor = rol === 'Administrador' || rol === 'Monitor';
 
-    // 100% DATOS REALES DE SUPABASE (Nada de placeholders)
+    // 100% DATOS REALES DE SUPABASE 
     const estadoPago = (profile as any)?.estado_pago || 'pendiente';
-    const tarjetaGuardada = (profile as any)?.metodo_pago || null;
 
     const [historialPagos, setHistorialPagos] = useState<Pago[]>([]);
     const [isLoadingPagos, setIsLoadingPagos] = useState(true);
 
-    // Estados del Modal
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [titular, setTitular] = useState('');
-    const [numero, setNumero] = useState('');
-    const [caducidad, setCaducidad] = useState('');
-    const [cvc, setCvc] = useState('');
-
-    const [modalError, setModalError] = useState<string | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
-    const [modalSuccess, setModalSuccess] = useState(false);
-
-    // 🔧 FIX 2: Envolvemos en useCallback para que useEffect no se queje
     const cargarPagos = useCallback(async () => {
         if (!profile?.id_usuario) return;
         setIsLoadingPagos(true);
         try {
             let pagos;
             if (isAdminOrMonitor) {
-                // Admin/Monitor ve todos los pagos reales del gimnasio
                 pagos = await PaymentRepository.getAllPagos();
             } else {
-                // Socio ve solo sus pagos reales
                 pagos = await PaymentRepository.getPagosBySocio(profile.id_usuario);
             }
             setHistorialPagos(pagos);
@@ -53,51 +36,6 @@ export const PagosPage = () => {
     useEffect(() => {
         cargarPagos();
     }, [cargarPagos]);
-
-    const handleGuardarTarjeta = async () => {
-        setModalError(null);
-        setModalSuccess(false);
-
-        const numLimpio = numero.replace(/\s/g, '');
-
-        if (titular.trim().length < 3) return setModalError('Nombre de titular no válido.');
-        if (numLimpio.length !== 16) return setModalError('Número de tarjeta incompleto.');
-        if (caducidad.length !== 5) return setModalError('Formato de fecha inválido (MM/YY).');
-
-        const [mes, anio] = caducidad.split('/');
-        const mesNum = parseInt(mes, 10);
-        const anioNum = parseInt(anio, 10);
-        const fechaActual = new Date();
-        const anioActualCorto = fechaActual.getFullYear() % 100;
-        const mesActual = fechaActual.getMonth() + 1;
-
-        if (mesNum < 1 || mesNum > 12) return setModalError('Mes no válido.');
-        if (anioNum < anioActualCorto || (anioNum === anioActualCorto && mesNum < mesActual)) {
-            return setModalError('La tarjeta ya ha caducado.');
-        }
-        if (cvc.length !== 3) return setModalError('CVC debe tener 3 dígitos.');
-
-        setIsSaving(true);
-        try {
-            if (profile?.id_usuario) {
-                await PaymentRepository.vincularTarjeta(profile.id_usuario, numLimpio, caducidad);
-                setModalSuccess(true);
-                setTimeout(() => {
-                    setShowEditModal(false);
-                    setModalSuccess(false);
-                    setTitular(''); setNumero(''); setCaducidad(''); setCvc('');
-                    // Recargar el perfil para actualizar la vista de la tarjeta
-                    window.location.reload();
-                }, 2000);
-            }
-        } catch (err: any) {
-            // 🔧 FIX 3: Usamos la variable 'err' para que no chille
-            console.error("Error al guardar tarjeta:", err);
-            setModalError('Error al guardar en base de datos.');
-        } finally {
-            setIsSaving(false);
-        }
-    };
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 relative">
@@ -134,29 +72,6 @@ export const PagosPage = () => {
                             <div className={`p-3 rounded-full ${estadoPago === 'activo' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
                                 {estadoPago === 'activo' ? <CheckCircle className="w-8 h-8 text-green-500" /> : <AlertTriangle className="w-8 h-8 text-fitbox-red" />}
                             </div>
-                        </div>
-                    </Card>
-
-                    <Card className="p-6 bg-fitbox-card border-neutral-800">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Tarjeta de Cargo</p>
-                                {tarjetaGuardada ? (
-                                    <div className="flex items-center gap-3 mt-2">
-                                        <div className="bg-neutral-800 p-2 rounded-md border border-neutral-700">
-                                            <CreditCard className="w-6 h-6 text-white" />
-                                        </div>
-                                        <p className="text-fitbox-text font-bold font-mono tracking-widest">{tarjetaGuardada}</p>
-                                    </div>
-                                ) : (
-                                    <div className="mt-4">
-                                        <p className="text-gray-400 text-sm italic">No hay tarjeta vinculada.</p>
-                                    </div>
-                                )}
-                            </div>
-                            <button onClick={() => setShowEditModal(true)} className="text-xs font-bold text-blue-400 hover:text-blue-300 uppercase tracking-widest transition-colors">
-                                {tarjetaGuardada ? 'Editar' : 'Añadir'}
-                            </button>
                         </div>
                     </Card>
                 </div>
@@ -212,62 +127,6 @@ export const PagosPage = () => {
                     </table>
                 </div>
             </div>
-
-            {/* MODAL EDITAR TARJETA */}
-            {showEditModal && (
-                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <Card className="max-w-md w-full bg-neutral-950 border-neutral-800 p-8 relative shadow-2xl">
-                        <button onClick={() => !isSaving && setShowEditModal(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white">
-                            <X className="w-6 h-6" />
-                        </button>
-
-                        <div className="mb-6">
-                            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Actualizar <span className="text-fitbox-red">Tarjeta</span></h2>
-                            <p className="text-xs text-gray-400">Introduce los nuevos datos de facturación.</p>
-                        </div>
-
-                        {modalSuccess ? (
-                            <div className="py-8 text-center animate-in zoom-in">
-                                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4 animate-bounce" />
-                                <p className="text-white font-bold">¡Datos guardados con éxito!</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-5">
-                                {modalError && <div className="p-3 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg text-sm font-bold flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {modalError}</div>}
-
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Titular</label>
-                                    <Input placeholder="NOMBRE COMPLETO" className="bg-neutral-900 border-neutral-800 uppercase text-white" value={titular} onChange={(e) => setTitular(e.target.value.replace(/[^a-zA-Z\s]/g, ''))} />
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Número de Tarjeta</label>
-                                    <Input placeholder="0000 0000 0000 0000" className="bg-neutral-900 border-neutral-800 font-mono text-white" maxLength={19} value={numero} onChange={(e) => setNumero(e.target.value.replace(/\D/g, '').match(/.{1,4}/g)?.join(' ') || '')} />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Caducidad (MM/YY)</label>
-                                        <Input placeholder="MM/YY" className="bg-neutral-900 border-neutral-800 text-center text-white" maxLength={5} value={caducidad} onChange={(e) => {
-                                            let v = e.target.value.replace(/\D/g, '');
-                                            if (v.length >= 3) v = v.substring(0, 2) + '/' + v.substring(2, 4);
-                                            setCaducidad(v);
-                                        }} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">CVC</label>
-                                        <Input type="password" placeholder="***" className="bg-neutral-900 border-neutral-800 text-center text-white" maxLength={3} value={cvc} onChange={(e) => setCvc(e.target.value.replace(/\D/g, ''))} />
-                                    </div>
-                                </div>
-
-                                <Button onClick={handleGuardarTarjeta} disabled={isSaving} className="w-full bg-fitbox-red hover:bg-red-700 py-6 mt-4 shadow-lg shadow-fitbox-red/20 font-bold text-white">
-                                    {isSaving ? 'GUARDANDO DATOS...' : 'GUARDAR CAMBIOS'}
-                                </Button>
-                            </div>
-                        )}
-                    </Card>
-                </div>
-            )}
         </div>
     );
 };
