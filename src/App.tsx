@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { useAuthStore } from './store/authStore';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
-import { LoginPage } from './pages/LoginPage'; // Tu nueva landing/login
+import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { MaquinasPage } from './pages/MaquinasPage';
@@ -16,11 +16,12 @@ import { GestionPagosPage } from './pages/GestionPagosPage';
 import { Card } from './components/ui/Card';
 import { Input } from './components/ui/Input';
 import { Button } from './components/ui/Button';
-import { CreditCard, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'; // <-- AÑADIDO Loader2
+import { CreditCard, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'; 
 import { supabase } from './database/supabase/Client';
 import { PaymentRepository } from './database/repositories/PaymentRepository';
 import { MisClasesPage } from './pages/MisClasesPage';
 import { RutinasPage } from './pages/RutinasPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage'; 
 
 // --- Modal bloqueador tipo Stripe ---
 const PaymentModal = ({ profile }: { profile: any }) => {
@@ -126,7 +127,8 @@ const AppContent = () => {
   const location = useLocation();
   const { checkSession, isLoading } = useAuthStore();
 
-  const isPublicRoute = location.pathname === '/' || location.pathname === '/registro';
+  // /reset-password como ruta pública para que no pida login
+  const isPublicRoute = location.pathname === '/' || location.pathname === '/registro' || location.pathname === '/reset-password';
 
   useEffect(() => {
     checkSession();
@@ -175,6 +177,7 @@ const AppContent = () => {
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/registro" element={<RegisterPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} /> {/* <-- NUEVA RUTA */}
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/perfil" element={<ProtectedRoute><PerfilPage /></ProtectedRoute>} />
           <Route path="/socios" element={<ProtectedRoute><SociosPage /></ProtectedRoute>} />

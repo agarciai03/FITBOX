@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
-import { LogOut, Save, Camera, CheckCircle } from 'lucide-react';
+import { LogOut, Save, Camera, CheckCircle, Shield } from 'lucide-react'; // <-- AÑADIDO: Shield
 import { supabase } from '../database/supabase/Client';
 import { REGEX } from '../components/utils/regex';
+import { AuthRepository } from '../database/repositories/AuthRepository'; // <-- AÑADIDO: AuthRepository
 
 export const PerfilPage = () => {
     const { profile, logout, setUser } = useAuthStore();
@@ -27,6 +28,11 @@ export const PerfilPage = () => {
         codigo_postal: '',
         avatar_url: ''
     });
+
+    // --- NUEVO: ESTADOS PARA CAMBIO DE CONTRASEÑA ---
+    const [passwords, setPasswords] = useState({ new: '', confirm: '' });
+    const [passLoading, setPassLoading] = useState(false);
+    // ------------------------------------------------
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -113,6 +119,26 @@ export const PerfilPage = () => {
             setError("No se pudo subir la imagen. Comprueba que el bucket 'avatars' esté creado y sea público en Supabase.");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    // --- NUEVO: FUNCIÓN PARA CAMBIAR CONTRASEÑA EN VIVO ---
+    const handleUpdatePassword = async () => {
+        setError(null);
+        setSuccessMessage(null);
+
+        if (passwords.new.length < 6) return setError("La nueva contraseña debe tener al menos 6 caracteres.");
+        if (passwords.new !== passwords.confirm) return setError("Las contraseñas no coinciden.");
+
+        setPassLoading(true);
+        try {
+            await AuthRepository.updatePassword(passwords.new);
+            setSuccessMessage("¡Contraseña actualizada con éxito!");
+            setPasswords({ new: '', confirm: '' });
+        } catch {
+            setError("No se ha podido actualizar la contraseña.");
+        } finally {
+            setPassLoading(false);
         }
     };
 
@@ -260,7 +286,7 @@ export const PerfilPage = () => {
                     {/* BLOQUE 1: Datos de la Cuenta (SOLO LECTURA) */}
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold text-white border-b border-neutral-800 pb-2">
-                            Cuenta y Seguridad <span className="text-xs text-gray-500 font-normal ml-2">(Seguridad)</span>
+                            Cuenta y Seguridad <span className="text-xs text-gray-500 font-normal ml-2">(Lectura)</span>
                         </h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
@@ -275,6 +301,47 @@ export const PerfilPage = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* --- NUEVO BLOQUE: SEGURIDAD Y CONTRASEÑA --- */}
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-semibold text-white border-b border-neutral-800 pb-2 flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-fitbox-red" />
+                            Seguridad de la cuenta
+                        </h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                            <div className="space-y-2">
+                                <Label className="text-gray-300 font-bold text-xs uppercase tracking-wider">Nueva Contraseña</Label>
+                                <Input
+                                    type="password"
+                                    placeholder="Mínimo 6 caracteres"
+                                    value={passwords.new}
+                                    onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
+                                    className={editableInputStyle}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-gray-300 font-bold text-xs uppercase tracking-wider">Repetir Contraseña</Label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="password"
+                                        placeholder="Confirma la contraseña"
+                                        value={passwords.confirm}
+                                        onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
+                                        className={editableInputStyle}
+                                    />
+                                    <Button
+                                        onClick={handleUpdatePassword}
+                                        disabled={passLoading || !passwords.new}
+                                        className="bg-neutral-800 hover:bg-fitbox-red transition-colors font-bold border border-neutral-700"
+                                    >
+                                        {passLoading ? '...' : 'Actualizar'}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {/* ------------------------------------------- */}
 
                     {/* BLOQUE 2: Información Personal (EDITABLE) */}
                     <div className="space-y-4">

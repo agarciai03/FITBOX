@@ -1,6 +1,5 @@
 import { supabase } from "../supabase/Client";
 
-// Todos los datos que tu RegisterPage va a enviar.
 export interface RegisterData {
     nombre: string;
     apellidos: string;
@@ -9,13 +8,13 @@ export interface RegisterData {
     dni: string;
     telefono: string;
     sexo: string;
-    fecha_nacimiento: string; 
+    fecha_nacimiento: string;
     pais: string;
     codigo_postal: string;
     localidad: string;
     provincia: string;
     id_rol?: number;
-    avatar_url?: string | null; 
+    avatar_url?: string | null;
 }
 
 export const AuthRepository = {
@@ -30,7 +29,7 @@ export const AuthRepository = {
                     dni: userData.dni,
                     telefono: userData.telefono,
                     sexo: userData.sexo,
-                    fecha_nacimiento: userData.fecha_nacimiento, 
+                    fecha_nacimiento: userData.fecha_nacimiento,
                     pais: userData.pais,
                     codigo_postal: userData.codigo_postal,
                     localidad: userData.localidad,
@@ -42,7 +41,7 @@ export const AuthRepository = {
         });
 
         if (error) throw error;
-        return data; 
+        return data;
     },
 
     login: async (email: string, password: string) => {
@@ -53,5 +52,21 @@ export const AuthRepository = {
 
         if (error) throw error;
         return data;
+    },
+
+    // NUEVO: Enviar email de recuperación
+    sendResetPasswordEmail: async (email: string) => {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+    },
+
+    // NUEVO: Actualizar la contraseña
+    updatePassword: async (newPassword: string) => {
+        const { error } = await supabase.auth.updateUser({
+            password: newPassword
+        });
+        if (error) throw error;
     }
 };
