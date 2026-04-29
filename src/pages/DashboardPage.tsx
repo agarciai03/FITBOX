@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '@/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
-import { Users, Calendar, AlertCircle, Activity, CreditCard, Clock, Dumbbell } from 'lucide-react';
+import { Users, Calendar, AlertCircle, Activity, CreditCard, Clock, Dumbbell, Settings } from 'lucide-react';
 import { MachineRepository } from '../database/repositories/MachineRepository';
 import { supabase } from '../database/supabase/Client';
 import { OcupacionChart } from '../components/charts/OcupacionChart';
@@ -21,6 +21,10 @@ export const DashboardPage = () => {
     const user = useAuthStore((state) => state.user);
     const navigate = useNavigate();
 
+    const rol = profile?.roles?.nombre_rol || 'Socio';
+    const isAdminOrMonitor = rol === 'Administrador' || rol === 'Monitor';
+    const isActivo = (profile as any)?.estado_pago === 'activo';
+
     const [incidencias, setIncidencias] = useState(0);
     const [sociosCount, setSociosCount] = useState(0);
     const [clasesCount, setClasesCount] = useState(0);
@@ -34,11 +38,13 @@ export const DashboardPage = () => {
     const [mensajeOcupacion, setMensajeOcupacion] = useState({ actual: 0, recomendada: '', recomendadaOcup: 0 });
 
     useEffect(() => {
+        // Cargar incidencias (RF-18)
         MachineRepository.getAllMaquinas().then(data => {
             const maquinasRotas = data.filter(maquina => maquina.estado !== 'Correcto').length;
             setIncidencias(maquinasRotas);
         }).catch(err => console.error("Error al cargar incidencias:", err));
 
+        // Cargar total de socios (RF-18)
         const fetchSocios = async () => {
             const { count, error } = await supabase.from('usuarios').select('*', { count: 'exact', head: true });
             if (!error && count !== null) setSociosCount(count);
@@ -51,6 +57,7 @@ export const DashboardPage = () => {
             if (m !== null) setMujeresCount(m);
         };
 
+        // Cargar clases activas de hoy (RF-18)
         const fetchClasesHoy = async () => {
             setIsLoadingClases(true);
             const hoy = new Date().toISOString().split('T')[0];
@@ -138,8 +145,6 @@ export const DashboardPage = () => {
         fetchClasesHoy();
     }, []);
 
-    const isActivo = (profile as any)?.estado_pago === 'activo';
-
     return (
         <div className="relative w-full pb-12">
 
@@ -148,20 +153,21 @@ export const DashboardPage = () => {
             <div className="fixed inset-0 bg-linear-to-br from-neutral-950 via-red-900/10 to-neutral-950 z-[-1] pointer-events-none"></div>
             <div className="fixed inset-0 opacity-[0.03] z-[-1] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }}></div>
 
-            <div className="p-4 md:p-6 lg:p-8 w-full max-w-350 mx-auto space-y-6 animate-in fade-in duration-700 relative z-10">
+            <div className="p-4 md:p-6 lg:p-8 w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-700 relative z-10">
 
-                {/* --- CABECERA --- */}
+                {/* --- CABECERA DINÁMICA SEGÚN ROL --- */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-neutral-800/50 pb-4">
                     <div>
                         <h1 className="text-3xl md:text-4xl font-black text-white italic tracking-tighter uppercase">
-                            Panel de <span className="text-fitbox-red">Atleta</span>
+                            Panel de <span className="text-fitbox-red">{isAdminOrMonitor ? 'Control' : 'Atleta'}</span>
                         </h1>
                         <p className="text-sm text-gray-400 mt-1 font-medium">
-                            Bienvenido, <span className="text-white capitalize">{profile?.nombre || user?.email?.split('@')[0]}</span>. Prepárate para entrenar.
+                            Bienvenido, <span className="text-white capitalize">{profile?.nombre || user?.email?.split('@')[0]}</span>.
+                            {isAdminOrMonitor ? ' Visión general del estado del centro.' : ' Prepárate para entrenar.'}
                         </p>
                     </div>
 
-                    {profile?.roles?.nombre_rol === 'Socio' && (
+                    {!isAdminOrMonitor && (
                         <div className={`flex items-center gap-3 px-4 py-2 rounded-xl border backdrop-blur-md shadow-lg ${isActivo ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
                             <div className={`p-1.5 rounded-full ${isActivo ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-fitbox-red'}`}>
                                 <CreditCard className="w-4 h-4" />
@@ -176,11 +182,11 @@ export const DashboardPage = () => {
                     )}
                 </div>
 
-                {/* --- TARJETAS DE MÉTRICAS (KPIs) --- */}
+                {/* --- TARJETAS DE MÉTRICAS (KPIs) (RF-18 Completado) --- */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                     <div className="bg-neutral-900/40 backdrop-blur-xl border border-white/5 rounded-xl p-4 shadow-lg hover:bg-neutral-800/50 transition-colors">
                         <div className="flex justify-between items-start mb-1">
-                            <span className="text-[9px] font-bold tracking-widest text-gray-500 uppercase">Socios</span>
+                            <span className="text-[9px] font-bold tracking-widest text-gray-500 uppercase">Total Socios</span>
                             <Users className="h-4 w-4 text-fitbox-red" />
                         </div>
                         <div className="text-2xl font-black text-white">{sociosCount}</div>
@@ -221,13 +227,12 @@ export const DashboardPage = () => {
                     </div>
                 </div>
 
-                {/* --- CONTENIDO PRINCIPAL --- */}
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
 
                     {/* COLUMNA IZQUIERDA */}
                     <div className="xl:col-span-8 space-y-6">
 
-                        {/* GRÁFICO DE OCUPACIÓN (Ahora protagonista de la zona izquierda) */}
+                        {/* GRÁFICO DE OCUPACIÓN */}
                         <div className="bg-neutral-900/60 backdrop-blur-2xl border border-white/5 p-6 rounded-2xl shadow-xl h-full flex flex-col">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
                                 <h3 className="text-white font-black text-lg uppercase tracking-tight flex items-center gap-2">
@@ -237,16 +242,15 @@ export const DashboardPage = () => {
                                 <div className={`px-3 py-1.5 rounded-lg border backdrop-blur-sm ${mensajeOcupacion.actual > 70 ? 'bg-red-500/10 border-red-500/30' : 'bg-green-500/10 border-green-500/30'}`}>
                                     <p className="text-[11px] font-bold text-gray-300">
                                         {mensajeOcupacion.actual > 70 ? (
-                                            <><span className="text-fitbox-red">⚠️ Muy lleno ({mensajeOcupacion.actual}%).</span> Mejor a las {mensajeOcupacion.recomendada}.</>
+                                            <><span className="text-fitbox-red">Muy lleno ({mensajeOcupacion.actual}%).</span> Mejor a las {mensajeOcupacion.recomendada}.</>
                                         ) : (
-                                            <><span className="text-green-400">✅ Tranquilo ({mensajeOcupacion.actual}%).</span> Buen momento para entrenar.</>
+                                            <><span className="text-green-400">Tranquilo ({mensajeOcupacion.actual}%).</span> Buen momento para entrenar.</>
                                         )}
                                     </p>
                                 </div>
                             </div>
 
                             <div className="flex-1 min-h-75 border border-white/5 bg-neutral-950/30 p-4 rounded-xl flex items-center justify-center">
-                                {/* Tu componente OcupacionChart se expandirá aquí */}
                                 <OcupacionChart data={datosOcupacion} />
                             </div>
                         </div>
@@ -256,21 +260,41 @@ export const DashboardPage = () => {
                     {/* COLUMNA DERECHA */}
                     <div className="xl:col-span-4 space-y-6">
 
-                        {/* ACCIONES RÁPIDAS */}
+                        {/* ACCIONES RÁPIDAS DINÁMICAS */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3">
-                            <Button
-                                onClick={() => navigate('/clases')}
-                                className="w-full h-16 bg-fitbox-red hover:bg-red-700 text-white font-black text-lg italic uppercase tracking-widest shadow-lg shadow-fitbox-red/20 transition-transform hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl"
-                            >
-                                <Calendar className="w-5 h-5" /> Reservar
-                            </Button>
+                            {isAdminOrMonitor ? (
+                                <>
+                                    <Button
+                                        onClick={() => navigate('/socios')}
+                                        className="w-full h-16 bg-fitbox-red hover:bg-red-700 text-white font-black text-lg italic uppercase tracking-widest shadow-lg shadow-fitbox-red/20 transition-transform hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl"
+                                    >
+                                        <Users className="w-5 h-5" /> Gestión Socios
+                                    </Button>
 
-                            <Button
-                                onClick={() => navigate('/maquinas')}
-                                className="w-full h-16 bg-neutral-900/80 backdrop-blur-xl hover:bg-neutral-800 text-white font-black text-lg italic uppercase tracking-widest border border-white/10 shadow-lg transition-all hover:border-fitbox-red/50 hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl"
-                            >
-                                <Dumbbell className="w-5 h-5" /> Máquinas
-                            </Button>
+                                    <Button
+                                        onClick={() => navigate('/maquinas')}
+                                        className="w-full h-16 bg-neutral-900/80 backdrop-blur-xl hover:bg-neutral-800 text-white font-black text-lg italic uppercase tracking-widest border border-white/10 shadow-lg transition-all hover:border-fitbox-red/50 hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl"
+                                    >
+                                        <Settings className="w-5 h-5" /> Ver Inventario
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <Button
+                                        onClick={() => navigate('/clases')}
+                                        className="w-full h-16 bg-fitbox-red hover:bg-red-700 text-white font-black text-lg italic uppercase tracking-widest shadow-lg shadow-fitbox-red/20 transition-transform hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl"
+                                    >
+                                        <Calendar className="w-5 h-5" /> Reservar
+                                    </Button>
+
+                                    <Button
+                                        onClick={() => navigate('/maquinas')}
+                                        className="w-full h-16 bg-neutral-900/80 backdrop-blur-xl hover:bg-neutral-800 text-white font-black text-lg italic uppercase tracking-widest border border-white/10 shadow-lg transition-all hover:border-fitbox-red/50 hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl"
+                                    >
+                                        <Dumbbell className="w-5 h-5" /> Máquinas
+                                    </Button>
+                                </>
+                            )}
                         </div>
 
                         {/* LISTA DE CLASES */}

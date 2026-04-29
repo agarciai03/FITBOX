@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { UserRepository, type Usuario } from '../database/repositories/UserRepository';
+import { ClassRepository, type Disciplina } from '../database/repositories/ClassRepository';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Users, Shield, UserCheck, AlertTriangle, UserPlus, CheckCircle, Trash2, Edit2 } from 'lucide-react';
+import { Users, Shield, UserCheck, AlertTriangle, UserPlus, CheckCircle, Trash2, Edit2, Camera } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { supabase } from '../database/supabase/Client';
-import { REGEX, isValidDNI, limpiarDNI } from '../components/utils/regex';
+import { REGEX, isValidDNI, calcularLetraDNI } from '../components/utils/regex';
+// --- AÑADIDO: Importamos tu AuthRepository (Cliente en la sombra) ---
+import { AuthRepository } from '../database/repositories/AuthRepository';
 
 export const SociosPage = () => {
     const profile = useAuthStore((state) => state.profile);
@@ -13,13 +17,15 @@ export const SociosPage = () => {
     const isAdmin = rol === 'Administrador';
 
     const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+    const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const [isCreandoStaff, setIsCreandoStaff] = useState(false);
+    const [isRegistering, setIsRegistering] = useState(false);
 
-    // ESTADO COMPLETO (Igual que un registro normal)
+    // ESTADO COMPLETO 
     const [nuevoStaff, setNuevoStaff] = useState({
         nombre: '',
         apellidos: '',
@@ -27,12 +33,15 @@ export const SociosPage = () => {
         telefono: '',
         email: '',
         password: '',
+        confirmPassword: '', // <-- AÑADIDO: Confirmar contraseña
         id_rol: 2,
         sexo: '',
         pais: '',
         provincia: '',
         localidad: '',
-        codigo_postal: ''
+        codigo_postal: '',
+        avatar_url: '',
+        id_disciplina: ''
     });
 
     const [usuarioAEditar, setUsuarioAEditar] = useState<Usuario | null>(null);
@@ -50,11 +59,46 @@ export const SociosPage = () => {
         }
     }, []);
 
+    const cargarDisciplinas = useCallback(async () => {
+        try {
+            const data = await ClassRepository.getAllDisciplinas();
+            setDisciplinas(data);
+        } catch (errorCatch) {
+            console.error("Error cargando disciplinas", errorCatch);
+        }
+    }, []);
+
     useEffect(() => {
         if (isAdmin) {
             cargarUsuarios();
+            cargarDisciplinas();
         }
-    }, [isAdmin, cargarUsuarios]);
+    }, [isAdmin, cargarUsuarios, cargarDisciplinas]);
+
+    // --- FUNCIÓN: SUBIR FOTO DEL MONITOR ---
+    const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) return setError("Formato no válido. Solo imágenes.");
+            if (file.size > 5 * 1024 * 1024) return setError("La imagen pesa más de 5MB.");
+
+            setError(null);
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `temp_monitors/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+            setNuevoStaff({ ...nuevoStaff, avatar_url: publicUrl });
+        } catch {
+            setError("No se pudo subir la imagen del monitor.");
+        }
+    };
 
     // Función: Añadir Staff (REGISTRO COMPLETO CON AUTH)
     const handleContratarStaff = async () => {
@@ -64,9 +108,15 @@ export const SociosPage = () => {
         const telefonoLimpio = nuevoStaff.telefono.trim();
         const dniLimpio = nuevoStaff.dni.trim().toUpperCase();
 
-        // 1. Comprobamos campos obligatorios
-        if (!nuevoStaff.nombre || !nuevoStaff.apellidos || !nuevoStaff.dni || !nuevoStaff.email || !nuevoStaff.password) {
-            setError("Por favor, rellena los campos obligatorios marcados con (*).");
+        // 1. Comprobamos campos obligatorios (incluido confirmPassword)
+        if (!nuevoStaff.nombre || !nuevoStaff.apellidos || !nuevoStaff.dni || !nuevoStaff.email || !nuevoStaff.password || !nuevoStaff.confirmPassword || !nuevoStaff.id_disciplina) {
+            setError("Por favor, rellena los campos obligatorios marcados con (*). Recuerda asignar una disciplina.");
+            return;
+        }
+
+        // --- Validación de coincidencia de contraseñas ---
+        if (nuevoStaff.password !== nuevoStaff.confirmPassword) {
+            setError("Las contraseñas no coinciden. Por favor, revísalas.");
             return;
         }
 
@@ -101,49 +151,45 @@ export const SociosPage = () => {
             return;
         }
 
+        setIsRegistering(true);
+
         try {
-            // 3. PASO ÚNICO Y DEFINITIVO: signUp con todos los metadatos.
-            // Al meter los datos en "options.data", el Trigger automático de tu Supabase
-            // se encargará de crear la ficha en public.usuarios sin que nosotros hagamos ".insert()".
-            const { error: authError } = await supabase.auth.signUp({
-                email: nuevoStaff.email.trim(),
-                password: nuevoStaff.password,
-                options: {
-                    data: {
-                        nombre: nuevoStaff.nombre.trim(),
-                        apellidos: nuevoStaff.apellidos.trim(),
-                        dni: dniLimpio,
-                        id_rol: nuevoStaff.id_rol, // Pasamos el rol para que sea admin/monitor
-                        telefono: telefonoLimpio || null,
-                        sexo: nuevoStaff.sexo || null,
-                        pais: nuevoStaff.pais || null,
-                        provincia: nuevoStaff.provincia || null,
-                        localidad: nuevoStaff.localidad || null,
-                        codigo_postal: nuevoStaff.codigo_postal || null
-                    }
-                }
+            // --- AÑADIDO: 3. Usamos AuthRepository (Cliente en la Sombra) ---
+            await AuthRepository.register(nuevoStaff.email.trim(), nuevoStaff.password, {
+                nombre: nuevoStaff.nombre.trim(),
+                apellidos: nuevoStaff.apellidos.trim(),
+                dni: dniLimpio,
+                id_rol: nuevoStaff.id_rol,
+                telefono: telefonoLimpio || '',
+                sexo: nuevoStaff.sexo || '',
+                pais: nuevoStaff.pais || '',
+                provincia: nuevoStaff.provincia || '',
+                localidad: nuevoStaff.localidad || '',
+                codigo_postal: nuevoStaff.codigo_postal || '',
+                avatar_url: nuevoStaff.avatar_url || null,
+                id_disciplina: nuevoStaff.id_disciplina || null,
+                fecha_nacimiento: '1990-01-01' // Dato por defecto para evitar fallos si tu BD lo pide
+                ,
+                email: ''
             });
 
-            if (authError) throw authError;
-
-            // Recargamos la tabla visualmente (damos medio segundo de margen para que el trigger acabe en la BBDD)
+            // Esperamos 1 segundo para que el Trigger termine y recargamos todo
             setTimeout(async () => {
                 await cargarUsuarios();
-            }, 500);
+                setIsRegistering(false);
+                setSuccessMessage(`¡La ficha de ${nuevoStaff.nombre.trim()} se ha creado correctamente! Ya puede iniciar sesión.`);
+                setIsCreandoStaff(false);
 
-            setSuccessMessage(`¡La ficha de ${nuevoStaff.nombre.trim()} se ha creado correctamente! Ya puede iniciar sesión.`);
-            setIsCreandoStaff(false);
-
-            // Limpiamos el formulario
-            setNuevoStaff({
-                nombre: '', apellidos: '', dni: '', telefono: '', email: '', password: '',
-                id_rol: 2, sexo: '', pais: '', provincia: '', localidad: '', codigo_postal: ''
-            });
+                // Limpiamos el formulario (Añadido confirmPassword)
+                setNuevoStaff({
+                    nombre: '', apellidos: '', dni: '', telefono: '', email: '', password: '', confirmPassword: '',
+                    id_rol: 2, sexo: '', pais: '', provincia: '', localidad: '', codigo_postal: '',
+                    avatar_url: '', id_disciplina: ''
+                });
+            }, 1000);
 
         } catch (errorCatch: any) {
             console.error("Error al registrar staff:", errorCatch);
-
-            // Filtramos los errores para que el usuario sepa qué ha fallado
             if (errorCatch.status === 400 || errorCatch.message?.includes('already registered')) {
                 setError("El correo electrónico ya está registrado en el sistema.");
             } else if (errorCatch.code === '23505') {
@@ -151,6 +197,7 @@ export const SociosPage = () => {
             } else {
                 setError(errorCatch.message || "Error al intentar crear el empleado en la base de datos.");
             }
+            setIsRegistering(false); // Liberamos el botón si hay error
         }
     };
 
@@ -288,9 +335,11 @@ export const SociosPage = () => {
                                                     </span>
                                                 )}
                                                 {esMonitor && (
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                                                        <UserCheck className="w-3.5 h-3.5" /> STAFF / MONITOR
-                                                    </span>
+                                                    <div className="flex flex-col items-start gap-1">
+                                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                                            <UserCheck className="w-3.5 h-3.5" /> STAFF / MONITOR
+                                                        </span>
+                                                    </div>
                                                 )}
                                                 {esSocio && (
                                                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-neutral-800 text-gray-300 border border-neutral-700">
@@ -420,15 +469,16 @@ export const SociosPage = () => {
                 </div>
             )}
 
-            {/* MODAL CONTRATAR STAFF (AHORA ES UN FORMULARIO COMPLETO TIPO REGISTRO) */}
+            {/* MODAL CONTRATAR STAFF */}
             {isCreandoStaff && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col my-8">
+                    <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col my-8 relative">
+
                         <div className="border-b border-neutral-800 pb-4 mb-6">
                             <h3 className="text-2xl font-black text-white uppercase tracking-tight">
-                                Ficha de Nuevo Empleado
+                                Ficha de Nuevo Monitor
                             </h3>
-                            <p className="text-sm text-fitbox-text-muted mt-1">Completa los datos contractuales y de acceso del nuevo staff.</p>
+                            <p className="text-sm text-fitbox-text-muted mt-1">Completa los datos contractuales y la especialidad del staff.</p>
                         </div>
 
                         {error && (
@@ -437,20 +487,49 @@ export const SociosPage = () => {
                             </div>
                         )}
 
+                        {/* SUBIDA DE FOTO DE PERFIL */}
+                        <div className="flex justify-center mb-6">
+                            <label className="cursor-pointer relative group block">
+                                <Avatar className="h-24 w-24 border-2 border-fitbox-red shadow-lg transition-opacity group-hover:opacity-50">
+                                    {nuevoStaff.avatar_url && <AvatarImage src={nuevoStaff.avatar_url} className="object-cover" />}
+                                    <AvatarFallback className="bg-neutral-900 text-fitbox-red font-bold">FOTO</AvatarFallback>
+                                </Avatar>
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Camera className="w-8 h-8 text-white" />
+                                </div>
+                                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                            </label>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            {/* ROL, EMAIL Y CONTRASEÑA */}
-                            <div className="md:col-span-2 space-y-2">
+
+                            {/* ROL FIJO (Monitor) */}
+                            <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Puesto Asignado *</label>
+                                <div className="w-full bg-neutral-900 border border-neutral-800 text-fitbox-red font-bold rounded-lg px-4 py-3 flex items-center">
+                                    Monitor Deportivo
+                                </div>
+                            </div>
+
+                            {/* ESPECIALIDAD (Disciplina) */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-fitbox-red uppercase tracking-widest">Especialidad *</label>
                                 <select
-                                    className="w-full bg-neutral-900 border border-neutral-800 text-blue-400 font-bold rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-all"
-                                    value={nuevoStaff.id_rol}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, id_rol: Number(e.target.value) })}
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white font-bold rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-all"
+                                    value={nuevoStaff.id_disciplina}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, id_disciplina: e.target.value })}
                                 >
-                                    <option value={2}>Monitor Deportivo</option>
-                                    <option value={1}>Co-Administrador (Dirección)</option>
+                                    <option value="" disabled>Selecciona la disciplina principal...</option>
+                                    {disciplinas.map((d) => (
+                                        <option key={d.id_disciplina} value={d.id_disciplina}>
+                                            {d.nombre}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
-                            <div className="space-y-2">
+
+                            {/* CREDENCIALES */}
+                            <div className="space-y-2 md:col-span-2">
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Correo Corporativo *</label>
                                 <Input
                                     type="email"
@@ -460,6 +539,7 @@ export const SociosPage = () => {
                                     onChange={(e) => setNuevoStaff({ ...nuevoStaff, email: e.target.value.replace(/\s/g, '') })}
                                 />
                             </div>
+
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Contraseña Temporal *</label>
                                 <Input
@@ -471,11 +551,21 @@ export const SociosPage = () => {
                                 />
                             </div>
 
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Confirmar Contraseña *</label>
+                                <Input
+                                    type="password"
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
+                                    placeholder="Repite la contraseña..."
+                                    value={nuevoStaff.confirmPassword}
+                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, confirmPassword: e.target.value })}
+                                />
+                            </div>
+
                             {/* DATOS PERSONALES */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Nombre *</label>
                                 <Input
-                                    autoFocus
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Ej: Carlos"
                                     value={nuevoStaff.nombre}
@@ -492,14 +582,33 @@ export const SociosPage = () => {
                                 />
                             </div>
 
+                            {/* --- INPUT DNI MODIFICADO --- */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">DNI / NIE *</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">DNI *</label>
                                 <Input
-                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red uppercase"
-                                    placeholder="Escribe 8 números..."
+                                    className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red uppercase font-mono tracking-widest"
+                                    placeholder="Escribe 8 números"
                                     value={nuevoStaff.dni}
+                                    maxLength={9}
                                     onChange={(e) => {
-                                        setNuevoStaff({ ...nuevoStaff, dni: limpiarDNI(e.target.value) });
+                                        const rawValue = e.target.value;
+                                        
+                                        if (rawValue.length < nuevoStaff.dni.length) {
+                                            if (nuevoStaff.dni.length === 9) {
+                                                setNuevoStaff({ ...nuevoStaff, dni: nuevoStaff.dni.substring(0, 7) });
+                                            } else {
+                                                setNuevoStaff({ ...nuevoStaff, dni: rawValue.replace(/\D/g, '') });
+                                            }
+                                            return;
+                                        }
+
+                                        const numeros = rawValue.replace(/\D/g, '').substring(0, 8);
+                                        
+                                        if (numeros.length === 8) {
+                                            setNuevoStaff({ ...nuevoStaff, dni: numeros + calcularLetraDNI(numeros) });
+                                        } else {
+                                            setNuevoStaff({ ...nuevoStaff, dni: numeros });
+                                        }
                                     }}
                                 />
                             </div>
@@ -563,7 +672,6 @@ export const SociosPage = () => {
                                     onChange={(e) => setNuevoStaff({ ...nuevoStaff, localidad: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
                                 />
                             </div>
-
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Código Postal</label>
                                 <Input
@@ -587,8 +695,8 @@ export const SociosPage = () => {
                             }}>
                                 Cancelar
                             </Button>
-                            <Button className="flex-1 bg-fitbox-red hover:bg-red-700 font-bold" onClick={handleContratarStaff}>
-                                Registrar Empleado
+                            <Button className="flex-1 bg-fitbox-red hover:bg-red-700 font-bold" disabled={isRegistering} onClick={handleContratarStaff}>
+                                {isRegistering ? 'Procesando...' : 'Registrar Empleado'}
                             </Button>
                         </div>
                     </div>

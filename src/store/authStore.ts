@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { supabase } from '../database/supabase/Client';
 import type { User } from '@supabase/supabase-js';
 
-// Tipamos el perfil de nuestra base de datos 
 export interface UserProfile {
     apellidos: string;
     dni: string;
@@ -24,9 +23,9 @@ export interface UserProfile {
 
 interface AuthState {
     user: User | null;
-    profile: UserProfile | null; // Guardará los datos de la tabla public.usuarios
+    profile: UserProfile | null;
     isLoading: boolean;
-    setUser: (user: User | null) => Promise<void>; // Lo hacemos asíncrono
+    setUser: (user: User | null) => Promise<void>;
     checkSession: () => Promise<void>;
     logout: () => Promise<void>;
 }
@@ -35,20 +34,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     user: null,
     profile: null,
     isLoading: true,
-
-    // Cuando guardamos el usuario, buscamos su rol en la BBDD
+    
     setUser: async (user) => {
         if (!user) {
             set({ user: null, profile: null });
             return;
         }
         try {
-            // Hacemos la consulta a la tabla usuarios pidiendo también el nombre_rol
             const { data: profile } = await supabase
                 .from('usuarios')
                 .select('*, roles(nombre_rol)')
                 .eq('id_usuario', user.id)
-                .single();
+                .maybeSingle(); 
 
             set({ user, profile: profile as UserProfile });
         } catch (error) {
@@ -56,7 +53,7 @@ export const useAuthStore = create<AuthState>((set) => ({
             set({ user, profile: null });
         }
     },
-
+    
     checkSession: async () => {
         try {
             const { data: { session }, error } = await supabase.auth.getSession();
@@ -67,7 +64,7 @@ export const useAuthStore = create<AuthState>((set) => ({
                     .from('usuarios')
                     .select('*, roles(nombre_rol)')
                     .eq('id_usuario', session.user.id)
-                    .single();
+                    .maybeSingle(); // <-- CAMBIO AQUÍ TAMBIÉN
 
                 set({ user: session.user, profile: profile as UserProfile, isLoading: false });
             } else {
@@ -78,7 +75,7 @@ export const useAuthStore = create<AuthState>((set) => ({
             set({ user: null, profile: null, isLoading: false });
         }
     },
-
+    
     logout: async () => {
         await supabase.auth.signOut();
         set({ user: null, profile: null });

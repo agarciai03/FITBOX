@@ -1,4 +1,20 @@
+import { createClient } from '@supabase/supabase-js';
 import { supabase } from "../supabase/Client";
+
+// Creamos un "trabajador en la sombra" que NO guarda sesión.
+// Le asignamos un "storageKey" único para que Supabase no se queje por consola.
+const supabaseSecundario = createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY,
+    {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false,
+            storageKey: 'registro-staff-token' // <-- ¡ESTO ELIMINA EL AVISO DE LA CONSOLA!
+        }
+    }
+);
 
 export interface RegisterData {
     nombre: string;
@@ -15,11 +31,13 @@ export interface RegisterData {
     provincia: string;
     id_rol?: number;
     avatar_url?: string | null;
+    id_disciplina?: string | null;
 }
 
 export const AuthRepository = {
     register: async (email: string, password: string, userData: RegisterData) => {
-        const { data, error } = await supabase.auth.signUp({
+        // USAMOS EL CLIENTE SECUNDARIO AQUÍ
+        const { data, error } = await supabaseSecundario.auth.signUp({
             email,
             password,
             options: {
@@ -35,7 +53,8 @@ export const AuthRepository = {
                     localidad: userData.localidad,
                     provincia: userData.provincia,
                     id_rol: userData.id_rol || 3,
-                    avatar_url: userData.avatar_url || null
+                    avatar_url: userData.avatar_url || null,
+                    id_disciplina: userData.id_disciplina || null
                 }
             }
         });
@@ -54,7 +73,6 @@ export const AuthRepository = {
         return data;
     },
 
-    // NUEVO: Enviar email de recuperación
     sendResetPasswordEmail: async (email: string) => {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/reset-password`,
@@ -62,7 +80,6 @@ export const AuthRepository = {
         if (error) throw error;
     },
 
-    // NUEVO: Actualizar la contraseña
     updatePassword: async (newPassword: string) => {
         const { error } = await supabase.auth.updateUser({
             password: newPassword
