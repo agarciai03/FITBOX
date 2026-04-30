@@ -7,7 +7,7 @@ import { Input } from '../components/ui/Input';
 import { Users, Shield, UserCheck, AlertTriangle, UserPlus, CheckCircle, Trash2, Edit2, Camera } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { supabase } from '../database/supabase/Client';
-import { REGEX, isValidDNI, calcularLetraDNI } from '../components/utils/regex';
+import { REGEX, isValidDNI, calcularLetraDNI } from '../utils/regex';
 // --- AÑADIDO: Importamos tu AuthRepository (Cliente en la sombra) ---
 import { AuthRepository } from '../database/repositories/AuthRepository';
 

@@ -9,7 +9,7 @@ import { Button } from '../components/ui/Button';
 import { Alert } from '../components/ui/Alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera, X } from 'lucide-react';
-import { REGEX, isValidDNI, limpiarDNI } from '../components/utils/regex';
+import { REGEX, isValidDNI, limpiarDNI } from '../utils/regex';
 
 interface FormInputs extends RegisterData {
     confirmPassword?: string;

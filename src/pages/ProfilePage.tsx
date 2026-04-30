@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { LogOut, Save, Camera, CheckCircle, Shield } from 'lucide-react'; // <-- AÑADIDO: Shield
 import { supabase } from '../database/supabase/Client';
-import { REGEX } from '../components/utils/regex';
+import { REGEX } from '../utils/regex';
 import { AuthRepository } from '../database/repositories/AuthRepository'; // <-- AÑADIDO: AuthRepository
 
 export const PerfilPage = () => {

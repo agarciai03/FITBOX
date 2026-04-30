@@ -8,7 +8,7 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '../components/ui/Alert';
-import { REGEX } from '../components/utils/regex';
+import { REGEX } from '../utils/regex';
 import { Dumbbell, Flame, Users, CalendarCheck, X, CheckCircle, Mail } from 'lucide-react';
 import { RegisterPage } from './RegisterPage';
 import { AuthRepository } from '../database/repositories/AuthRepository';
