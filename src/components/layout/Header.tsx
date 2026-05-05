@@ -1,7 +1,7 @@
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Sun, Moon, Globe } from 'lucide-react';
+import { Sun, Moon, Globe, Menu } from 'lucide-react'; // <-- AÑADIDO 'Menu'
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -12,6 +12,7 @@ export const Header = () => {
 
     const user = useAuthStore((state) => state.user);
     const profile = useAuthStore((state) => state.profile);
+    const toggleMobileMenu = useAuthStore((state) => state.toggleMobileMenu); // <-- OBTENEMOS LA FUNCIÓN
     const esRutaPublica = location.pathname === '/' || location.pathname === '/registro';
 
     const irAlInicio = () => {
@@ -49,16 +50,28 @@ export const Header = () => {
     };
 
     return (
-        // EFECTO CRISTAL: bg-neutral-950/60 y backdrop-blur-xl dejan ver el fondo rojo de la app
         <header className="bg-neutral-950/60 backdrop-blur-xl border-b border-neutral-800/50 p-4 sticky top-0 z-50 transition-colors duration-300">
             <div className="w-full px-2 flex justify-between items-center">
-                <h1
-                    className="flex items-center gap-3 text-2xl font-extrabold text-white cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={irAlInicio}
-                >
-                    <img src="/favicon.png" alt="Logo FITBOX" className="h-12 w-auto object-contain" />
-                    <span>FIT<span className="text-fitbox-red">BOX</span></span>
-                </h1>
+
+                {/* menu desplegable */}
+                <div className="flex items-center gap-3">
+                    {user && !esRutaPublica && (
+                        <button
+                            onClick={toggleMobileMenu}
+                            className="md:hidden text-gray-400 hover:text-white transition-colors p-1"
+                        >
+                            <Menu className="w-6 h-6" />
+                        </button>
+                    )}
+
+                    <h1
+                        className="flex items-center gap-3 text-2xl font-extrabold text-white cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={irAlInicio}
+                    >
+                        <img src="/favicon.png" alt="Logo FITBOX" className="h-12 w-auto object-contain hidden sm:block" />
+                        <span>FIT<span className="text-fitbox-red">BOX</span></span>
+                    </h1>
+                </div>
 
                 <div className="flex items-center gap-4 sm:gap-6">
                     {user && !esRutaPublica && (
