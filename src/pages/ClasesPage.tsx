@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { ClassRepository, type Clase, type Disciplina } from '../database/repositories/ClassRepository';
 import { supabase } from '../database/supabase/Client';
 import { Button } from '../components/ui/Button';
-import { Calendar, Trash2, Clock, CheckCircle, CalendarX2, Plus } from 'lucide-react';
+import { Calendar, Trash2, Clock, CheckCircle, CalendarX2, Plus, X } from 'lucide-react'; 
 
 interface MonitorBasico {
     id_usuario: string;
@@ -23,7 +23,7 @@ export const ClasesPage = () => {
     const [clases, setClases] = useState<Clase[]>([]);
     const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
     const [monitores, setMonitores] = useState<MonitorBasico[]>([]);
-    const [misReservasActivas, setMisReservasActivas] = useState<string[]>([]);
+    const [misReservasActivas, setMisReservasActivas] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -61,8 +61,7 @@ export const ClasesPage = () => {
 
             if (isSocio && profile?.id_usuario) {
                 const misReservas = await ClassRepository.getReservasBySocio(profile.id_usuario);
-                const idsClasesReservadas = misReservas.map(reserva => reserva.id_clase);
-                setMisReservasActivas(idsClasesReservadas);
+                setMisReservasActivas(misReservas);
             }
 
         } catch (errorCatch) {
@@ -117,7 +116,7 @@ export const ClasesPage = () => {
             return;
         }
 
-        // --- VALIDACIÓN DE FINES DE SEMANA Y AFORO ---
+        // VALIDACIÓN DE FINES DE SEMANA Y AFORO 
         const disciplinaElegida = disciplinas.find(d => d.id_disciplina === nuevaClase.id_disciplina);
 
         if (disciplinaElegida && disciplinaElegida.nombre !== 'Sala de Máquinas') {
@@ -177,6 +176,20 @@ export const ClasesPage = () => {
             console.error("Error reserva:", errorCatch);
             if (errorCatch instanceof Error) setError(errorCatch.message);
             else setError("Error al intentar reservar.");
+        }
+    };
+
+    const handleCancelarReserva = async (id_reserva: string) => {
+        if (!window.confirm("¿Seguro que quieres anular tu asistencia a esta clase?")) return;
+        setError(null);
+        setSuccessMessage(null);
+        try {
+            await ClassRepository.cancelarReserva(id_reserva);
+            setSuccessMessage("Reserva cancelada correctamente.");
+            cargarDatos();
+        } catch (errorCatch) {
+            console.error("Error al cancelar:", errorCatch);
+            setError("No se ha podido cancelar la reserva.");
         }
     };
 
@@ -253,7 +266,10 @@ export const ClasesPage = () => {
                                         const ocupadas = reservasActivas.length;
                                         const total = clase.aforo_maximo;
                                         const estaLlena = ocupadas >= total;
-                                        const yaReservada = misReservasActivas.includes(clase.id_clase);
+
+                                        // Buscamos si el usuario tiene una reserva en esta clase
+                                        const miReserva = misReservasActivas.find(r => r.id_clase === clase.id_clase);
+
                                         const porcentajeOcupado = (ocupadas / total) * 100;
                                         const fechaFinClase = new Date(`${clase.fecha}T${clase.hora_fin}`);
                                         const estaFinalizada = ahora > fechaFinClase;
@@ -311,10 +327,19 @@ export const ClasesPage = () => {
                                                             Completada
                                                         </span>
                                                     ) : isSocio && (
-                                                        yaReservada ? (
-                                                            <span className="text-green-500 font-bold text-xs flex items-center justify-end gap-1">
-                                                                <CheckCircle className="w-4 h-4" /> APUNTADO
-                                                            </span>
+                                                        miReserva ? (
+                                                            <div className="flex items-center justify-end gap-3">
+                                                                <span className="text-green-500 font-bold text-xs flex items-center gap-1">
+                                                                    <CheckCircle className="w-4 h-4" /> APUNTADO
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => handleCancelarReserva(miReserva.id)}
+                                                                    className="text-red-500 hover:text-white hover:bg-red-500 p-1.5 rounded-md transition-colors"
+                                                                    title="Cancelar Reserva"
+                                                                >
+                                                                    <X className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
                                                         ) : (
                                                             <Button
                                                                 disabled={estaLlena}
