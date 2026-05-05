@@ -3,6 +3,7 @@ import { supabase } from '../supabase/Client';
 export interface Disciplina {
     id_disciplina: string;
     nombre: string;
+    aforo_maximo?: number;
 }
 
 export interface Rutina {

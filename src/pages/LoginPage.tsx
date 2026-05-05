@@ -53,13 +53,11 @@ export const LoginPage = () => {
                 navigate('/dashboard');
             }
         } catch (error: any) {
-            // --- CORRECCIÓN: TRADUCIMOS EL ERROR DE SUPABASE ---
             if (error.message?.includes('Invalid login credentials')) {
                 setAuthError("Correo electrónico o contraseña incorrectos.");
             } else {
                 setAuthError("Error al iniciar sesión. Inténtalo de nuevo.");
             }
-            // ----------------------------------------------------
         } finally {
             setIsLoading(false);
         }

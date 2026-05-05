@@ -25,15 +25,22 @@ interface AuthState {
     user: User | null;
     profile: UserProfile | null;
     isLoading: boolean;
+    isMobileMenuOpen: boolean; 
     setUser: (user: User | null) => Promise<void>;
     checkSession: () => Promise<void>;
     logout: () => Promise<void>;
+    toggleMobileMenu: () => void; 
+    closeMobileMenu: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
     user: null,
     profile: null,
     isLoading: true,
+    isMobileMenuOpen: false, 
+
+    toggleMobileMenu: () => set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })), 
+    closeMobileMenu: () => set({ isMobileMenuOpen: false }), 
     
     setUser: async (user) => {
         if (!user) {

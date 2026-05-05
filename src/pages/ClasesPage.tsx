@@ -117,8 +117,9 @@ export const ClasesPage = () => {
             return;
         }
 
-        // --- NUEVA VALIDACIÓN DE FINES DE SEMANA ---
+        // --- VALIDACIÓN DE FINES DE SEMANA Y AFORO ---
         const disciplinaElegida = disciplinas.find(d => d.id_disciplina === nuevaClase.id_disciplina);
+
         if (disciplinaElegida && disciplinaElegida.nombre !== 'Sala de Máquinas') {
             const fechaSeleccionada = new Date(nuevaClase.fecha);
             const diaSemana = fechaSeleccionada.getDay(); // 0 = Domingo, 6 = Sábado
@@ -127,17 +128,20 @@ export const ClasesPage = () => {
                 return;
             }
         }
-        // ---------------------------------------------
 
         try {
+            // Forzamos el aforo de la Base de Datos
+            const aforoBD = disciplinaElegida?.aforo_maximo || 20;
+
             await ClassRepository.createClase({
                 id_disciplina: nuevaClase.id_disciplina,
                 id_monitor: nuevaClase.id_monitor || null,
                 fecha: nuevaClase.fecha,
                 hora_inicio: nuevaClase.hora_inicio,
                 hora_fin: nuevaClase.hora_fin,
-                aforo_maximo: nuevaClase.aforo_maximo
+                aforo_maximo: aforoBD // Mandamos el dato de la BD, no lo que escriba el usuario
             });
+
             setIsCreando(false);
             setNuevaClase({ id_disciplina: '', id_monitor: '', fecha: '', hora_inicio: '', hora_fin: '', aforo_maximo: 20 });
             cargarDatos();
@@ -343,7 +347,7 @@ export const ClasesPage = () => {
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Disciplina</label>
                                 <select className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-all" onChange={(e) => setNuevaClase({ ...nuevaClase, id_disciplina: e.target.value })}>
                                     <option value="">Selecciona...</option>
-                                    {disciplinas.map(d => <option key={d.id_disciplina} value={d.id_disciplina}>{d.nombre}</option>)}
+                                    {disciplinas.map(d => <option key={d.id_disciplina} value={d.id_disciplina}>{d.nombre} (Aforo: {d.aforo_maximo || 20})</option>)}
                                 </select>
                             </div>
 
@@ -355,12 +359,12 @@ export const ClasesPage = () => {
                                 </select>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4"> {/* Cambiamos a cols-1 porque quitamos el aforo */}
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fecha</label>
                                     <input
                                         type="date"
-                                        className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none"
+                                        className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-all"
                                         value={nuevaClase.fecha}
                                         onChange={(e) => setNuevaClase({ ...nuevaClase, fecha: e.target.value })}
                                     />
@@ -368,10 +372,6 @@ export const ClasesPage = () => {
                                     {nuevaClase.id_disciplina && disciplinas.find(d => d.id_disciplina === nuevaClase.id_disciplina)?.nombre !== 'Sala de Máquinas' && (
                                         <p className="text-[10px] text-fitbox-red italic mt-1 font-bold">Solo de Lunes a Viernes</p>
                                     )}
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Aforo</label>
-                                    <input type="number" defaultValue={20} className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none" onChange={(e) => setNuevaClase({ ...nuevaClase, aforo_maximo: Number(e.target.value) })} />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
