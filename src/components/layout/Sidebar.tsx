@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard, Activity, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard, Activity, ChevronLeft, ChevronRight, X, BarChart3 } from 'lucide-react';
 
 export const Sidebar = () => {
     const profile = useAuthStore((state) => state.profile);
-    const isMobileMenuOpen = useAuthStore((state) => state.isMobileMenuOpen); 
-    const closeMobileMenu = useAuthStore((state) => state.closeMobileMenu);   
+    const isMobileMenuOpen = useAuthStore((state) => state.isMobileMenuOpen);
+    const closeMobileMenu = useAuthStore((state) => state.closeMobileMenu);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -75,6 +75,18 @@ export const Sidebar = () => {
                     >
                         <Home className="w-5 h-5 shrink-0" />
                         <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Inicio</span>
+                    </button>
+
+                    <button
+                        title="Estadísticas"
+                        onClick={() => handleNavigation('/estadisticas')}
+                        className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/estadisticas'
+                            ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
+                            : 'text-gray-400 hover:bg-fitbox-red/5 hover:text-fitbox-red'
+                            } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
+                    >
+                        <BarChart3 className="w-5 h-5 shrink-0" />
+                        <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Estadísticas</span>
                     </button>
 
                     {(rol === 'Administrador' || rol === 'Monitor') && (

@@ -16,12 +16,13 @@ import { GestionPagosPage } from './pages/GestionPagosPage';
 import { Card } from './components/ui/Card';
 import { Input } from './components/ui/Input';
 import { Button } from './components/ui/Button';
-import { CreditCard, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'; 
+import { CreditCard, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from './database/supabase/Client';
 import { PaymentRepository } from './database/repositories/PaymentRepository';
 import { MisClasesPage } from './pages/MisClasesPage';
 import { RutinasPage } from './pages/RutinasPage';
-import { ResetPasswordPage } from './pages/ResetPasswordPage'; 
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { EstadisticasPage } from './pages/EstadisticasPage';
 
 // --- Modal bloqueador tipo Stripe ---
 const PaymentModal = ({ profile }: { profile: any }) => {
@@ -187,6 +188,7 @@ const AppContent = () => {
           <Route path="/mis-clases" element={<ProtectedRoute><MisClasesPage /></ProtectedRoute>} />
           <Route path="/pagos" element={<ProtectedRoute><PagosPage /></ProtectedRoute>} />
           <Route path="/gestion-pagos" element={<ProtectedRoute><GestionPagosPage /></ProtectedRoute>} />
+          <Route path="/estadisticas" element={<ProtectedRoute><EstadisticasPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

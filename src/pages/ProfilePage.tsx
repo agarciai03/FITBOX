@@ -7,10 +7,10 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
-import { LogOut, Save, Camera, CheckCircle, Shield } from 'lucide-react'; // <-- AÑADIDO: Shield
+import { LogOut, Save, Camera, CheckCircle, Shield, Trophy, Zap } from 'lucide-react';
 import { supabase } from '../database/supabase/Client';
 import { REGEX } from '../utils/regex';
-import { AuthRepository } from '../database/repositories/AuthRepository'; // <-- AÑADIDO: AuthRepository
+import { AuthRepository } from '../database/repositories/AuthRepository';
 
 export const PerfilPage = () => {
     const { profile, logout, setUser } = useAuthStore();
@@ -29,10 +29,8 @@ export const PerfilPage = () => {
         avatar_url: ''
     });
 
-    // --- NUEVO: ESTADOS PARA CAMBIO DE CONTRASEÑA ---
     const [passwords, setPasswords] = useState({ new: '', confirm: '' });
     const [passLoading, setPassLoading] = useState(false);
-    // ------------------------------------------------
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -64,6 +62,14 @@ export const PerfilPage = () => {
     }
 
     const inicial = profile.nombre ? profile.nombre.charAt(0).toUpperCase() : 'F';
+    const isSocio = profile.roles?.nombre_rol === 'Socio' || profile.id_rol === 3;
+
+    // --- CÁLCULOS DE GAMIFICACIÓN ---
+    const nivel = (profile as any).nivel || 1;
+    const xpActual = (profile as any).xp || 0;
+    const xpParaSiguienteNivel = nivel * 200; // Fórmula: Nivel actual * 200
+    const porcentajeXP = Math.min((xpActual / xpParaSiguienteNivel) * 100, 100);
+    const xpFaltante = xpParaSiguienteNivel - xpActual;
 
     const handleLogout = async () => {
         await logout();
@@ -76,41 +82,35 @@ export const PerfilPage = () => {
             const file = event.target.files?.[0];
             if (!file) return;
 
-            // --- VALIDACIONES DE SEGURIDAD DEL AVATAR ---
             const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
             if (!allowedTypes.includes(file.type)) {
                 setError("Formato no válido. Solo se permiten imágenes (JPG, JPEG, PNG, WEBP).");
                 return;
             }
 
-            const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+            const maxSizeInBytes = 5 * 1024 * 1024;
             if (file.size > maxSizeInBytes) {
                 setError("La imagen es demasiado pesada. El tamaño máximo es 5MB.");
                 return;
             }
-            // --------------------------------------------
 
             setIsLoading(true);
             setError(null);
 
-            // Generamos un nombre único para evitar que se sobreescriba si tienen el mismo nombre
             const fileExt = file.name.split('.').pop();
             const fileName = `${Math.random()}.${fileExt}`;
             const filePath = `${profile.id_usuario}/${fileName}`;
 
-            // Subimos la imagen al bucket 'avatars'
             const { error: uploadError } = await supabase.storage
                 .from('avatars')
                 .upload(filePath, file);
 
             if (uploadError) throw uploadError;
 
-            // Conseguimos la URL pública para mostrarla
             const { data: { publicUrl } } = supabase.storage
                 .from('avatars')
                 .getPublicUrl(filePath);
 
-            // Actualizamos el formulario con la nueva URL
             setFormData({ ...formData, avatar_url: publicUrl });
             setSuccessMessage("¡Foto subida! Haz clic en 'Guardar Cambios' para confirmarla.");
 
@@ -122,11 +122,9 @@ export const PerfilPage = () => {
         }
     };
 
-    // --- NUEVO: FUNCIÓN PARA CAMBIAR CONTRASEÑA EN VIVO ---
     const handleUpdatePassword = async () => {
         setError(null);
         setSuccessMessage(null);
-
         if (passwords.new.length < 6) return setError("La nueva contraseña debe tener al menos 6 caracteres.");
         if (passwords.new !== passwords.confirm) return setError("Las contraseñas no coinciden.");
 
@@ -142,7 +140,6 @@ export const PerfilPage = () => {
         }
     };
 
-    // FUNCIÓN: GUARDAR TODOS LOS CAMBIOS Y VALIDAR CON REGEX
     const handleGuardarCambios = async () => {
         setError(null);
         setSuccessMessage(null);
@@ -152,26 +149,27 @@ export const PerfilPage = () => {
         const nombreLimpio = formData.nombre.trim();
         const apellidosLimpio = formData.apellidos.trim();
 
-        // --- VALIDACIONES REGEX ---
         if (!nombreLimpio || !apellidosLimpio) {
             setError("El nombre y los apellidos son obligatorios.");
             setIsLoading(false); return;
         }
+
         if (!REGEX.TEXTO_PURO.test(nombreLimpio) || !REGEX.TEXTO_PURO.test(apellidosLimpio)) {
             setError("El nombre y apellidos solo pueden contener letras y espacios.");
             setIsLoading(false); return;
         }
+
         if (telefonoLimpio && !REGEX.TELEFONO.test(telefonoLimpio)) {
             setError("El teléfono debe tener exactamente 9 dígitos numéricos.");
             setIsLoading(false); return;
         }
+
         if (formData.codigo_postal && !REGEX.CODIGO_POSTAL.test(formData.codigo_postal)) {
             setError("El código postal no tiene un formato español válido (Debe ser un número de 5 cifras real).");
             setIsLoading(false); return;
         }
 
         try {
-            // Empaquetamos los datos, convirtiendo los vacíos ("") en nulls para que Supabase no explote
             const datosAActualizar = {
                 nombre: nombreLimpio,
                 apellidos: apellidosLimpio,
@@ -191,19 +189,14 @@ export const PerfilPage = () => {
 
             if (updateError) throw updateError;
 
-            // Actualizamos Zustand para que el Header cambie en tiempo real sin F5
             const { data: authData } = await supabase.auth.getUser();
             if (authData.user) {
                 await setUser(authData.user);
             }
 
             setSuccessMessage("¡Tus datos han sido actualizados correctamente!");
-
         } catch (err: any) {
-            // AHORA LA CONSOLA NOS DIRÁ EL ERROR EXACTO DE POSTGRES
             console.error("Error exacto de Supabase:", err.message, err.details, err.hint);
-
-            // Si el error dice algo de "avatar_url", avisamos al usuario
             if (err.message?.includes('avatar_url')) {
                 setError("Falta crear la columna 'avatar_url' (text) en la tabla 'usuarios' de Supabase.");
             } else {
@@ -215,7 +208,6 @@ export const PerfilPage = () => {
         }
     };
 
-    // Estilos reutilizables
     const readOnlyInputStyle = "bg-neutral-900/40 border-neutral-800 text-gray-500 cursor-not-allowed focus-visible:ring-0 focus-visible:border-neutral-800";
     const editableInputStyle = "bg-neutral-900 border-neutral-800 text-white focus-visible:ring-1 focus-visible:ring-fitbox-red focus-visible:border-fitbox-red transition-all";
 
@@ -227,46 +219,70 @@ export const PerfilPage = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 border-b border-neutral-800 p-6 sm:p-8 bg-black/20">
 
                     {/* Agrupamos Avatar y Textos juntos a la izquierda */}
-                    <div className="flex items-center gap-5 w-full sm:w-auto">
-
-                        {/* Input oculto de cámara envuelto en un Label interactivo */}
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 w-full sm:w-auto">
                         <label className="cursor-pointer relative group block shrink-0">
-                            <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-2 border-fitbox-red shadow-lg transition-opacity group-hover:opacity-50">
+                            <Avatar className="h-24 w-24 sm:h-28 sm:w-28 border-2 border-fitbox-red shadow-[0_0_20px_rgba(239,68,68,0.2)] transition-opacity group-hover:opacity-50">
                                 {formData.avatar_url && (
                                     <AvatarImage src={formData.avatar_url} className="object-cover" />
                                 )}
-                                <AvatarFallback className="bg-neutral-900 text-fitbox-red text-2xl sm:text-3xl font-bold">
+                                <AvatarFallback className="bg-neutral-900 text-fitbox-red text-3xl font-bold">
                                     {inicial}
                                 </AvatarFallback>
                             </Avatar>
-                            {/* Icono de cámara al pasar el ratón */}
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Camera className="w-8 h-8 text-white" />
                             </div>
-                            <input
-                                type="file"
-                                accept="image/jpeg, image/png, image/jpg, image/webp"
-                                className="hidden"
-                                onChange={handleAvatarUpload}
-                                disabled={isLoading}
-                            />
+                            <input type="file" accept="image/jpeg, image/png, image/jpg, image/webp" className="hidden" onChange={handleAvatarUpload} disabled={isLoading} />
                         </label>
 
-                        {/* Textos del Perfil */}
-                        <div className="space-y-1">
-                            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                        {/* --- Textos del Perfil y BARRA DE XP (SÓLO SOCIOS) --- */}
+                        <div className="flex flex-col items-center sm:items-start w-full">
+                            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight text-center sm:text-left">
                                 {formData.nombre} {formData.apellidos}
                             </h2>
-                            <p className="text-fitbox-text-muted text-sm sm:text-lg capitalize">
+                            <p className="text-fitbox-text-muted text-sm sm:text-base capitalize mb-4">
                                 {profile.roles?.nombre_rol || 'Socio'} de FITBOX
                             </p>
+
+                            {/* BARRA DE GAMIFICACIÓN - VISIBLE SOLO PARA SOCIOS */}
+                            {isSocio && (
+                                <div className="bg-neutral-900/60 border border-neutral-800 p-4 rounded-xl w-full sm:w-80 shadow-inner">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="bg-fitbox-red/20 p-1 rounded-md">
+                                                <Trophy className="w-4 h-4 text-fitbox-red" />
+                                            </div>
+                                            <span className="text-xs font-black text-white uppercase tracking-wider">
+                                                Nivel {nivel}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Zap className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                            <span className="text-[10px] text-gray-400 font-bold">{xpActual} / {xpParaSiguienteNivel} XP</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Contenedor de la barra */}
+                                    <div className="w-full h-2 bg-neutral-950 rounded-full overflow-hidden border border-neutral-800">
+                                        <div
+                                            className="h-full bg-fitbox-red transition-all duration-1000 ease-out relative"
+                                            style={{ width: `${porcentajeXP}%` }}
+                                        >
+                                            <div className="absolute inset-0 bg-white/20"></div>
+                                        </div>
+                                    </div>
+                                    <p className="text-[9px] text-gray-500 mt-2 text-right font-medium uppercase tracking-widest">
+                                        A {xpFaltante} XP del siguiente nivel
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     <Button
                         variant="destructive"
                         onClick={handleLogout}
-                        className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2 font-bold transition-colors shrink-0 w-full sm:w-auto shadow-md"
+                        className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2 font-bold transition-colors shrink-0 w-full sm:w-auto shadow-md self-start sm:self-center"
                     >
                         <LogOut className="w-4 h-4" />
                         Cerrar Sesión
@@ -274,7 +290,6 @@ export const PerfilPage = () => {
                 </div>
 
                 <CardContent className="space-y-10 p-6 sm:p-8">
-
                     {/* ALERTAS DE GUARDADO */}
                     {error && <Alert type="error" message={error} />}
                     {successMessage && (
@@ -288,13 +303,11 @@ export const PerfilPage = () => {
                         <h3 className="text-xl font-semibold text-white border-b border-neutral-800 pb-2">
                             Cuenta y Seguridad <span className="text-xs text-gray-500 font-normal ml-2">(Lectura)</span>
                         </h3>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                             <div className="space-y-2">
                                 <Label className="text-fitbox-text-muted font-bold text-xs uppercase tracking-wider">Correo Electrónico</Label>
                                 <Input value={profile.email || 'No especificado'} readOnly className={readOnlyInputStyle} />
                             </div>
-
                             <div className="space-y-2">
                                 <Label className="text-fitbox-text-muted font-bold text-xs uppercase tracking-wider">DNI / NIE</Label>
                                 <Input value={profile.dni || 'No especificado'} readOnly className={readOnlyInputStyle} />
@@ -302,13 +315,12 @@ export const PerfilPage = () => {
                         </div>
                     </div>
 
-                    {/* --- NUEVO BLOQUE: SEGURIDAD Y CONTRASEÑA --- */}
+                    {/* --- BLOQUE: SEGURIDAD Y CONTRASEÑA --- */}
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold text-white border-b border-neutral-800 pb-2 flex items-center gap-2">
                             <Shield className="w-5 h-5 text-fitbox-red" />
                             Seguridad de la cuenta
                         </h3>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                             <div className="space-y-2">
                                 <Label className="text-gray-300 font-bold text-xs uppercase tracking-wider">Nueva Contraseña</Label>
@@ -341,37 +353,31 @@ export const PerfilPage = () => {
                             </div>
                         </div>
                     </div>
-                    {/* ------------------------------------------- */}
 
                     {/* BLOQUE 2: Información Personal (EDITABLE) */}
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold text-white border-b border-neutral-800 pb-2">
                             Información Personal
                         </h3>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                             <div className="space-y-2">
                                 <Label htmlFor="nombre" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Nombre</Label>
                                 <Input
                                     id="nombre"
                                     value={formData.nombre}
-                                    // Usamos replace para eliminar cualquier número antes de actualizar el estado.
-                                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value.replace(/[^a-zA-Z \s]/g, '') })}
                                     className={editableInputStyle}
                                 />
                             </div>
-
                             <div className="space-y-2">
                                 <Label htmlFor="apellidos" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Apellidos</Label>
                                 <Input
                                     id="apellidos"
                                     value={formData.apellidos}
-                                    // Igual que el nombre, protección pura frente a errores tipográficos de los usuarios.
-                                    onChange={(e) => setFormData({ ...formData, apellidos: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    onChange={(e) => setFormData({ ...formData, apellidos: e.target.value.replace(/[^a-zA-Z \s]/g, '') })}
                                     className={editableInputStyle}
                                 />
                             </div>
-
                             <div className="space-y-2">
                                 <Label htmlFor="sexo" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Sexo</Label>
                                 <select
@@ -386,14 +392,12 @@ export const PerfilPage = () => {
                                     <option value="Otro">Otro</option>
                                 </select>
                             </div>
-
                             <div className="space-y-2">
                                 <Label htmlFor="telefono" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Teléfono de Contacto</Label>
                                 <Input
                                     id="telefono" type="tel" placeholder="600000000"
                                     value={formData.telefono}
                                     onChange={(e) => {
-                                        // \D detecta lo que NO es un número, lo elimina, y limitamos a 9 caracteres.
                                         const valorLimpio = e.target.value.replace(/\D/g, '');
                                         if (valorLimpio.length <= 9) setFormData({ ...formData, telefono: valorLimpio });
                                     }}
@@ -408,46 +412,40 @@ export const PerfilPage = () => {
                         <h3 className="text-xl font-semibold text-white border-b border-neutral-800 pb-2">
                             Ubicación
                         </h3>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
                             <div className="space-y-2 lg:col-span-2">
                                 <Label htmlFor="pais" className="text-gray-300 font-bold text-xs uppercase tracking-wider">País</Label>
                                 <Input
                                     id="pais"
                                     value={formData.pais}
-                                    // No permitimos números en campos de localización.
-                                    onChange={(e) => setFormData({ ...formData, pais: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    onChange={(e) => setFormData({ ...formData, pais: e.target.value.replace(/[^a-zA-Z \s]/g, '') })}
                                     className={editableInputStyle}
                                 />
                             </div>
-
                             <div className="space-y-2 lg:col-span-2">
                                 <Label htmlFor="provincia" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Provincia</Label>
                                 <Input
                                     id="provincia"
                                     value={formData.provincia}
-                                    onChange={(e) => setFormData({ ...formData, provincia: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    onChange={(e) => setFormData({ ...formData, provincia: e.target.value.replace(/[^a-zA-Z \s]/g, '') })}
                                     className={editableInputStyle}
                                 />
                             </div>
-
                             <div className="space-y-2 lg:col-span-3">
                                 <Label htmlFor="localidad" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Localidad / Ciudad</Label>
                                 <Input
                                     id="localidad"
                                     value={formData.localidad}
-                                    onChange={(e) => setFormData({ ...formData, localidad: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    onChange={(e) => setFormData({ ...formData, localidad: e.target.value.replace(/[^a-zA-Z \s]/g, '') })}
                                     className={editableInputStyle}
                                 />
                             </div>
-
                             <div className="space-y-2">
                                 <Label htmlFor="cp" className="text-gray-300 font-bold text-xs uppercase tracking-wider">Código Postal</Label>
                                 <Input
                                     id="cp" placeholder="06800"
                                     value={formData.codigo_postal}
                                     onChange={(e) => {
-                                        // Forzamos máximo 5 dígitos puramente numéricos.
                                         const valorLimpio = e.target.value.replace(/\D/g, '');
                                         if (valorLimpio.length <= 5) setFormData({ ...formData, codigo_postal: valorLimpio });
                                     }}
@@ -468,7 +466,6 @@ export const PerfilPage = () => {
                             {isLoading ? "Guardando..." : "Guardar Cambios"}
                         </Button>
                     </div>
-
                 </CardContent>
             </Card>
         </div>

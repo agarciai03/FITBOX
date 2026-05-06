@@ -58,34 +58,17 @@ export const UserRepository = {
         if (error) throw error;
     },
 
-    // NUEVO: Sistema de Gamificación - Sumar XP y comprobar subida de Nivel
+    // Sumar XP y comprobar subida de Nivel
     sumarExperiencia: async (id_usuario: string, cantidadXp: number = 50) => {
         try {
-            const { data: user, error: fetchError } = await supabase
-                .from('usuarios')
-                .select('xp, nivel')
-                .eq('id_usuario', id_usuario)
-                .single();
+            // Llamamos a la "puerta VIP" (RPC) de la base de datos
+            const { error } = await supabase.rpc('dar_experiencia', {
+                socio_id: id_usuario,
+                cantidad: cantidadXp
+            });
 
-            if (fetchError) throw fetchError;
+            if (error) throw error;
 
-            // CORRECCIÓN ESLINT: Cambiado let por const porque no se reasigna
-            const nuevaXp = (user?.xp || 0) + cantidadXp;
-            let nuevoNivel = user?.nivel || 1;
-
-            const xpParaSiguienteNivel = nuevoNivel * 200;
-            if (nuevaXp >= xpParaSiguienteNivel) {
-                nuevoNivel += 1;
-            }
-
-            const { error: updateError } = await supabase
-                .from('usuarios')
-                .update({ xp: nuevaXp, nivel: nuevoNivel })
-                .eq('id_usuario', id_usuario);
-
-            if (updateError) throw updateError;
-
-            return { nuevaXp, nuevoNivel };
         } catch (error) {
             console.error("Error al sumar XP:", error);
             throw error;
