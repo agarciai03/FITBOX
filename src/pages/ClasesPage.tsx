@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { ClassRepository, type Clase, type Disciplina } from '../database/repositories/ClassRepository';
+import { MachineRepository, type Maquina } from '../database/repositories/MachineRepository';
 import { supabase } from '../database/supabase/Client';
 import { Button } from '../components/ui/Button';
-import { Calendar, Trash2, Clock, CheckCircle, CalendarX2, Plus, X } from 'lucide-react'; 
+import { Calendar, Trash2, Clock, CheckCircle, CalendarX2, Plus, X, AlertTriangle, Info, Dumbbell } from 'lucide-react';
 
 interface MonitorBasico {
     id_usuario: string;
@@ -23,19 +24,28 @@ export const ClasesPage = () => {
     const [clases, setClases] = useState<Clase[]>([]);
     const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
     const [monitores, setMonitores] = useState<MonitorBasico[]>([]);
+    const [maquinasGlobales, setMaquinasGlobales] = useState<Maquina[]>([]);
     const [misReservasActivas, setMisReservasActivas] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const [isCreando, setIsCreando] = useState(false);
+
+    // Autocompletado inteligente de Disciplina y Monitor
     const [nuevaClase, setNuevaClase] = useState({
-        id_disciplina: '',
-        id_monitor: '',
+        id_disciplina: isMonitor && (profile as any)?.id_disciplina ? (profile as any).id_disciplina : '',
+        id_monitor: isMonitor && profile?.id_usuario ? profile.id_usuario : '',
         fecha: '',
         hora_inicio: '',
         hora_fin: '',
         aforo_maximo: 20
+    });
+
+    const [modalMaterial, setModalMaterial] = useState({
+        isOpen: false,
+        id_disciplina: '',
+        nombre_disciplina: ''
     });
 
     const [ahora, setAhora] = useState(new Date());
@@ -45,11 +55,15 @@ export const ClasesPage = () => {
             if (clases.length === 0) setIsLoading(true);
             setError(null);
 
-            const dataClases = await ClassRepository.getAllClases();
-            const dataDisciplinas = await ClassRepository.getAllDisciplinas();
+            const [dataClases, dataDisciplinas, dataMaquinas] = await Promise.all([
+                ClassRepository.getAllClases(),
+                ClassRepository.getAllDisciplinas(),
+                MachineRepository.getAllMaquinas()
+            ]);
 
             setClases(dataClases);
             setDisciplinas(dataDisciplinas);
+            setMaquinasGlobales(dataMaquinas);
 
             const { data: dataMonitores, error: errorSupabase } = await supabase
                 .from('usuarios')
@@ -82,9 +96,10 @@ export const ClasesPage = () => {
     }, []);
 
     useEffect(() => {
-        const channel = supabase.channel('realtime-reservas')
+        const channel = supabase.channel('realtime-clases-maquinas')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'reservas' }, cargarDatos)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, cargarDatos)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'maquinas' }, cargarDatos)
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
@@ -109,19 +124,17 @@ export const ClasesPage = () => {
         }
     }, [canManage, clases, ahora]);
 
-
     const handleCrearClase = async () => {
         if (!nuevaClase.id_disciplina || !nuevaClase.fecha || !nuevaClase.hora_inicio || !nuevaClase.hora_fin) {
             setError("Por favor, rellena todos los campos obligatorios.");
             return;
         }
 
-        // VALIDACIÓN DE FINES DE SEMANA Y AFORO 
         const disciplinaElegida = disciplinas.find(d => d.id_disciplina === nuevaClase.id_disciplina);
 
         if (disciplinaElegida && disciplinaElegida.nombre !== 'Sala de Máquinas') {
             const fechaSeleccionada = new Date(nuevaClase.fecha);
-            const diaSemana = fechaSeleccionada.getDay(); // 0 = Domingo, 6 = Sábado
+            const diaSemana = fechaSeleccionada.getDay();
             if (diaSemana === 0 || diaSemana === 6) {
                 setError(`La disciplina "${disciplinaElegida.nombre}" solo puede programarse de Lunes a Viernes.`);
                 return;
@@ -129,7 +142,6 @@ export const ClasesPage = () => {
         }
 
         try {
-            // Forzamos el aforo de la Base de Datos
             const aforoBD = disciplinaElegida?.aforo_maximo || 20;
 
             await ClassRepository.createClase({
@@ -138,11 +150,19 @@ export const ClasesPage = () => {
                 fecha: nuevaClase.fecha,
                 hora_inicio: nuevaClase.hora_inicio,
                 hora_fin: nuevaClase.hora_fin,
-                aforo_maximo: aforoBD // Mandamos el dato de la BD, no lo que escriba el usuario
+                aforo_maximo: aforoBD
             });
 
             setIsCreando(false);
-            setNuevaClase({ id_disciplina: '', id_monitor: '', fecha: '', hora_inicio: '', hora_fin: '', aforo_maximo: 20 });
+            // Reiniciamos manteniendo la disciplina del monitor
+            setNuevaClase({
+                id_disciplina: isMonitor && (profile as any)?.id_disciplina ? (profile as any).id_disciplina : '',
+                id_monitor: isMonitor && profile?.id_usuario ? profile.id_usuario : '',
+                fecha: '',
+                hora_inicio: '',
+                hora_fin: '',
+                aforo_maximo: 20
+            });
             cargarDatos();
         } catch (errorCatch) {
             console.error("Error al crear:", errorCatch);
@@ -194,7 +214,7 @@ export const ClasesPage = () => {
     };
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+        <div className="p-4 md:p-8 max-w-300 mx-auto space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
@@ -219,6 +239,15 @@ export const ClasesPage = () => {
                             onClick={() => {
                                 setIsCreando(true);
                                 setError(null);
+                                // Al abrir el modal también auto-asigna la disciplina
+                                setNuevaClase({
+                                    id_disciplina: isMonitor && (profile as any)?.id_disciplina ? (profile as any).id_disciplina : '',
+                                    id_monitor: isMonitor && profile?.id_usuario ? profile.id_usuario : '',
+                                    fecha: '',
+                                    hora_inicio: '',
+                                    hora_fin: '',
+                                    aforo_maximo: 20
+                                });
                             }}
                             className="bg-white text-black hover:bg-fitbox-red hover:text-white font-black transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] border border-white/20 px-6 py-5 rounded-xl flex items-center gap-2 uppercase italic tracking-tighter"
                         >
@@ -253,13 +282,14 @@ export const ClasesPage = () => {
                                     <th className="px-6 py-4">Día / Fecha</th>
                                     <th className="px-6 py-4">Horario</th>
                                     <th className="px-6 py-4">Disciplina</th>
+                                    <th className="px-6 py-4 text-center">Equipamiento</th>
                                     <th className="px-6 py-4 text-center">Aforo / Plazas</th>
                                     <th className="px-6 py-4 text-right">Acción</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-800">
                                 {isLoading ? (
-                                    <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">Actualizando calendario...</td></tr>
+                                    <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500">Actualizando calendario...</td></tr>
                                 ) : (
                                     clases.map((clase) => {
                                         const reservasActivas = clase.reservas?.filter(r => r.estado === 'activa') || [];
@@ -267,7 +297,6 @@ export const ClasesPage = () => {
                                         const total = clase.aforo_maximo;
                                         const estaLlena = ocupadas >= total;
 
-                                        // Buscamos si el usuario tiene una reserva en esta clase
                                         const miReserva = misReservasActivas.find(r => r.id_clase === clase.id_clase);
 
                                         const porcentajeOcupado = (ocupadas / total) * 100;
@@ -276,20 +305,38 @@ export const ClasesPage = () => {
 
                                         return (
                                             <tr key={clase.id_clase} className={`transition-colors ${estaFinalizada ? 'bg-black/40 opacity-75' : 'hover:bg-neutral-800/20'}`}>
-                                                <td className="px-6 py-4 font-bold text-white">
+                                                <td className="px-6 py-4 font-bold text-white whitespace-nowrap">
                                                     {new Date(clase.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
                                                 </td>
-                                                <td className="px-6 py-4">
+                                                <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className={`flex items-center gap-2 ${estaFinalizada ? 'text-gray-500' : 'text-gray-300'}`}>
                                                         <Clock className={`w-4 h-4 ${estaFinalizada ? 'text-gray-600' : 'text-fitbox-red'}`} />
                                                         {clase.hora_inicio.slice(0, 5)} - {clase.hora_fin.slice(0, 5)}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <span className={`${estaFinalizada ? 'bg-neutral-900 text-gray-500 border-gray-700' : 'bg-neutral-800 text-fitbox-red border-fitbox-red/20'} px-3 py-1 rounded-full text-[11px] font-black uppercase border`}>
+                                                    <span className={`${estaFinalizada ? 'bg-neutral-900 text-gray-500 border-gray-700' : 'bg-neutral-800 text-fitbox-red border-fitbox-red/20'} px-3 py-1 rounded-full text-[11px] font-black uppercase border whitespace-nowrap`}>
                                                         {clase.disciplinas?.nombre}
                                                     </span>
                                                 </td>
+
+                                                {/* --- BOTÓN PARA ABRIR MODAL DE MATERIAL --- */}
+                                                <td className="px-6 py-4 text-center">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="text-[10px] uppercase font-bold border-neutral-700 hover:border-fitbox-red text-gray-300"
+                                                        onClick={() => setModalMaterial({
+                                                            isOpen: true,
+                                                            id_disciplina: clase.id_disciplina,
+                                                            nombre_disciplina: clase.disciplinas?.nombre || 'General'
+                                                        })}
+                                                    >
+                                                        <Dumbbell className="w-3.5 h-3.5 mr-1" />
+                                                        Ver Material
+                                                    </Button>
+                                                </td>
+
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col gap-1 items-center">
                                                         <span className={`text-[11px] font-bold ${estaFinalizada ? 'text-gray-500' : estaLlena ? 'text-red-500' : 'text-gray-400'}`}>
@@ -362,6 +409,64 @@ export const ClasesPage = () => {
                 )}
             </div>
 
+            {/* --- MODAL PARA VER EL MATERIAL EN TIEMPO REAL --- */}
+            {modalMaterial.isOpen && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+                    <div className="bg-fitbox-card border border-neutral-800 p-6 md:p-8 rounded-2xl w-full max-w-lg space-y-6 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                        <div className="flex justify-between items-start border-b border-neutral-800 pb-4">
+                            <div>
+                                <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic">
+                                    INVENTARIO <span className="text-fitbox-red">{modalMaterial.nombre_disciplina}</span>
+                                </h3>
+                                <p className="text-gray-400 mt-1 text-sm font-medium">Estado del equipamiento en tiempo real.</p>
+                            </div>
+                            <button onClick={() => setModalMaterial({ isOpen: false, id_disciplina: '', nombre_disciplina: '' })} className="text-gray-500 hover:text-white transition-colors">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 max-h-96 overflow-y-auto pr-2 scrollbar-thin">
+                            {(() => {
+                                const maquinasSala = maquinasGlobales.filter(m => m.id_disciplina === modalMaterial.id_disciplina);
+
+                                if (maquinasSala.length === 0) {
+                                    return (
+                                        <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6 text-center">
+                                            <Dumbbell className="w-10 h-10 text-neutral-700 mx-auto mb-3" />
+                                            <p className="text-sm text-gray-400 italic">No hay equipamiento técnico asignado a esta disciplina. ¡Todo es peso libre o cardio!</p>
+                                        </div>
+                                    );
+                                }
+
+                                return maquinasSala.map(m => {
+                                    const esCorrecto = m.estado === 'Correcto';
+                                    const esDefectuoso = m.estado === 'Defectuoso';
+                                    const esObs = m.estado === 'Correcto pero con observaciones';
+
+                                    return (
+                                        <div key={m.id_maquina} className={`flex flex-col p-3 rounded-lg border ${esDefectuoso ? 'bg-red-950/20 border-red-900/30' : esObs ? 'bg-yellow-950/10 border-yellow-900/30' : 'bg-neutral-900/50 border-neutral-800/50'}`}>
+                                            <div className="flex justify-between items-center">
+                                                <span className={`font-bold text-sm ${esDefectuoso ? 'text-red-400 line-through opacity-70' : 'text-white'}`}>{m.nombre}</span>
+
+                                                {esCorrecto && <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-green-500/20"><CheckCircle className="w-3 h-3" /> Operativa</span>}
+                                                {esDefectuoso && <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-red-500/20"><AlertTriangle className="w-3 h-3" /> Averiada</span>}
+                                                {esObs && <span className="text-[10px] bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-yellow-500/20"><Info className="w-3 h-3" /> En revisión</span>}
+                                            </div>
+                                            {/* Mostramos las observaciones si el monitor ha escrito algo */}
+                                            {!esCorrecto && m.observaciones && (
+                                                <div className="mt-2 pt-2 border-t border-black/20">
+                                                    <p className={`text-xs italic font-medium ${esDefectuoso ? 'text-red-400' : 'text-yellow-500'}`}>"{m.observaciones}"</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                });
+                            })()}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {isCreando && canManage && (
                 <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                     <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
@@ -370,21 +475,31 @@ export const ClasesPage = () => {
 
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Disciplina</label>
-                                <select className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-all" onChange={(e) => setNuevaClase({ ...nuevaClase, id_disciplina: e.target.value })}>
+                                <select
+                                    className={`w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none transition-all ${isMonitor ? 'opacity-60 cursor-not-allowed' : 'focus:border-fitbox-red'}`}
+                                    value={nuevaClase.id_disciplina} 
+                                    onChange={(e) => setNuevaClase({ ...nuevaClase, id_disciplina: e.target.value })}
+                                    disabled={isMonitor} 
+                                >
                                     <option value="">Selecciona...</option>
                                     {disciplinas.map(d => <option key={d.id_disciplina} value={d.id_disciplina}>{d.nombre} (Aforo: {d.aforo_maximo || 20})</option>)}
                                 </select>
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monitor Asignado (Opcional)</label>
-                                <select className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-all" onChange={(e) => setNuevaClase({ ...nuevaClase, id_monitor: e.target.value })}>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monitor Asignado</label>
+                                <select
+                                    className={`w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none transition-all ${isMonitor ? 'opacity-60 cursor-not-allowed' : 'focus:border-fitbox-red'}`}
+                                    value={nuevaClase.id_monitor}
+                                    onChange={(e) => setNuevaClase({ ...nuevaClase, id_monitor: e.target.value })}
+                                    disabled={isMonitor} 
+                                >
                                     <option value="">Sin Monitor</option>
                                     {monitores.map(m => <option key={m.id_usuario} value={m.id_usuario}>{m.nombre} {m.apellidos}</option>)}
                                 </select>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-4"> {/* Cambiamos a cols-1 porque quitamos el aforo */}
+                            <div className="grid grid-cols-1 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fecha</label>
                                     <input
@@ -393,7 +508,6 @@ export const ClasesPage = () => {
                                         value={nuevaClase.fecha}
                                         onChange={(e) => setNuevaClase({ ...nuevaClase, fecha: e.target.value })}
                                     />
-                                    {/* PEQUEÑO TEXTO DE AYUDA VISUAL */}
                                     {nuevaClase.id_disciplina && disciplinas.find(d => d.id_disciplina === nuevaClase.id_disciplina)?.nombre !== 'Sala de Máquinas' && (
                                         <p className="text-[10px] text-fitbox-red italic mt-1 font-bold">Solo de Lunes a Viernes</p>
                                     )}
