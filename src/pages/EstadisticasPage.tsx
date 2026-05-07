@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../database/supabase/Client';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, Legend } from 'recharts';
 import { TrendingUp, BarChart3, AlertTriangle, Target } from 'lucide-react';
 import { Card } from '../components/ui/Card';
+import { IngresosChart } from '../components/charts/IngresosChart';
+import { DisciplinasChart } from '../components/charts/DisciplinasChart';
+import { ReservasChart } from '../components/charts/ReservasChart';
 
 export const EstadisticasPage = () => {
     const profile = useAuthStore((state) => state.profile);
@@ -23,12 +25,10 @@ export const EstadisticasPage = () => {
             const añoActual = new Date().getFullYear();
             const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-            // Inicializamos arrays vacíos
             const ingresos = meses.map(m => ({ mes: m, ingresos: 0 }));
             const reservas = meses.map(m => ({ mes: m, reservas: 0 }));
 
             try {
-                // Obtener pagos 
                 const { data: pagos } = await supabase.from('pagos').select('importe, fecha_pago');
                 if (pagos) {
                     pagos.forEach(pago => {
@@ -39,7 +39,6 @@ export const EstadisticasPage = () => {
                     });
                 }
 
-                // Obtener reservas 
                 const { data: reservasData } = await supabase.from('reservas').select('fecha_reserva');
                 if (reservasData) {
                     reservasData.forEach(reserva => {
@@ -50,7 +49,6 @@ export const EstadisticasPage = () => {
                     });
                 }
 
-                // Obtener popularidad de disciplinas
                 const { data: reservasDataCompleta } = await supabase
                     .from('reservas')
                     .select(`
@@ -65,12 +63,10 @@ export const EstadisticasPage = () => {
                     const conteoDisciplinas: Record<string, number> = {};
 
                     reservasDataCompleta.forEach((res: any) => {
-                        // Navegamos por la relación de la base de datos
                         const nombreDisc = res.clases?.disciplinas?.nombre || 'Otras';
                         conteoDisciplinas[nombreDisc] = (conteoDisciplinas[nombreDisc] || 0) + 1;
                     });
 
-                    // Colores premium para el gráfico (Rojo Fitbox, Azul, Verde, Amarillo, Morado, Naranja)
                     const colores = ['#dc2626', '#3b82f6', '#22c55e', '#eab308', '#a855f7', '#f97316'];
 
                     const dataDisc = Object.keys(conteoDisciplinas).map((key, index) => ({
@@ -79,7 +75,6 @@ export const EstadisticasPage = () => {
                         color: colores[index % colores.length]
                     }));
 
-                    // Ordenar de mayor a menor popularidad
                     dataDisc.sort((a, b) => b.value - a.value);
                     setDatosDisciplinas(dataDisc);
                 }
@@ -97,7 +92,6 @@ export const EstadisticasPage = () => {
         cargarEstadisticas();
     }, [isStaff]);
 
-    // Bloqueo de seguridad
     if (!isStaff) {
         return (
             <div className="p-8 text-center flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in">
@@ -124,11 +118,7 @@ export const EstadisticasPage = () => {
                 </div>
             ) : (
                 <div className="space-y-8">
-
-                    {/* INGRESOS + DONUT DISCIPLINAS */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                        {/* GRÁFICO 1: INGRESOS */}
                         <Card className="bg-neutral-950 border-neutral-800 p-6 shadow-2xl lg:col-span-2">
                             <div className="flex items-center justify-between mb-6">
                                 <div>
@@ -138,25 +128,9 @@ export const EstadisticasPage = () => {
                                     <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Ingresos por pagos en {new Date().getFullYear()}</p>
                                 </div>
                             </div>
-                            <div className="h-80 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={datosIngresos} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
-                                        <XAxis dataKey="mes" stroke="#a3a3a3" fontSize={12} tickLine={false} axisLine={false} />
-                                        <YAxis stroke="#a3a3a3" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}€`} />
-                                        <Tooltip
-                                            cursor={{ fill: '#262626' }}
-                                            contentStyle={{ backgroundColor: '#16181d', border: '1px solid #262626', borderRadius: '8px' }}
-                                            itemStyle={{ color: '#22c55e', fontWeight: 'bold' }}
-                                            formatter={(value: any) => [`${value} €`, 'Ingresos']}
-                                        />
-                                        <Bar dataKey="ingresos" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
+                            <IngresosChart data={datosIngresos} />
                         </Card>
 
-                        {/* POPULARIDAD DISCIPLINAS */}
                         <Card className="bg-neutral-950 border-neutral-800 p-6 shadow-2xl lg:col-span-1">
                             <div className="flex items-center justify-between mb-6">
                                 <div>
@@ -166,41 +140,10 @@ export const EstadisticasPage = () => {
                                     <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">% de asistencia a clases</p>
                                 </div>
                             </div>
-                            <div className="h-80 w-full flex flex-col items-center justify-center">
-                                {datosDisciplinas.length === 0 ? (
-                                    <p className="text-gray-500 italic text-sm">Sin datos de reservas</p>
-                                ) : (
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={datosDisciplinas}
-                                                cx="50%"
-                                                cy="45%"
-                                                innerRadius={60}
-                                                outerRadius={90}
-                                                paddingAngle={5}
-                                                dataKey="value"
-                                                stroke="none"
-                                            >
-                                                {datosDisciplinas.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip
-                                                contentStyle={{ backgroundColor: '#16181d', border: '1px solid #262626', borderRadius: '8px', color: '#fff' }}
-                                                itemStyle={{ fontWeight: 'bold' }}
-                                                formatter={(value: any) => [`${value} Asistencias`, 'Total']}
-                                            />
-                                            <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px', color: '#a3a3a3' }} />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                )}
-                            </div>
+                            <DisciplinasChart data={datosDisciplinas} />
                         </Card>
-
                     </div>
 
-                    {/* RESERVAS */}
                     <div className="grid grid-cols-1">
                         <Card className="bg-neutral-950 border-neutral-800 p-6 shadow-2xl">
                             <div className="flex items-center justify-between mb-6">
@@ -211,30 +154,9 @@ export const EstadisticasPage = () => {
                                     <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Evolución del tráfico de socios</p>
                                 </div>
                             </div>
-                            <div className="h-80 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={datosReservas} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="colorReservas" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#dc2626" stopOpacity={0.4} />
-                                                <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
-                                        <XAxis dataKey="mes" stroke="#a3a3a3" fontSize={12} tickLine={false} axisLine={false} />
-                                        <YAxis stroke="#a3a3a3" fontSize={12} tickLine={false} axisLine={false} />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#16181d', border: '1px solid #262626', borderRadius: '8px', color: '#fff' }}
-                                            itemStyle={{ color: '#dc2626', fontWeight: 'bold' }}
-                                            formatter={(value: any) => [`${value} Plazas reservadas`, 'Tráfico']}
-                                        />
-                                        <Area type="monotone" dataKey="reservas" stroke="#dc2626" strokeWidth={3} fillOpacity={1} fill="url(#colorReservas)" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
+                            <ReservasChart data={datosReservas} />
                         </Card>
                     </div>
-
                 </div>
             )}
         </div>
