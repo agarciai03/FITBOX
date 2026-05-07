@@ -1,7 +1,7 @@
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Sun, Moon, Globe, Menu } from 'lucide-react'; // <-- AÑADIDO 'Menu'
+import { Globe, Menu } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,7 +20,7 @@ export const Header = () => {
         else navigate('/');
     };
 
-    const [isDark, setIsDark] = useState(() => {
+    const [isDark] = useState(() => {
         const saved = localStorage.getItem('theme');
         return saved === 'light' ? false : true;
     });
@@ -76,12 +76,12 @@ export const Header = () => {
                 <div className="flex items-center gap-4 sm:gap-6">
                     {user && !esRutaPublica && (
                         <div className="flex items-center gap-2 border-r border-neutral-700 pr-4 sm:pr-6">
-                            <button
+                            {/* <button
                                 onClick={() => setIsDark(!isDark)}
                                 className="p-2 text-gray-400 hover:text-fitbox-red hover:bg-neutral-800/50 rounded-full transition-all"
                             >
                                 {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                            </button>
+                            </button> */}
 
                             <button
                                 onClick={toggleIdioma}
