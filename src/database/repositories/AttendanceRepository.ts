@@ -1,6 +1,6 @@
 import { supabase } from '../supabase/Client';
 import { type Clase } from './ClassRepository';
-import { UserRepository } from './UserRepository'; // <-- AÑADIDO: Importamos el UserRepository
+import { UserRepository } from './UserRepository'; 
 
 export const AttendanceRepository = {
     // Traer solo las clases donde este usuario es el monitor

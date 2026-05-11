@@ -40,11 +40,11 @@ export const limpiarNumeros = (texto: string): string => {
     return texto.replace(/\D/g, '');
 };
 
-// Limpiador estricto para DNI/NIE en tiempo real (UX Fluida)
+// Limpiador estricto para DNI/NIE en tiempo real 
 export const limpiarDNI = (texto: string): string => {
     let valor = texto.toUpperCase().replace(/[^0-9A-Z]/g, '');
 
-    // Filtro inteligente: Obliga a que empiece por X,Y,Z o número, seguido de hasta 7 números, y opcional 1 letra al final.
+    // Obliga a que empiece por X,Y,Z o número, seguido de hasta 7 números, y opcional 1 letra al final.
     const match = valor.match(/^[XYZ0-9][0-9]{0,7}[A-Z]?/);
     valor = match ? match[0] : '';
 

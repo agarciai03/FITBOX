@@ -9,13 +9,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // 👇 AQUI INYECTAMOS NUESTRO ROJO FITBOX
         default: "bg-fitbox-red text-white hover:bg-fitbox-red-hover",
         
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         
-        // 👇 Y AQUÍ UN ESTILO GRIS OSCURO PARA EL SECUNDARIO
         secondary: "bg-fitbox-card text-fitbox-text border border-neutral-700 hover:bg-neutral-800",
         
         ghost: "hover:bg-accent hover:text-accent-foreground",

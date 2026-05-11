@@ -162,7 +162,7 @@ export const DashboardPage = () => {
                             Panel de <span className="text-fitbox-red">{isAdminOrMonitor ? 'Control' : 'Atleta'}</span>
                         </h1>
                         <p className="text-sm text-gray-400 mt-1 font-medium">
-                            Bienvenido, <span className="text-white capitalize">{profile?.nombre || user?.email?.split('@')[0]}</span>.
+                            Bienvenido/a, <span className="text-white capitalize">{profile?.nombre || user?.email?.split('@')[0]}</span>.
                             {isAdminOrMonitor ? ' Visión general del estado del centro.' : ' Prepárate para entrenar.'}
                         </p>
                     </div>

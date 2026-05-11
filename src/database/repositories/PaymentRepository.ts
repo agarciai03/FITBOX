@@ -1,21 +1,9 @@
+import type { Pago } from '../../interfaces/types';
 import { supabase } from '../supabase/Client';
-
-export interface Pago {
-    id_pago: number;
-    id_usuario: string;
-    importe: number;
-    concepto: string;
-    fecha_pago: string;
-    metodo_pago?: string;
-    estado_pago?: string;
-    usuarios?: {
-        nombre: string;
-        apellidos: string;
-    };
-}
+export type { Pago };
 
 export const PaymentRepository = {
-    // 1. Traer TODOS los pagos (Para Admin/Monitor) con el nombre del socio cruzado
+    // Traer todos los pagos (Para Admin/Monitor) con el nombre del socio cruzado
     getAllPagos: async (): Promise<Pago[]> => {
         const { data, error } = await supabase
             .from('pagos')
@@ -29,7 +17,7 @@ export const PaymentRepository = {
         return data as Pago[];
     },
 
-    // 2. Traer solo los pagos de un socio concreto
+    // Traer solo los pagos de un socio concreto
     getPagosBySocio: async (id_usuario: string): Promise<Pago[]> => {
         const { data, error } = await supabase
             .from('pagos')
@@ -44,7 +32,7 @@ export const PaymentRepository = {
         return data as Pago[];
     },
 
-    // 3. Registrar un nuevo recibo de facturación en la base de datos
+    // Registrar un nuevo recibo de facturación en la base de datos
     registrarPago: async (id_usuario: string, importe: number, concepto: string): Promise<void> => {
         const { error } = await supabase
             .from('pagos')

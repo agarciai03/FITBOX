@@ -1,20 +1,6 @@
+import type { EstadoMaquina, Maquina } from '../../interfaces/types';
 import { supabase } from '../supabase/Client';
-
-export type EstadoMaquina = 'Correcto' | 'Defectuoso' | 'Correcto pero con observaciones';
-
-export interface Maquina {
-    id_maquina: string;
-    nombre: string;
-    estado: EstadoMaquina;
-    fecha_averia: string | null;
-    observaciones: string | null;
-    id_monitor_reporte: string | null;
-    fecha_registro: string;
-    descripcion?: string | null;
-    tutorial_url?: string | null;
-    id_disciplina?: string | null;
-    disciplinas?: { nombre: string };
-}
+export type { EstadoMaquina, Maquina };
 
 export const MachineRepository = {
     getAllMaquinas: async (): Promise<Maquina[]> => {

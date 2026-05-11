@@ -320,7 +320,7 @@ export const ClasesPage = () => {
                                                     </span>
                                                 </td>
 
-                                                {/* --- BOTÓN PARA ABRIR MODAL DE MATERIAL --- */}
+                                                {/* ABRIR MODAL DE MATERIAL */}
                                                 <td className="px-6 py-4 text-center">
                                                     <Button
                                                         variant="outline"
@@ -409,7 +409,7 @@ export const ClasesPage = () => {
                 )}
             </div>
 
-            {/* --- MODAL PARA VER EL MATERIAL EN TIEMPO REAL --- */}
+            {/* MODAL PARA VER EL MATERIAL EN TIEMPO REAL */}
             {modalMaterial.isOpen && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
                     <div className="bg-fitbox-card border border-neutral-800 p-6 md:p-8 rounded-2xl w-full max-w-lg space-y-6 shadow-[0_0_50px_rgba(0,0,0,0.5)]">

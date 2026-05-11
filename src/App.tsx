@@ -24,7 +24,7 @@ import { RutinasPage } from './pages/RutinasPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { EstadisticasPage } from './pages/EstadisticasPage';
 
-// --- Modal bloqueador tipo Stripe ---
+// Modal bloqueador tipo Stripe 
 const PaymentModal = ({ profile }: { profile: any }) => {
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -123,7 +123,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// --- COMPONENTE INTERNO ---
 const AppContent = () => {
   const location = useLocation();
   const { checkSession, isLoading } = useAuthStore();
@@ -149,7 +148,7 @@ const AppContent = () => {
         <div className="absolute inset-0 bg-linear-to-br from-neutral-950 via-red-900/10 to-neutral-950 z-0"></div>
 
         <div className="relative z-10 flex flex-col items-center space-y-8 animate-in fade-in zoom-in duration-500">
-          {/* Logo con efecto de resplandor */}
+          {/* Logo con efecto */}
           <div className="relative">
             <div className="absolute inset-0 bg-fitbox-red blur-2xl opacity-20 animate-pulse"></div>
             <h1 className="text-6xl font-black text-white italic tracking-tighter relative z-10 uppercase">

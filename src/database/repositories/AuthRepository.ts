@@ -1,5 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
+
+import { createClient } from "@supabase/supabase-js";
 import { supabase } from "../supabase/Client";
+import type { RegisterData } from "../../interfaces/types";
+export type { RegisterData };
 
 // Creamos un "trabajador en la sombra" que NO guarda sesión.
 // Le asignamos un "storageKey" único para que Supabase no se queje por consola.
@@ -11,28 +14,11 @@ const supabaseSecundario = createClient(
             persistSession: false,
             autoRefreshToken: false,
             detectSessionInUrl: false,
-            storageKey: 'registro-staff-token' // <-- ¡ESTO ELIMINA EL AVISO DE LA CONSOLA!
+            storageKey: 'registro-staff-token' 
         }
     }
 );
 
-export interface RegisterData {
-    nombre: string;
-    apellidos: string;
-    email: string;
-    password?: string;
-    dni: string;
-    telefono: string;
-    sexo: string;
-    fecha_nacimiento: string;
-    pais: string;
-    codigo_postal: string;
-    localidad: string;
-    provincia: string;
-    id_rol?: number;
-    avatar_url?: string | null;
-    id_disciplina?: string | null;
-}
 
 export const AuthRepository = {
     register: async (email: string, password: string, userData: RegisterData) => {

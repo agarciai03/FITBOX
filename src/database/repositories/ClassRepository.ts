@@ -1,47 +1,7 @@
+import type { Clase, Disciplina, Reserva, Rutina } from '../../interfaces/types';
 import { supabase } from '../supabase/Client';
 
-export interface Disciplina {
-    id_disciplina: string;
-    nombre: string;
-    aforo_maximo?: number;
-}
-
-export interface Rutina {
-    id_rutina: string;
-    id_disciplina: string;
-    dia_semana: string;
-    titulo: string;
-    descripcion: string;
-}
-
-export interface Clase {
-    total_reservas?: number;
-    id_clase: string;
-    id_disciplina: string;
-    id_monitor: string | null;
-    fecha: string;
-    hora_inicio: string;
-    hora_fin: string;
-    aforo_maximo: number;
-    disciplinas?: { nombre: string };
-    usuarios?: { nombre: string; apellidos: string };
-    reservas?: Reserva[]; 
-}
-
-export interface Reserva {
-    id: string;
-    id_clase: string;
-    id_socio: string;
-    fecha_reserva: string;
-    estado: string;
-    clases?: Clase;
-    asistencia?: boolean | null; 
-    usuarios?: {
-        nombre: string;
-        apellidos: string;
-        email?: string; 
-    };
-}
+export type { Disciplina, Rutina, Clase, Reserva };
 
 export const ClassRepository = {
 

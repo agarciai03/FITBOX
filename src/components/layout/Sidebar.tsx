@@ -64,7 +64,7 @@ export const Sidebar = () => {
                 </div>
 
                 <nav className="flex flex-col gap-2 w-full overflow-y-auto pb-20 scrollbar-hide">
-                    {/* Botones de Navegación usando handleNavigation en lugar de navigate */}
+                    {/* Botones de Navegación usando handleNavigation */}
                     <button
                         title="Inicio"
                         onClick={() => handleNavigation('/dashboard')}
@@ -77,30 +77,33 @@ export const Sidebar = () => {
                         <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Inicio</span>
                     </button>
 
-                    <button
-                        title="Estadísticas"
-                        onClick={() => handleNavigation('/estadisticas')}
-                        className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/estadisticas'
-                            ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
-                            : 'text-gray-400 hover:bg-fitbox-red/5 hover:text-fitbox-red'
-                            } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
-                    >
-                        <BarChart3 className="w-5 h-5 shrink-0" />
-                        <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Estadísticas</span>
-                    </button>
-
+                    {/* ESTADÍSTICAS Y CAJA: SOLO ADMIN Y MONITORES */}
                     {(rol === 'Administrador' || rol === 'Monitor') && (
-                        <button
-                            title="Control de Caja"
-                            onClick={() => handleNavigation('/gestion-pagos')}
-                            className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/gestion-pagos'
-                                ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
-                                : 'text-gray-400 hover:bg-fitbox-red/5 hover:text-fitbox-red'
-                                } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
-                        >
-                            <CreditCard className="w-5 h-5 shrink-0" />
-                            <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Control de Caja</span>
-                        </button>
+                        <>
+                            <button
+                                title="Estadísticas"
+                                onClick={() => handleNavigation('/estadisticas')}
+                                className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/estadisticas'
+                                    ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
+                                    : 'text-gray-400 hover:bg-fitbox-red/5 hover:text-fitbox-red'
+                                    } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
+                            >
+                                <BarChart3 className="w-5 h-5 shrink-0" />
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Estadísticas</span>
+                            </button>
+
+                            <button
+                                title="Control de Caja"
+                                onClick={() => handleNavigation('/gestion-pagos')}
+                                className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/gestion-pagos'
+                                    ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
+                                    : 'text-gray-400 hover:bg-fitbox-red/5 hover:text-fitbox-red'
+                                    } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
+                            >
+                                <CreditCard className="w-5 h-5 shrink-0" />
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Control de Caja</span>
+                            </button>
+                        </>
                     )}
 
                     {rol === 'Administrador' && (

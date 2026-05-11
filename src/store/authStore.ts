@@ -1,25 +1,9 @@
 import { create } from 'zustand';
 import { supabase } from '../database/supabase/Client';
 import type { User } from '@supabase/supabase-js';
+import type { UserProfile } from '../interfaces/types'; 
 
-export interface UserProfile {
-    apellidos: string;
-    dni: string;
-    sexo: string;
-    telefono: string;
-    pais: string;
-    provincia: string;
-    codigo_postal: string;
-    localidad: string;
-    id_usuario: string;
-    nombre: string;
-    email: string;
-    id_rol: number;
-    avatar_url?: string;
-    roles?: {
-        nombre_rol: string;
-    };
-}
+export type { UserProfile };
 
 interface AuthState {
     user: User | null;
@@ -71,7 +55,7 @@ export const useAuthStore = create<AuthState>((set) => ({
                     .from('usuarios')
                     .select('*, roles(nombre_rol)')
                     .eq('id_usuario', session.user.id)
-                    .maybeSingle(); // <-- CAMBIO AQUÍ TAMBIÉN
+                    .maybeSingle(); 
 
                 set({ user: session.user, profile: profile as UserProfile, isLoading: false });
             } else {

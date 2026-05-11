@@ -1,17 +1,7 @@
+import type { Usuario } from '../../interfaces/types';
 import { supabase } from '../supabase/Client';
 
-export interface Usuario {
-    id_usuario: string;
-    nombre: string;
-    apellidos: string;
-    email: string;
-    id_rol: number;
-    telefono: string;
-    avatar_url?: string;
-    roles?: { nombre_rol: string };
-    xp?: number;
-    nivel?: number;
-}
+export type { Usuario };
 
 const generateDefaultAvatar = (nombre: string = '', apellidos: string = '') => {
     const nameQuery = encodeURIComponent(`${nombre} ${apellidos}`.trim() || 'User');
