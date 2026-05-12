@@ -3,8 +3,9 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+@custom-variant dark (&:is(.dark *));
+
 @theme {
-  /* Le decimos a Tailwind que lea las variables dinámicas */
   --color-fitbox-bg: var(--fitbox-bg);
   --color-fitbox-card: var(--fitbox-card);
   --color-fitbox-red: var(--fitbox-red);
@@ -21,19 +22,58 @@
   *,
   ::before,
   ::after {
-    border-color: var(--border);
-    outline-color: var(--ring);
+    border-color: var(--color-border);
+    outline-color: var(--color-ring);
   }
 
   html {
     @apply font-sans;
-    /* Forzamos el esquema de color oscuro para el scrollbar del navegador */
-    color-scheme: dark; 
   }
 }
 
 :root {
-  /* COLORES FITBOX (MODO OSCURO FIJO)
+  --fitbox-bg: #f3f4f6;
+  --fitbox-card: #ffffff;
+  --fitbox-red: #dc2626;
+  --fitbox-red-hover: #b91c1c;
+  --fitbox-text: #111827;
+  --fitbox-text-muted: #6b7280;
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
   --fitbox-bg: #0f1115;
   --fitbox-card: #16181d;
   --fitbox-red: #dc2626;
@@ -41,7 +81,6 @@
   --fitbox-text: #e5e5e5;
   --fitbox-text-muted: #a3a3a3;
 
-  /* Variables de Shadcn (versión oscura) */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -65,7 +104,6 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
