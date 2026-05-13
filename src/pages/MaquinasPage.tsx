@@ -61,11 +61,10 @@ export const MaquinasPage = () => {
         }
     }, []);
 
+    // AHORA SE CARGA PARA TODOS (Socios y Staff)
     useEffect(() => {
-        if (isStaff) {
-            cargarMaquinas();
-        }
-    }, [isStaff, cargarMaquinas]);
+        cargarMaquinas();
+    }, [cargarMaquinas]);
 
     const handleActualizarEstado = async () => {
         if (!maquinaSeleccionada || !profile?.id_usuario) return;
@@ -117,19 +116,6 @@ export const MaquinasPage = () => {
         }
     };
 
-    // BLOQUEO ABSOLUTO PARA SOCIOS
-    if (!isStaff) {
-        return (
-            <div className="p-8 text-center flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in duration-500">
-                <AlertTriangle className="w-20 h-20 text-fitbox-red mb-6 opacity-20" />
-                <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2">ZONA RESTRINGIDA</h2>
-                <p className="text-gray-400 max-w-md">
-                    El inventario técnico es exclusivo para la plantilla de Monitores y Dirección.
-                </p>
-            </div>
-        );
-    }
-
     const maquinasCategoriaActual = maquinas.filter(m => getCategoria(m.nombre) === categoriaActiva);
 
     return (
@@ -143,7 +129,10 @@ export const MaquinasPage = () => {
                         INVENTARIO <span className="text-fitbox-red">EQUIPAMIENTO</span>
                     </h1>
                     <p className="text-fitbox-text-muted mt-2 text-sm md:text-base">
-                        Control de averías, alta de material y mantenimiento técnico del club.
+                        {isStaff
+                            ? 'Control de averías, alta de material y mantenimiento técnico del club.'
+                            : 'Consulta los manuales de uso y el estado técnico del equipamiento.'
+                        }
                     </p>
                 </div>
 
@@ -165,7 +154,7 @@ export const MaquinasPage = () => {
                 </div>
             )}
 
-            {/* SELECTOR DE CATEGORÍAS (TABS) */}
+            {/* SELECTOR DE CATEGORÍAS */}
             <div className="space-y-4">
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                     {CATEGORIAS.map(cat => {
@@ -177,8 +166,8 @@ export const MaquinasPage = () => {
                                 key={cat}
                                 onClick={() => setCategoriaActiva(cat)}
                                 className={`px-6 py-3 rounded-xl font-black text-sm uppercase tracking-wider whitespace-nowrap transition-all duration-300 border flex items-center gap-2 ${activa
-                                        ? 'bg-fitbox-red border-fitbox-red text-white shadow-lg shadow-fitbox-red/20'
-                                        : 'bg-neutral-900 border-neutral-800 text-gray-500 hover:bg-neutral-800 hover:text-white'
+                                    ? 'bg-fitbox-red border-fitbox-red text-white shadow-lg shadow-fitbox-red/20'
+                                    : 'bg-neutral-900 border-neutral-800 text-gray-500 hover:bg-neutral-800 hover:text-white'
                                     }`}
                             >
                                 {cat}
@@ -215,7 +204,8 @@ export const MaquinasPage = () => {
                                     <th className="px-6 py-5 whitespace-nowrap">Estado Técnico</th>
                                     <th className="px-6 py-5 whitespace-nowrap">Registro Avería</th>
                                     <th className="px-6 py-5">Reporte / Observaciones</th>
-                                    <th className="px-6 py-5 text-right whitespace-nowrap">Acciones</th>
+                                    {/* SOLO MUESTRA LA COLUMNA SI ES STAFF */}
+                                    {isStaff && <th className="px-6 py-5 text-right whitespace-nowrap">Acciones</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-800/50">
@@ -236,7 +226,7 @@ export const MaquinasPage = () => {
                                                     {(maq.descripcion || maq.tutorial_url) && (
                                                         <button
                                                             onClick={() => setMaquinaParaLeer(maq)}
-                                                            className="text-blue-400 hover:text-white p-1.5 bg-blue-500/10 rounded-md transition-colors border border-blue-500/20 hover:bg-blue-500/30"
+                                                            className="text-blue-400 hover:text-white p-1.5 bg-blue-500/10 rounded-md transition-colors border border-blue-500/20 hover:bg-blue-500/30 shrink-0"
                                                             title="Ver manual y tutorial"
                                                         >
                                                             <BookOpen className="w-4 h-4" />
@@ -245,7 +235,7 @@ export const MaquinasPage = () => {
                                                 </div>
                                             </td>
 
-                                            {/* ESTADO (BADGES) */}
+                                            {/* ESTADO */}
                                             <td className="px-6 py-5">
                                                 {esCorrecto && (
                                                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-wider">
@@ -280,33 +270,35 @@ export const MaquinasPage = () => {
                                                 )}
                                             </td>
 
-                                            {/* BOTONES DE ACCIÓN */}
-                                            <td className="px-6 py-5 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Button
-                                                        variant="secondary"
-                                                        size="sm"
-                                                        className="h-9 px-4 font-black text-[10px] uppercase tracking-wider bg-neutral-800 text-gray-300 hover:bg-neutral-700 hover:text-white border-none shadow-md"
-                                                        onClick={() => {
-                                                            setMaquinaSeleccionada(maq);
-                                                            setNuevoEstado(maq.estado);
-                                                            setNuevasObservaciones(maq.observaciones || '');
-                                                        }}
-                                                    >
-                                                        Gestionar Estado
-                                                    </Button>
-
-                                                    {isAdmin && (
-                                                        <button
-                                                            onClick={() => handleBorrarMaquina(maq.id_maquina, maq.nombre)}
-                                                            className="text-neutral-500 hover:text-white p-2.5 rounded-lg hover:bg-red-600 transition-colors shadow-md"
-                                                            title="Eliminar DEFINITIVAMENTE del inventario"
+                                            {/* BOTONES DE ACCIÓN (SOLO SE MUESTRAN AL STAFF) */}
+                                            {isStaff && (
+                                                <td className="px-6 py-5 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Button
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            className="h-9 px-4 font-black text-[10px] uppercase tracking-wider bg-neutral-800 text-gray-300 hover:bg-neutral-700 hover:text-white border-none shadow-md"
+                                                            onClick={() => {
+                                                                setMaquinaSeleccionada(maq);
+                                                                setNuevoEstado(maq.estado);
+                                                                setNuevasObservaciones(maq.observaciones || '');
+                                                            }}
                                                         >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
+                                                            Gestionar Estado
+                                                        </Button>
+
+                                                        {isAdmin && (
+                                                            <button
+                                                                onClick={() => handleBorrarMaquina(maq.id_maquina, maq.nombre)}
+                                                                className="text-neutral-500 hover:text-white p-2.5 rounded-lg hover:bg-red-600 transition-colors shadow-md"
+                                                                title="Eliminar DEFINITIVAMENTE del inventario"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     );
                                 })}
@@ -377,12 +369,12 @@ export const MaquinasPage = () => {
             )}
 
             {/* MODAL: CAMBIAR ESTADO (Averías) */}
-            {maquinaSeleccionada && (
+            {maquinaSeleccionada && isStaff && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
                     <Card className="bg-neutral-950 border border-neutral-800 p-6 md:p-8 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden">
 
                         <div className={`absolute top-0 left-0 w-full h-1 transition-colors duration-500 ${nuevoEstado === 'Correcto' ? 'bg-green-500' :
-                                nuevoEstado === 'Defectuoso' ? 'bg-red-500' : 'bg-yellow-500'
+                            nuevoEstado === 'Defectuoso' ? 'bg-red-500' : 'bg-yellow-500'
                             }`}></div>
 
                         <h3 className="text-xl font-bold text-white mb-6 pr-6 leading-tight">

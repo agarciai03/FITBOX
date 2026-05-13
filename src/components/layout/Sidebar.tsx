@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard, Activity, ChevronLeft, ChevronRight, X, BarChart3 } from 'lucide-react';
+import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard, Activity, ChevronLeft, ChevronRight, X, BarChart3, Settings } from 'lucide-react';
 
 export const Sidebar = () => {
     const profile = useAuthStore((state) => state.profile);
@@ -229,6 +229,20 @@ export const Sidebar = () => {
                                 <Activity className="w-5 h-5 shrink-0" />
                                 <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Planes de Entrenamiento</span>
                             </button>
+                            
+                            {/* Máquinas para socios */}
+                            <button
+                                title="Equipamiento"
+                                onClick={() => handleNavigation('/maquinas')}
+                                className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/maquinas'
+                                    ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
+                                    : 'text-gray-400 hover:bg-fitbox-red/5 hover:text-fitbox-red'
+                                    } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
+                            >
+                                <Dumbbell className="w-5 h-5 shrink-0" />
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Equipamiento</span>
+                            </button>
+
                             <button
                                 title="Mis Pagos"
                                 onClick={() => handleNavigation('/pagos')}
