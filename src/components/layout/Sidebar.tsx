@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard, Activity, ChevronLeft, ChevronRight, X, BarChart3, Settings } from 'lucide-react';
+import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard, Activity, ChevronLeft, ChevronRight, X, BarChart3 } from 'lucide-react';
 
 export const Sidebar = () => {
     const profile = useAuthStore((state) => state.profile);

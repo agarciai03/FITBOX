@@ -32,15 +32,14 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // 1. Validar extensión/tipo de archivo
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
             setAuthError("Formato no válido. Solo se permiten imágenes (JPG, JPEG, PNG, WEBP).");
             return;
         }
 
-        // 2. Validar tamaño (Máximo 5MB)
-        const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+        // Validar tamaño 
+        const maxSizeInBytes = 5 * 1024 * 1024; 
         if (file.size > maxSizeInBytes) {
             setAuthError("La imagen es demasiado pesada. El tamaño máximo es 5MB.");
             return;
@@ -67,6 +66,28 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                 return;
             }
 
+            let finalAvatarUrl = null;
+
+            if (avatarFile) {
+                const fileExt = avatarFile.name.split('.').pop();
+                const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+                const filePath = `nuevos-socios/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, avatarFile, {
+                    cacheControl: '3600',
+                    upsert: false,
+                    contentType: avatarFile.type
+                });
+
+                if (!uploadError) {
+                    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+                    finalAvatarUrl = publicUrl; // Nos guardamos la URL de la foto subida
+                } else {
+                    console.error("No se pudo subir la imagen al Storage:", uploadError);
+                }
+            }
+
+            // preparamos los datos 
             const datosLimpios = {
                 ...restData,
                 email: emailLimpio,
@@ -79,44 +100,14 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                 provincia: restData.provincia.trim(),
                 localidad: restData.localidad.trim(),
                 id_rol: 3,
-                avatar_url: null
+                avatar_url: finalAvatarUrl 
             };
 
+            // registramos en supabase y obtenemos el ID del usuario creado
             const authResponse = await AuthRepository.register(emailLimpio, password as string, datosLimpios);
             const userId = authResponse.user?.id;
 
             if (!userId) throw new Error("No se ha devuelto el ID del usuario.");
-
-            const { error: dbError } = await supabase.from('usuarios').insert([{
-                id_usuario: userId,
-                email: emailLimpio,
-                nombre: datosLimpios.nombre,
-                apellidos: datosLimpios.apellidos,
-                dni: datosLimpios.dni,
-                telefono: datosLimpios.telefono || null,
-                fecha_nacimiento: datosLimpios.fecha_nacimiento || null,
-                sexo: datosLimpios.sexo || null,
-                pais: datosLimpios.pais || null,
-                provincia: datosLimpios.provincia || null,
-                localidad: datosLimpios.localidad || null,
-                codigo_postal: datosLimpios.codigo_postal || null,
-                id_rol: 3
-            }]);
-
-            if (dbError) throw dbError;
-
-            if (avatarFile && userId) {
-                const fileExt = avatarFile.name.split('.').pop();
-                const fileName = `${Math.random()}.${fileExt}`;
-                const filePath = `${userId}/${fileName}`;
-
-                const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, avatarFile);
-
-                if (!uploadError) {
-                    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
-                    await supabase.from('usuarios').update({ avatar_url: publicUrl }).eq('id_usuario', userId);
-                }
-            }
 
             setSuccessMessage('¡Registro completado con éxito! Preparando tu entorno...');
 
@@ -138,7 +129,6 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
             setIsLoading(false);
         }
     };
-
     return (
         <div className="fixed inset-0 z-100 bg-black/40 backdrop-blur-md overflow-y-auto p-4 sm:p-6 animate-in fade-in duration-300">
 

@@ -5,19 +5,21 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fitbox-red focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-fitbox-red text-white hover:bg-fitbox-red-hover",
-        
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        
-        secondary: "bg-fitbox-card text-fitbox-text border border-neutral-700 hover:bg-neutral-800",
-        
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "bg-fitbox-red text-white hover:bg-fitbox-red-hover hover:-translate-y-0.5 hover:shadow-[0_0_15px_rgba(220,38,38,0.4)]",
+
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-[0_0_15px_rgba(255,0,0,0.3)]",
+
+        outline: "border border-input bg-background hover:border-fitbox-red/50 hover:bg-accent hover:text-accent-foreground",
+
+        secondary: "bg-fitbox-card text-fitbox-text border border-neutral-700 hover:bg-neutral-800 hover:border-neutral-500",
+
+        ghost: "hover:bg-fitbox-red/10 hover:text-fitbox-red",
+
+        link: "text-fitbox-red underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2",
