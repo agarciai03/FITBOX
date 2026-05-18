@@ -3,7 +3,6 @@ import { supabase } from '../supabase/Client';
 export type { Pago };
 
 export const PaymentRepository = {
-    // Traer todos los pagos (Para Admin/Monitor) con el nombre del socio cruzado
     getAllPagos: async (): Promise<Pago[]> => {
         const { data, error } = await supabase
             .from('pagos')
@@ -17,7 +16,6 @@ export const PaymentRepository = {
         return data as Pago[];
     },
 
-    // Traer solo los pagos de un socio concreto
     getPagosBySocio: async (id_usuario: string): Promise<Pago[]> => {
         const { data, error } = await supabase
             .from('pagos')
@@ -32,7 +30,6 @@ export const PaymentRepository = {
         return data as Pago[];
     },
 
-    // Registrar un nuevo recibo de facturación en la base de datos
     registrarPago: async (id_usuario: string, importe: number, concepto: string): Promise<void> => {
         const { error } = await supabase
             .from('pagos')

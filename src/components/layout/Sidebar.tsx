@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard, Activity, ChevronLeft, ChevronRight, X, BarChart3 } from 'lucide-react';
+import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard, Activity, ChevronLeft, ChevronRight, X, BarChart3, AlertTriangle } from 'lucide-react';
 
 export const Sidebar = () => {
     const profile = useAuthStore((state) => state.profile);
@@ -13,7 +13,11 @@ export const Sidebar = () => {
     const pathname = location.pathname;
 
     const [isCollapsed, setIsCollapsed] = useState(false);
+    
     const rol = profile?.roles?.nombre_rol || 'Socio';
+    const isSocio = rol === 'Socio';
+    
+    const haPagado = (profile as any)?.estado_pago === 'activo';
 
     // Función que navega y, si estamos en móvil, cierra el menú automáticamente
     const handleNavigation = (path: string) => {
@@ -31,7 +35,6 @@ export const Sidebar = () => {
             )}
 
             {/* sidebar responsive */}
-
             <aside className={`fixed md:relative z-50 bg-neutral-950 md:bg-neutral-950/40 backdrop-blur-md border-r border-neutral-800/50 min-h-screen p-4 flex flex-col transition-all duration-300 
                 ${isCollapsed ? 'md:w-20 md:items-center' : 'w-64'} 
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
@@ -64,7 +67,7 @@ export const Sidebar = () => {
                 </div>
 
                 <nav className="flex flex-col gap-2 w-full overflow-y-auto pb-20 scrollbar-hide">
-                    {/* Botones de Navegación usando handleNavigation */}
+                    {/* Botón de Inicio (Visible para todos) */}
                     <button
                         title="Inicio"
                         onClick={() => handleNavigation('/dashboard')}
@@ -102,6 +105,19 @@ export const Sidebar = () => {
                             >
                                 <CreditCard className="w-5 h-5 shrink-0" />
                                 <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Control de Caja</span>
+                            </button>
+                            
+                            {/* Boton de morosos */}
+                            <button
+                                title="Control Morosos"
+                                onClick={() => handleNavigation('/morosos')}
+                                className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/morosos'
+                                    ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
+                                    : 'text-gray-400 hover:bg-red-500/10 hover:text-red-500'
+                                    } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
+                            >
+                                <AlertTriangle className="w-5 h-5 shrink-0" />
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Control Morosos</span>
                             </button>
                         </>
                     )}
@@ -205,44 +221,51 @@ export const Sidebar = () => {
                         </>
                     )}
 
-                    {rol === 'Socio' && (
+                    {/* MENÚ DEL SOCIO */}
+                    {isSocio && (
                         <>
-                            <button
-                                title="Horarios y Reservas"
-                                onClick={() => handleNavigation('/clases')}
-                                className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/clases'
-                                    ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
-                                    : 'text-gray-400 hover:bg-fitbox-red/5 hover:text-fitbox-red'
-                                    } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
-                            >
-                                <Calendar className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Horarios y Reservas</span>
-                            </button>
-                            <button
-                                title="Planes de Entrenamiento"
-                                onClick={() => handleNavigation('/rutinas')}
-                                className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/rutinas'
-                                    ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
-                                    : 'text-gray-400 hover:bg-fitbox-red/5 hover:text-fitbox-red'
-                                    } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
-                            >
-                                <Activity className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Planes de Entrenamiento</span>
-                            </button>
-                            
-                            {/* Máquinas para socios */}
-                            <button
-                                title="Equipamiento"
-                                onClick={() => handleNavigation('/maquinas')}
-                                className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/maquinas'
-                                    ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
-                                    : 'text-gray-400 hover:bg-fitbox-red/5 hover:text-fitbox-red'
-                                    } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
-                            >
-                                <Dumbbell className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Equipamiento</span>
-                            </button>
+                            {/* BLOQUEO CONDICIONAL: Solo mostramos estas opciones si haPagado es true */}
+                            {haPagado && (
+                                <>
+                                    <button
+                                        title="Horarios y Reservas"
+                                        onClick={() => handleNavigation('/clases')}
+                                        className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/clases'
+                                            ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
+                                            : 'text-gray-400 hover:bg-fitbox-red/5 hover:text-fitbox-red'
+                                            } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
+                                    >
+                                        <Calendar className="w-5 h-5 shrink-0" />
+                                        <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Horarios y Reservas</span>
+                                    </button>
+                                    <button
+                                        title="Planes de Entrenamiento"
+                                        onClick={() => handleNavigation('/rutinas')}
+                                        className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/rutinas'
+                                            ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
+                                            : 'text-gray-400 hover:bg-fitbox-red/5 hover:text-fitbox-red'
+                                            } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
+                                    >
+                                        <Activity className="w-5 h-5 shrink-0" />
+                                        <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Planes de Entrenamiento</span>
+                                    </button>
+                                    
+                                    {/* Máquinas para socios */}
+                                    <button
+                                        title="Equipamiento"
+                                        onClick={() => handleNavigation('/maquinas')}
+                                        className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/maquinas'
+                                            ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
+                                            : 'text-gray-400 hover:bg-fitbox-red/5 hover:text-fitbox-red'
+                                            } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
+                                    >
+                                        <Dumbbell className="w-5 h-5 shrink-0" />
+                                        <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Equipamiento</span>
+                                    </button>
+                                </>
+                            )}
 
+                            {/* El botón de pagos se muestra siempre */}
                             <button
                                 title="Mis Pagos"
                                 onClick={() => handleNavigation('/pagos')}
