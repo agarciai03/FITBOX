@@ -48,10 +48,9 @@ export const UserRepository = {
         if (error) throw error;
     },
 
-    // Sumar XP y comprobar subida de Nivel
-    sumarExperiencia: async (id_usuario: string, cantidadXp: number = 50) => {
+    // Sumar o restar XP y comprobar subida de Nivel
+    sumarExperiencia: async (id_usuario: string, cantidadXp: number) => {
         try {
-            // Llamamos a la "puerta VIP" (RPC) de la base de datos
             const { error } = await supabase.rpc('dar_experiencia', {
                 socio_id: id_usuario,
                 cantidad: cantidadXp
@@ -60,7 +59,7 @@ export const UserRepository = {
             if (error) throw error;
 
         } catch (error) {
-            console.error("Error al sumar XP:", error);
+            console.error("Error al modificar XP:", error);
             throw error;
         }
     }

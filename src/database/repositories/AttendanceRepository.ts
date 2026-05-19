@@ -26,8 +26,9 @@ export const AttendanceRepository = {
         return data as Clase[];
     },
 
-    // Pasar lista (Marcar si vino o faltó) + LÓGICA XP
+    // Pasar lista (Marcar si vino o faltó) + XP
     marcarAsistencia: async (id_reserva: string, asistio: boolean): Promise<void> => {
+        // 1. Guardamos la asistencia en la base de datos
         const { error } = await supabase
             .from('reservas')
             .update({ asistencia: asistio })
@@ -35,23 +36,22 @@ export const AttendanceRepository = {
 
         if (error) throw error;
 
-        // Si el socio ha asistido a su clase, le premiamos con 50 XP
-        if (asistio) {
-            try {
-                // Buscamos de quién era la reserva en Supabase
-                const { data: reserva, error: resError } = await supabase
-                    .from('reservas')
-                    .select('id_socio')
-                    .eq('id', id_reserva)
-                    .single();
+        // Gestionamos la penalización o el premio de XP
+        try {
+            // Buscamos de quién era la reserva en Supabase
+            const { data: reserva, error: resError } = await supabase
+                .from('reservas')
+                .select('id_socio')
+                .eq('id', id_reserva)
+                .single();
 
-                // Le inyectamos los puntos de experiencia
-                if (!resError && reserva?.id_socio) {
-                    await UserRepository.sumarExperiencia(reserva.id_socio, 50);
-                }
-            } catch (xpError) {
-                console.error("La asistencia se guardó, pero hubo un fallo sumando XP", xpError);
+            // Le damos o quitamos los puntos de experiencia 
+            if (!resError && reserva?.id_socio) {
+                const cantidadXp = asistio ? 50 : -10;
+                await UserRepository.sumarExperiencia(reserva.id_socio, cantidadXp);
             }
+        } catch (xpError) {
+            console.error("La asistencia se guardó, pero hubo un fallo modificando la XP", xpError);
         }
     }
 };
