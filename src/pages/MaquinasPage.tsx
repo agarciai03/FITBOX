@@ -7,7 +7,6 @@ import { Dumbbell, AlertTriangle, CheckCircle, Info, Trash2, ExternalLink, BookO
 import { Card } from '../components/ui/Card';
 import { Alert } from '../components/ui/Alert';
 
-// Función inteligente para clasificar las máquinas
 const getCategoria = (nombre: string): string => {
     const n = nombre.toLowerCase();
     if (['saco', 'aqua bag', 'pera', 'bob', 'ring', 'escudos', 'manoplas', 'combas', 'espejos', 'asaltos'].some(k => n.includes(k))) return 'Boxeo';
@@ -19,7 +18,6 @@ const getCategoria = (nombre: string): string => {
 const CATEGORIAS = ['Sala de Máquinas', 'Boxeo', 'Jiu Jitsu BJJ', 'CrossFit'];
 
 export const MaquinasPage = () => {
-    // 1. Doble check de seguridad para garantizar que el ADMIN tenga todo el poder
     const profile = useAuthStore((state) => state.profile);
     const rol = profile?.roles?.nombre_rol || 'Socio';
     const idRol = profile?.id_rol;
@@ -33,10 +31,8 @@ export const MaquinasPage = () => {
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    // Pestaña activa
     const [categoriaActiva, setCategoriaActiva] = useState<string>('Sala de Máquinas');
 
-    // Modales
     const [maquinaSeleccionada, setMaquinaSeleccionada] = useState<Maquina | null>(null);
     const [nuevoEstado, setNuevoEstado] = useState<EstadoMaquina>('Correcto');
     const [nuevasObservaciones, setNuevasObservaciones] = useState('');
@@ -61,7 +57,6 @@ export const MaquinasPage = () => {
         }
     }, []);
 
-    // AHORA SE CARGA PARA TODOS (Socios y Staff)
     useEffect(() => {
         cargarMaquinas();
     }, [cargarMaquinas]);
@@ -95,7 +90,6 @@ export const MaquinasPage = () => {
             setNombreNuevaMaquina(''); setDescripcionNuevaMaquina(''); setTutorialNuevaMaquina('');
             setSuccessMessage("Máquina registrada con éxito en el sistema.");
 
-            // Redirigir automáticamente a la categoría de la máquina recién creada
             setCategoriaActiva(getCategoria(nombreNuevaMaquina));
             cargarMaquinas();
         } catch (errorCatch: any) {
@@ -125,7 +119,7 @@ export const MaquinasPage = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-neutral-800 pb-6">
                 <div>
                     <h1 className="text-3xl md:text-4xl font-extrabold text-white flex items-center gap-3 uppercase tracking-tight">
-                        <Settings className="w-8 h-8 md:w-10 md:h-10 text-fitbox-red" />
+                        <Settings className="size-8 md:size-10 text-fitbox-red" />
                         INVENTARIO <span className="text-fitbox-red">EQUIPAMIENTO</span>
                     </h1>
                     <p className="text-fitbox-text-muted mt-2 text-sm md:text-base">
@@ -141,7 +135,7 @@ export const MaquinasPage = () => {
                         onClick={() => setIsCreando(true)}
                         className="bg-fitbox-red hover:bg-red-700 text-white font-bold w-full md:w-auto shadow-lg shadow-fitbox-red/20 py-6"
                     >
-                        <Plus className="w-5 h-5 mr-2" /> Registrar Equipamiento
+                        <Plus className="size-5 mr-2" /> Registrar Equipamiento
                     </Button>
                 )}
             </div>
@@ -150,7 +144,7 @@ export const MaquinasPage = () => {
             {error && <Alert type="error" message={error} />}
             {successMessage && (
                 <div className="p-4 bg-green-500/10 border border-green-500/30 text-green-400 rounded-lg flex items-center gap-3 font-bold animate-in slide-in-from-top-2">
-                    <CheckCircle className="w-5 h-5 shrink-0" /> <p>{successMessage}</p>
+                    <CheckCircle className="size-5 shrink-0" /> <p>{successMessage}</p>
                 </div>
             )}
 
@@ -183,13 +177,13 @@ export const MaquinasPage = () => {
             {/* TABLA DE INVENTARIO */}
             {isLoading ? (
                 <div className="py-20 text-center flex flex-col items-center">
-                    <Dumbbell className="w-12 h-12 text-fitbox-red animate-spin mx-auto mb-4" />
-                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Cargando base de datos...</p>
+                    <Dumbbell className="size-12 text-fitbox-red animate-spin mx-auto mb-4" />
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Cargando base de datos…</p>
                 </div>
             ) : maquinasCategoriaActual.length === 0 ? (
                 <div className="py-20 text-center border border-dashed border-neutral-800 rounded-2xl bg-neutral-900/20 flex flex-col items-center">
-                    <Settings className="w-16 h-16 text-neutral-800 mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">Categoría Vacía</h3>
+                    <Settings className="size-16 text-neutral-800 mb-4" />
+                    <h3 className="text-xl font-semibold text-white mb-2">Categoría Vacía</h3>
                     <p className="text-sm text-gray-500 max-w-md">
                         {isAdmin ? 'No hay máquinas registradas en esta sección. Añade la primera desde el botón superior.' : 'No hay equipamiento disponible aquí.'}
                     </p>
@@ -204,7 +198,6 @@ export const MaquinasPage = () => {
                                     <th className="px-6 py-5 whitespace-nowrap">Estado Técnico</th>
                                     <th className="px-6 py-5 whitespace-nowrap">Registro Avería</th>
                                     <th className="px-6 py-5">Reporte / Observaciones</th>
-                                    {/* SOLO MUESTRA LA COLUMNA SI ES STAFF */}
                                     {isStaff && <th className="px-6 py-5 text-right whitespace-nowrap">Acciones</th>}
                                 </tr>
                             </thead>
@@ -229,7 +222,7 @@ export const MaquinasPage = () => {
                                                             className="text-blue-400 hover:text-white p-1.5 bg-blue-500/10 rounded-md transition-colors border border-blue-500/20 hover:bg-blue-500/30 shrink-0"
                                                             title="Ver manual y tutorial"
                                                         >
-                                                            <BookOpen className="w-4 h-4" />
+                                                            <BookOpen className="size-4" />
                                                         </button>
                                                     )}
                                                 </div>
@@ -239,17 +232,17 @@ export const MaquinasPage = () => {
                                             <td className="px-6 py-5">
                                                 {esCorrecto && (
                                                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-wider">
-                                                        <CheckCircle className="w-3.5 h-3.5" /> 100% Operativa
+                                                        <CheckCircle className="size-3.5" /> 100% Operativa
                                                     </span>
                                                 )}
                                                 {esDefectuoso && (
                                                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-red-500/10 text-red-500 border border-red-500/20 uppercase tracking-wider">
-                                                        <AlertTriangle className="w-3.5 h-3.5 animate-pulse" /> Fuera de Servicio
+                                                        <AlertTriangle className="size-3.5 animate-pulse" /> Fuera de Servicio
                                                     </span>
                                                 )}
                                                 {esObs && (
                                                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 uppercase tracking-wider whitespace-nowrap">
-                                                        <Info className="w-3.5 h-3.5" /> Revisión Pendiente
+                                                        <Info className="size-3.5" /> Revisión Pendiente
                                                     </span>
                                                 )}
                                             </td>
@@ -270,7 +263,7 @@ export const MaquinasPage = () => {
                                                 )}
                                             </td>
 
-                                            {/* BOTONES DE ACCIÓN (SOLO SE MUESTRAN AL STAFF) */}
+                                            {/* BOTONES DE ACCIÓN */}
                                             {isStaff && (
                                                 <td className="px-6 py-5 text-right">
                                                     <div className="flex items-center justify-end gap-2">
@@ -290,10 +283,10 @@ export const MaquinasPage = () => {
                                                         {isAdmin && (
                                                             <button
                                                                 onClick={() => handleBorrarMaquina(maq.id_maquina, maq.nombre)}
-                                                                className="text-neutral-500 hover:text-white p-2.5 rounded-lg hover:bg-red-600 transition-colors shadow-md"
+                                                                className="text-gray-400 hover:text-white p-2.5 rounded-lg hover:bg-red-700 transition-colors shadow-md"
                                                                 title="Eliminar DEFINITIVAMENTE del inventario"
                                                             >
-                                                                <Trash2 className="w-4 h-4" />
+                                                                <Trash2 className="size-4" />
                                                             </button>
                                                         )}
                                                     </div>
@@ -308,14 +301,14 @@ export const MaquinasPage = () => {
                 </div>
             )}
 
-            {/* MODAL: CREAR MÁQUINA NUEVA (Solo Admin) */}
+            {/* MODAL: CREAR MÁQUINA NUEVA */}
             {isCreando && isAdmin && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
                     <Card className="bg-neutral-950 border border-neutral-800 p-6 md:p-8 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-fitbox-red to-red-900"></div>
 
                         <button onClick={() => setIsCreando(false)} className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors">
-                            <X className="w-6 h-6" />
+                            <X className="size-6" />
                         </button>
 
                         <div className="mb-6">
@@ -327,9 +320,9 @@ export const MaquinasPage = () => {
 
                         <div className="space-y-5">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Nombre / Modelo Oficial *</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="nombre_oficial">Nombre / Modelo Oficial *</label>
                                 <Input
-                                    autoFocus
+                                    id="nombre_oficial"
                                     className="w-full bg-neutral-900 border-neutral-800 text-white px-4 py-3 outline-none focus:border-fitbox-red font-bold transition-colors"
                                     placeholder="Ej: Press de Banca Olímpico"
                                     value={nombreNuevaMaquina}
@@ -338,20 +331,22 @@ export const MaquinasPage = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">URL Vídeo Tutorial (Opcional)</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="url_tutorial">URL Vídeo Tutorial (Opcional)</label>
                                 <Input
+                                    id="url_tutorial"
                                     className="w-full bg-neutral-900 border-neutral-800 text-white px-4 py-3 outline-none focus:border-fitbox-red transition-colors"
-                                    placeholder="Enlace a YouTube, Vimeo..."
+                                    placeholder="Enlace a YouTube, Vimeo…"
                                     value={tutorialNuevaMaquina}
                                     onChange={(e) => setTutorialNuevaMaquina(e.target.value)}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ficha Técnica / Instrucciones (Opcional)</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="ficha_tecnica">Ficha Técnica / Instrucciones (Opcional)</label>
                                 <textarea
+                                    id="ficha_tecnica"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none min-h-30 resize-y focus:border-fitbox-red placeholder:text-neutral-600 text-sm"
-                                    placeholder="Pautas de uso, precauciones de seguridad, peso máximo..."
+                                    placeholder="Pautas de uso, precauciones de seguridad, peso máximo…"
                                     value={descripcionNuevaMaquina}
                                     onChange={(e) => setDescripcionNuevaMaquina(e.target.value)}
                                 />
@@ -368,7 +363,7 @@ export const MaquinasPage = () => {
                 </div>
             )}
 
-            {/* MODAL: CAMBIAR ESTADO (Averías) */}
+            {/* MODAL: CAMBIAR ESTADO */}
             {maquinaSeleccionada && isStaff && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
                     <Card className="bg-neutral-950 border border-neutral-800 p-6 md:p-8 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden">
@@ -377,14 +372,15 @@ export const MaquinasPage = () => {
                             nuevoEstado === 'Defectuoso' ? 'bg-red-500' : 'bg-yellow-500'
                             }`}></div>
 
-                        <h3 className="text-xl font-bold text-white mb-6 pr-6 leading-tight">
+                        <h3 className="text-xl font-semibold text-white mb-6 pr-6 leading-tight">
                             Gestión: <span className="text-fitbox-red uppercase">{maquinaSeleccionada.nombre}</span>
                         </h3>
 
                         <div className="space-y-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Cambiar Estado Técnico</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="estado_tecnico">Cambiar Estado Técnico</label>
                                 <select
+                                    id="estado_tecnico"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white font-bold rounded-lg px-4 py-4 outline-none focus:border-fitbox-red transition-all"
                                     value={nuevoEstado}
                                     onChange={(e) => setNuevoEstado(e.target.value as EstadoMaquina)}
@@ -397,10 +393,11 @@ export const MaquinasPage = () => {
 
                             {nuevoEstado !== 'Correcto' && (
                                 <div className="space-y-2 animate-in slide-in-from-top-2">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Reporte del problema</label>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="reporte_problema">Reporte del problema</label>
                                     <textarea
+                                        id="reporte_problema"
                                         className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none min-h-30 resize-y focus:border-fitbox-red placeholder:text-neutral-600 text-sm font-medium"
-                                        placeholder="Detalla qué pieza falla, si hay ruido extraño, cable suelto..."
+                                        placeholder="Detalla qué pieza falla, si hay ruido extraño, cable suelto…"
                                         value={nuevasObservaciones}
                                         onChange={(e) => setNuevasObservaciones(e.target.value)}
                                     />
@@ -423,12 +420,12 @@ export const MaquinasPage = () => {
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
                     <Card className="bg-neutral-950 border border-neutral-800 p-6 md:p-8 rounded-2xl w-full max-w-lg shadow-2xl relative">
                         <button onClick={() => setMaquinaParaLeer(null)} className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors">
-                            <X className="w-6 h-6" />
+                            <X className="size-6" />
                         </button>
 
                         <div className="mb-6 pr-8 border-b border-neutral-800 pb-4">
                             <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter flex items-center gap-3">
-                                <BookOpen className="text-blue-400 w-6 h-6" /> {maquinaParaLeer.nombre}
+                                <BookOpen className="text-blue-400 size-6" /> {maquinaParaLeer.nombre}
                             </h3>
                             <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest font-bold">Ficha Técnica Oficial</p>
                         </div>
@@ -436,7 +433,7 @@ export const MaquinasPage = () => {
                         <div className="space-y-6">
                             {maquinaParaLeer.descripcion && (
                                 <div className="space-y-2">
-                                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Instrucciones de Uso</h4>
+                                    <h4 className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">Instrucciones de Uso</h4>
                                     <div className="text-gray-300 leading-relaxed text-sm bg-neutral-900/50 p-5 rounded-xl border border-neutral-800/50 whitespace-pre-wrap font-medium">
                                         {maquinaParaLeer.descripcion}
                                     </div>
@@ -447,7 +444,7 @@ export const MaquinasPage = () => {
                                 <div className="pt-2">
                                     <a href={maquinaParaLeer.tutorial_url} target="_blank" rel="noreferrer" className="block">
                                         <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 text-md shadow-lg shadow-blue-500/20">
-                                            <ExternalLink className="w-5 h-5 mr-2" /> Abrir Vídeo Tutorial
+                                            <ExternalLink className="size-5 mr-2" /> Abrir Vídeo Tutorial
                                         </Button>
                                     </a>
                                 </div>

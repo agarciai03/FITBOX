@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useReducer } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '@/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +16,30 @@ interface ClaseDashboard {
     reservas: { id: string }[];
 }
 
+interface DashboardState {
+    incidencias: number;
+    sociosCount: number;
+    clasesCount: number;
+    hombresCount: number;
+    mujeresCount: number;
+    proximasClases: ClaseDashboard[];
+    isLoadingClases: boolean;
+    datosOcupacion: { hora: string; ocupacion: number }[];
+    mensajeOcupacion: { actual: number; recomendada: string; recomendadaOcup: number };
+}
+
+const initialState: DashboardState = {
+    incidencias: 0,
+    sociosCount: 0,
+    clasesCount: 0,
+    hombresCount: 0,
+    mujeresCount: 0,
+    proximasClases: [],
+    isLoadingClases: true,
+    datosOcupacion: [],
+    mensajeOcupacion: { actual: 0, recomendada: '', recomendadaOcup: 0 }
+};
+
 export const DashboardPage = () => {
     const profile = useAuthStore((state) => state.profile);
     const user = useAuthStore((state) => state.user);
@@ -25,38 +49,37 @@ export const DashboardPage = () => {
     const isAdminOrMonitor = rol === 'Administrador' || rol === 'Monitor';
     const isActivo = (profile as any)?.estado_pago === 'activo';
 
-    const [incidencias, setIncidencias] = useState(0);
-    const [sociosCount, setSociosCount] = useState(0);
-    const [clasesCount, setClasesCount] = useState(0);
-    const [hombresCount, setHombresCount] = useState(0);
-    const [mujeresCount, setMujeresCount] = useState(0);
+    const [state, setState] = useReducer(
+        (prev: DashboardState, next: Partial<DashboardState>) => ({ ...prev, ...next }),
+        initialState
+    );
 
-    const [proximasClases, setProximasClases] = useState<ClaseDashboard[]>([]);
-    const [isLoadingClases, setIsLoadingClases] = useState(true);
-
-    const [datosOcupacion, setDatosOcupacion] = useState<{ hora: string, ocupacion: number }[]>([]);
-    const [mensajeOcupacion, setMensajeOcupacion] = useState({ actual: 0, recomendada: '', recomendadaOcup: 0 });
+    // Desestructuramos para que el HTML de abajo siga funcionando exactamente igual
+    const {
+        incidencias, sociosCount, clasesCount, hombresCount, mujeresCount,
+        proximasClases, isLoadingClases, datosOcupacion, mensajeOcupacion
+    } = state;
 
     useEffect(() => {
+        let isMounted = true; // Evita memory leaks si el usuario cambia rápido de página
+
         MachineRepository.getAllMaquinas().then(data => {
-            const maquinasRotas = data.filter(maquina => maquina.estado !== 'Correcto').length;
-            setIncidencias(maquinasRotas);
+            if (isMounted) setState({ incidencias: data.filter(maquina => maquina.estado !== 'Correcto').length });
         }).catch(err => console.error("Error al cargar incidencias:", err));
 
         const fetchSocios = async () => {
             const { count, error } = await supabase.from('usuarios').select('*', { count: 'exact', head: true });
-            if (!error && count !== null) setSociosCount(count);
+            if (!error && count !== null && isMounted) setState({ sociosCount: count });
         };
 
         const fetchEstadisticasSexos = async () => {
             const { count: h } = await supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('sexo', 'Hombre');
             const { count: m } = await supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('sexo', 'Mujer');
-            if (h !== null) setHombresCount(h);
-            if (m !== null) setMujeresCount(m);
+            if (isMounted) setState({ hombresCount: h || 0, mujeresCount: m || 0 });
         };
 
         const fetchClasesHoy = async () => {
-            setIsLoadingClases(true);
+            if (isMounted) setState({ isLoadingClases: true });
             const hoy = new Date().toISOString().split('T')[0];
 
             const { data, error } = await supabase
@@ -72,10 +95,7 @@ export const DashboardPage = () => {
                 .eq('fecha', hoy)
                 .order('hora_inicio', { ascending: true });
 
-            if (!error && data) {
-                setClasesCount(data.length);
-                setProximasClases(data.slice(0, 4) as unknown as ClaseDashboard[]);
-
+            if (!error && data && isMounted) {
                 const buckets = [8, 10, 12, 14, 16, 18, 20, 22];
                 const ocupacionArr = buckets.map(b => ({
                     hora: `${b < 10 ? '0' + b : b}:00`,
@@ -103,7 +123,6 @@ export const DashboardPage = () => {
                         item.ocupacion = Math.round((item.reservas / item.plazas) * 100);
                     }
                 });
-                setDatosOcupacion(ocupacionArr);
 
                 const horaActualNum = new Date().getHours();
                 let bucketActual = horaActualNum % 2 === 0 ? horaActualNum : horaActualNum - 1;
@@ -128,18 +147,27 @@ export const DashboardPage = () => {
                     menorOcupacion = 0;
                 }
 
-                setMensajeOcupacion({
-                    actual: ocupacionActual,
-                    recomendada: mejorHora,
-                    recomendadaOcup: menorOcupacion
+                setState({
+                    clasesCount: data.length,
+                    proximasClases: data.slice(0, 4) as unknown as ClaseDashboard[],
+                    datosOcupacion: ocupacionArr,
+                    mensajeOcupacion: {
+                        actual: ocupacionActual,
+                        recomendada: mejorHora,
+                        recomendadaOcup: menorOcupacion
+                    },
+                    isLoadingClases: false
                 });
+            } else if (isMounted) {
+                setState({ isLoadingClases: false });
             }
-            setIsLoadingClases(false);
         };
 
         fetchSocios();
         fetchEstadisticasSexos();
         fetchClasesHoy();
+
+        return () => { isMounted = false; };
     }, []);
 
     return (
@@ -302,8 +330,8 @@ export const DashboardPage = () => {
                                 <div className="space-y-3">
                                     {isLoadingClases ? (
                                         <div className="space-y-2">
-                                            {[1, 2, 3].map(i => (
-                                                <div key={i} className="h-16 bg-neutral-800/50 animate-pulse rounded-xl border border-white/5"></div>
+                                            {[1, 2, 3].map(num => (
+                                                <div key={`skeleton-${num}`} className="h-16 bg-neutral-800/50 animate-pulse rounded-xl border border-white/5"></div>
                                             ))}
                                         </div>
                                     ) : proximasClases.length === 0 ? (

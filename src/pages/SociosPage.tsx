@@ -33,7 +33,7 @@ export const SociosPage = () => {
         telefono: '',
         email: '',
         password: '',
-        confirmPassword: '', // <-- AÑADIDO: Confirmar contraseña
+        confirmPassword: '',
         id_rol: 2,
         sexo: '',
         pais: '',
@@ -94,7 +94,8 @@ export const SociosPage = () => {
             if (uploadError) throw uploadError;
 
             const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
-            setNuevoStaff({ ...nuevoStaff, avatar_url: publicUrl });
+
+            setNuevoStaff(prev => ({ ...prev, avatar_url: publicUrl }));
         } catch {
             setError("No se pudo subir la imagen del monitor.");
         }
@@ -154,7 +155,6 @@ export const SociosPage = () => {
         setIsRegistering(true);
 
         try {
-            // --- AÑADIDO: 3. Usamos AuthRepository (Cliente en la Sombra) ---
             await AuthRepository.register(nuevoStaff.email.trim(), nuevoStaff.password, {
                 nombre: nuevoStaff.nombre.trim(),
                 apellidos: nuevoStaff.apellidos.trim(),
@@ -168,8 +168,7 @@ export const SociosPage = () => {
                 codigo_postal: nuevoStaff.codigo_postal || '',
                 avatar_url: nuevoStaff.avatar_url || null,
                 id_disciplina: nuevoStaff.id_disciplina || null,
-                fecha_nacimiento: '1990-01-01' // Dato por defecto para evitar fallos si tu BD lo pide
-                ,
+                fecha_nacimiento: '1990-01-01',
                 email: ''
             });
 
@@ -180,7 +179,6 @@ export const SociosPage = () => {
                 setSuccessMessage(`¡La ficha de ${nuevoStaff.nombre.trim()} se ha creado correctamente! Ya puede iniciar sesión.`);
                 setIsCreandoStaff(false);
 
-                // Limpiamos el formulario (Añadido confirmPassword)
                 setNuevoStaff({
                     nombre: '', apellidos: '', dni: '', telefono: '', email: '', password: '', confirmPassword: '',
                     id_rol: 2, sexo: '', pais: '', provincia: '', localidad: '', codigo_postal: '',
@@ -197,7 +195,7 @@ export const SociosPage = () => {
             } else {
                 setError(errorCatch.message || "Error al intentar crear el empleado en la base de datos.");
             }
-            setIsRegistering(false); // Liberamos el botón si hay error
+            setIsRegistering(false);
         }
     };
 
@@ -408,44 +406,48 @@ export const SociosPage = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Nombre</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="edit-nombre">Nombre</label>
                                 <Input
+                                    id="edit-nombre"
                                     autoFocus
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-blue-500"
                                     value={usuarioAEditar.nombre}
-                                    onChange={(e) => setUsuarioAEditar({ ...usuarioAEditar, nombre: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    onChange={(e) => setUsuarioAEditar(prev => prev ? { ...prev, nombre: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') } : null)}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Apellidos</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="edit-apellidos">Apellidos</label>
                                 <Input
+                                    id="edit-apellidos"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-blue-500"
                                     value={usuarioAEditar.apellidos}
-                                    onChange={(e) => setUsuarioAEditar({ ...usuarioAEditar, apellidos: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    onChange={(e) => setUsuarioAEditar(prev => prev ? { ...prev, apellidos: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') } : null)}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Teléfono</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="edit-telefono">Teléfono</label>
                                 <Input
+                                    id="edit-telefono"
                                     type="tel"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-blue-500"
                                     value={usuarioAEditar.telefono || ''}
                                     onChange={(e) => {
                                         const valorLimpio = e.target.value.replace(/\D/g, '');
                                         if (valorLimpio.length <= 9) {
-                                            setUsuarioAEditar({ ...usuarioAEditar, telefono: valorLimpio });
+                                            setUsuarioAEditar(prev => prev ? { ...prev, telefono: valorLimpio } : null);
                                         }
                                     }}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rol en el Gimnasio</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="edit-rol">Rol en el Gimnasio</label>
                                 <select
+                                    id="edit-rol"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white font-bold rounded-lg px-4 py-3 outline-none focus:border-blue-500 transition-all"
                                     value={usuarioAEditar.id_rol}
-                                    onChange={(e) => setUsuarioAEditar({ ...usuarioAEditar, id_rol: Number(e.target.value) })}
+                                    onChange={(e) => setUsuarioAEditar(prev => prev ? { ...prev, id_rol: Number(e.target.value) } : null)}
                                 >
                                     <option value={3}>Socio (Cliente)</option>
                                     <option value={2}>Monitor Deportivo</option>
@@ -489,7 +491,7 @@ export const SociosPage = () => {
 
                         {/* SUBIDA DE FOTO DE PERFIL */}
                         <div className="flex justify-center mb-6">
-                            <label className="cursor-pointer relative group block">
+                            <label className="cursor-pointer relative group block" htmlFor="upload-avatar">
                                 <Avatar className="h-24 w-24 border-2 border-fitbox-red shadow-lg transition-opacity group-hover:opacity-50">
                                     {nuevoStaff.avatar_url && <AvatarImage src={nuevoStaff.avatar_url} className="object-cover" />}
                                     <AvatarFallback className="bg-neutral-900 text-fitbox-red font-bold">FOTO</AvatarFallback>
@@ -497,7 +499,7 @@ export const SociosPage = () => {
                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Camera className="w-8 h-8 text-white" />
                                 </div>
-                                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                                <input id="upload-avatar" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                             </label>
                         </div>
 
@@ -513,11 +515,12 @@ export const SociosPage = () => {
 
                             {/* ESPECIALIDAD (Disciplina) */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-fitbox-red uppercase tracking-widest">Especialidad *</label>
+                                <label className="text-[10px] font-bold text-fitbox-red uppercase tracking-widest" htmlFor="staff-disciplina">Especialidad *</label>
                                 <select
+                                    id="staff-disciplina"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white font-bold rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-all"
                                     value={nuevoStaff.id_disciplina}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, id_disciplina: e.target.value })}
+                                    onChange={(e) => setNuevoStaff(prev => ({ ...prev, id_disciplina: e.target.value }))}
                                 >
                                     <option value="" disabled>Selecciona la disciplina principal...</option>
                                     {disciplinas.map((d) => (
@@ -530,95 +533,102 @@ export const SociosPage = () => {
 
                             {/* CREDENCIALES */}
                             <div className="space-y-2 md:col-span-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Correo Corporativo *</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="staff-email">Correo Corporativo *</label>
                                 <Input
+                                    id="staff-email"
                                     type="email"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="empleado@fitbox.com"
                                     value={nuevoStaff.email}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, email: e.target.value.replace(/\s/g, '') })}
+                                    onChange={(e) => setNuevoStaff(prev => ({ ...prev, email: e.target.value.replace(/\s/g, '') }))}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Contraseña Temporal *</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="staff-password">Contraseña Temporal *</label>
                                 <Input
+                                    id="staff-password"
                                     type="password"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Mínimo 6 caracteres..."
                                     value={nuevoStaff.password}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, password: e.target.value })}
+                                    onChange={(e) => setNuevoStaff(prev => ({ ...prev, password: e.target.value }))}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Confirmar Contraseña *</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="staff-confirm-password">Confirmar Contraseña *</label>
                                 <Input
+                                    id="staff-confirm-password"
                                     type="password"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Repite la contraseña..."
                                     value={nuevoStaff.confirmPassword}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, confirmPassword: e.target.value })}
+                                    onChange={(e) => setNuevoStaff(prev => ({ ...prev, confirmPassword: e.target.value }))}
                                 />
                             </div>
 
                             {/* DATOS PERSONALES */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Nombre *</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="staff-nombre">Nombre *</label>
                                 <Input
+                                    id="staff-nombre"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Ej: Carlos"
                                     value={nuevoStaff.nombre}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, nombre: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    onChange={(e) => setNuevoStaff(prev => ({ ...prev, nombre: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') }))}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Apellidos *</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="staff-apellidos">Apellidos *</label>
                                 <Input
+                                    id="staff-apellidos"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Ej: Martínez Gómez"
                                     value={nuevoStaff.apellidos}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, apellidos: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    onChange={(e) => setNuevoStaff(prev => ({ ...prev, apellidos: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') }))}
                                 />
                             </div>
 
                             {/* --- INPUT DNI MODIFICADO --- */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">DNI *</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="staff-dni">DNI *</label>
                                 <Input
+                                    id="staff-dni"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red uppercase font-mono tracking-widest"
                                     placeholder="Escribe 8 números"
                                     value={nuevoStaff.dni}
                                     maxLength={9}
                                     onChange={(e) => {
                                         const rawValue = e.target.value;
-                                        
+
                                         if (rawValue.length < nuevoStaff.dni.length) {
                                             if (nuevoStaff.dni.length === 9) {
-                                                setNuevoStaff({ ...nuevoStaff, dni: nuevoStaff.dni.substring(0, 7) });
+                                                setNuevoStaff(prev => ({ ...prev, dni: prev.dni.substring(0, 7) }));
                                             } else {
-                                                setNuevoStaff({ ...nuevoStaff, dni: rawValue.replace(/\D/g, '') });
+                                                setNuevoStaff(prev => ({ ...prev, dni: rawValue.replace(/\D/g, '') }));
                                             }
                                             return;
                                         }
 
                                         const numeros = rawValue.replace(/\D/g, '').substring(0, 8);
-                                        
+
                                         if (numeros.length === 8) {
-                                            setNuevoStaff({ ...nuevoStaff, dni: numeros + calcularLetraDNI(numeros) });
+                                            setNuevoStaff(prev => ({ ...prev, dni: numeros + calcularLetraDNI(numeros) }));
                                         } else {
-                                            setNuevoStaff({ ...nuevoStaff, dni: numeros });
+                                            setNuevoStaff(prev => ({ ...prev, dni: numeros }));
                                         }
                                     }}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Sexo</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="staff-sexo">Sexo</label>
                                 <select
+                                    id="staff-sexo"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-all capitalize"
                                     value={nuevoStaff.sexo}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, sexo: e.target.value })}
+                                    onChange={(e) => setNuevoStaff(prev => ({ ...prev, sexo: e.target.value }))}
                                 >
                                     <option value="" disabled>Seleccionar...</option>
                                     <option value="Hombre">Hombre</option>
@@ -628,8 +638,9 @@ export const SociosPage = () => {
                             </div>
 
                             <div className="space-y-2 md:col-span-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Teléfono de Contacto</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="staff-telefono">Teléfono de Contacto</label>
                                 <Input
+                                    id="staff-telefono"
                                     type="tel"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Ej: 600123456"
@@ -637,7 +648,7 @@ export const SociosPage = () => {
                                     onChange={(e) => {
                                         const valorLimpio = e.target.value.replace(/\D/g, '');
                                         if (valorLimpio.length <= 9) {
-                                            setNuevoStaff({ ...nuevoStaff, telefono: valorLimpio });
+                                            setNuevoStaff(prev => ({ ...prev, telefono: valorLimpio }));
                                         }
                                     }}
                                 />
@@ -645,43 +656,47 @@ export const SociosPage = () => {
 
                             {/* UBICACIÓN */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">País</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="staff-pais">País</label>
                                 <Input
+                                    id="staff-pais"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Ej: España"
                                     value={nuevoStaff.pais}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, pais: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    onChange={(e) => setNuevoStaff(prev => ({ ...prev, pais: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') }))}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Provincia</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="staff-provincia">Provincia</label>
                                 <Input
+                                    id="staff-provincia"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Ej: Madrid"
                                     value={nuevoStaff.provincia}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, provincia: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    onChange={(e) => setNuevoStaff(prev => ({ ...prev, provincia: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') }))}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Localidad / Ciudad</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="staff-localidad">Localidad / Ciudad</label>
                                 <Input
+                                    id="staff-localidad"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Ej: Móstoles"
                                     value={nuevoStaff.localidad}
-                                    onChange={(e) => setNuevoStaff({ ...nuevoStaff, localidad: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') })}
+                                    onChange={(e) => setNuevoStaff(prev => ({ ...prev, localidad: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '') }))}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Código Postal</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="staff-cp">Código Postal</label>
                                 <Input
+                                    id="staff-cp"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                     placeholder="Ej: 28930"
                                     value={nuevoStaff.codigo_postal}
                                     onChange={(e) => {
                                         const valorLimpio = e.target.value.replace(/\D/g, '');
                                         if (valorLimpio.length <= 5) {
-                                            setNuevoStaff({ ...nuevoStaff, codigo_postal: valorLimpio });
+                                            setNuevoStaff(prev => ({ ...prev, codigo_postal: valorLimpio }));
                                         }
                                     }}
                                 />

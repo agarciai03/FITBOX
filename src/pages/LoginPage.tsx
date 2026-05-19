@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../database/supabase/Client';
@@ -29,64 +29,64 @@ export const LoginPage = () => {
     const [showResetModal, setShowResetModal] = useState(false);
     const [resetEmail, setResetEmail] = useState('');
     const [resetSuccess, setResetSuccess] = useState(false);
-    const [resetLoading, setResetLoading] = useState(false);
+    
+    const [isPendingLogin, startTransitionLogin] = useTransition();
+    const [isPendingReset, startTransitionReset] = useTransition();
 
     const [authError, setAuthError] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
 
     const { register, handleSubmit } = useForm<LoginFormInputs>();
 
-    const onSubmit = async (data: LoginFormInputs) => {
-        setIsLoading(true);
+    const onSubmit = (data: LoginFormInputs) => {
         setAuthError(null);
 
-        try {
-            const { data: authData, error } = await supabase.auth.signInWithPassword({
-                email: data.email,
-                password: data.password,
-            });
+        startTransitionLogin(async () => {
+            try {
+                const { data: authData, error } = await supabase.auth.signInWithPassword({
+                    email: data.email,
+                    password: data.password,
+                });
 
-            if (error) throw error;
+                if (error) throw error;
 
-            if (authData.user) {
-                await setUser(authData.user);
-                navigate('/dashboard');
+                if (authData.user) {
+                    await setUser(authData.user);
+                    navigate('/dashboard');
+                }
+            } catch (error: any) {
+                if (error.message?.includes('Invalid login credentials')) {
+                    setAuthError("Correo electrónico o contraseña incorrectos.");
+                } else {
+                    setAuthError("Error al iniciar sesión. Inténtalo de nuevo.");
+                }
             }
-        } catch (error: any) {
-            if (error.message?.includes('Invalid login credentials')) {
-                setAuthError("Correo electrónico o contraseña incorrectos.");
-            } else {
-                setAuthError("Error al iniciar sesión. Inténtalo de nuevo.");
-            }
-        } finally {
-            setIsLoading(false);
-        }
+        });
     };
 
-    const handleResetPassword = async (e: React.FormEvent) => {
+    const handleResetPassword = (e: React.FormEvent) => {
         e.preventDefault();
-        setResetLoading(true);
         setAuthError(null);
-        try {
-            await AuthRepository.sendResetPasswordEmail(resetEmail);
-            setResetSuccess(true);
-        } catch {
-            setAuthError("No se pudo enviar el correo de recuperación. Verifica el email.");
-        } finally {
-            setResetLoading(false);
-        }
+        
+        startTransitionReset(async () => {
+            try {
+                await AuthRepository.sendResetPasswordEmail(resetEmail);
+                setResetSuccess(true);
+            } catch {
+                setAuthError("No se pudo enviar el correo de recuperación. Verifica el email.");
+            }
+        });
     };
 
     return (
         <div className="min-h-screen bg-neutral-950 flex flex-col relative overflow-hidden">
-            {/* Fondo decorativo */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,#450a0a,transparent)] opacity-40 pointer-events-none"></div>
+            {/* Fondo decorativo (Foco de luz corporativo) */}
+            <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-150 md:w-250 h-125 bg-fitbox-red/20 rounded-full blur-[120px] pointer-events-none animate-in fade-in duration-1000"></div>
 
             {/* Contenido Landing */}
             <main className="relative z-10 grow flex flex-col items-center justify-center px-4 pt-20 pb-32">
                 <div className="text-center space-y-6 max-w-4xl">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-950/30 border border-red-900/50 rounded-full text-fitbox-red text-xs font-bold uppercase tracking-widest animate-fade-in">
-                        <Flame className="w-3 h-3" />
+                        <Flame className="size-3" />
                         Tu mejor versión empieza aquí
                     </div>
 
@@ -124,7 +124,7 @@ export const LoginPage = () => {
                         { icon: Flame, label: "Intensidad", val: "100%" }
                     ].map((item, i) => (
                         <div key={i} className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-neutral-900/40 border border-neutral-800/50 backdrop-blur-sm">
-                            <item.icon className="w-8 h-8 text-fitbox-red mb-2" />
+                            <item.icon className="size-8 text-fitbox-red mb-2" />
                             <span className="text-white font-black uppercase text-xl italic">{item.val}</span>
                             <span className="text-gray-500 text-xs font-bold uppercase tracking-widest">{item.label}</span>
                         </div>
@@ -140,7 +140,7 @@ export const LoginPage = () => {
                             <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-fitbox-red via-red-600 to-red-900"></div>
 
                             <button onClick={() => setShowLoginModal(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
-                                <X className="w-6 h-6" />
+                                <X className="size-6" />
                             </button>
 
                             <div className="mb-8 text-center">
@@ -188,8 +188,8 @@ export const LoginPage = () => {
                                 </div>
 
                                 <div className="pt-2">
-                                    <Button type="submit" className="w-full bg-fitbox-red hover:bg-red-700 text-white font-bold py-6 text-lg shadow-lg" disabled={isLoading}>
-                                        {isLoading ? 'Comprobando credenciales...' : 'Acceder'}
+                                    <Button type="submit" className="w-full bg-fitbox-red hover:bg-red-700 text-white font-bold py-6 text-lg shadow-lg" disabled={isPendingLogin}>
+                                        {isPendingLogin ? 'Comprobando credenciales…' : 'Acceder'}
                                     </Button>
                                 </div>
                             </form>
@@ -217,12 +217,12 @@ export const LoginPage = () => {
                     <Card className="w-full max-w-md p-8 bg-neutral-950/90 border-neutral-800 relative overflow-hidden shadow-2xl">
                         <div className="absolute top-0 left-0 w-full h-1 bg-fitbox-red"></div>
                         <button onClick={() => { setShowResetModal(false); setResetSuccess(false); }} className="absolute top-4 right-4 text-gray-500 hover:text-white">
-                            <X className="w-6 h-6" />
+                            <X className="size-6" />
                         </button>
 
                         <div className="text-center mb-6">
                             <div className="w-16 h-16 bg-red-950/30 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-900/50">
-                                <Mail className="text-fitbox-red w-8 h-8" />
+                                <Mail className="text-fitbox-red size-8" />
                             </div>
                             <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Recuperar <span className="text-fitbox-red">Acceso</span></h2>
                         </div>
@@ -230,7 +230,7 @@ export const LoginPage = () => {
                         {resetSuccess ? (
                             <div className="text-center py-4 space-y-6 animate-in zoom-in">
                                 <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
-                                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                                    <CheckCircle className="size-12 text-green-500 mx-auto mb-2" />
                                     <p className="text-sm text-gray-300 font-medium">Revisa tu bandeja de entrada. Te hemos enviado un enlace seguro para cambiar tu contraseña.</p>
                                 </div>
                                 <Button onClick={() => setShowResetModal(false)} className="w-full bg-neutral-800 font-bold">Cerrar ventana</Button>
@@ -249,8 +249,8 @@ export const LoginPage = () => {
                                         className="bg-neutral-900 border-neutral-800 h-12 text-white"
                                     />
                                 </div>
-                                <Button type="submit" className="w-full bg-fitbox-red py-6 font-bold shadow-lg" disabled={resetLoading}>
-                                    {resetLoading ? 'Enviando...' : 'Enviar enlace de recuperación'}
+                                <Button type="submit" className="w-full bg-fitbox-red py-6 font-bold shadow-lg" disabled={isPendingReset}>
+                                    {isPendingReset ? 'Enviando…' : 'Enviar enlace de recuperación'}
                                 </Button>
                             </form>
                         )}
@@ -268,7 +268,6 @@ export const LoginPage = () => {
                     }}
                 />
             )}
-
         </div>
     );
 };

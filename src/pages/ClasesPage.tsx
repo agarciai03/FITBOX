@@ -99,10 +99,14 @@ export const ClasesPage = () => {
         const channel = supabase.channel('realtime-clases-maquinas')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'reservas' }, cargarDatos)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, cargarDatos)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'maquinas' }, cargarDatos)
-            .subscribe();
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'maquinas' }, cargarDatos);
 
-        return () => { supabase.removeChannel(channel); };
+        channel.subscribe();
+
+        return () => {
+            channel.unsubscribe();
+            supabase.removeChannel(channel);
+        };
     }, [cargarDatos]);
 
     useEffect(() => {
@@ -154,7 +158,6 @@ export const ClasesPage = () => {
             });
 
             setIsCreando(false);
-            // Reiniciamos manteniendo la disciplina del monitor
             setNuevaClase({
                 id_disciplina: isMonitor && (profile as any)?.id_disciplina ? (profile as any).id_disciplina : '',
                 id_monitor: isMonitor && profile?.id_usuario ? profile.id_usuario : '',
@@ -239,7 +242,6 @@ export const ClasesPage = () => {
                             onClick={() => {
                                 setIsCreando(true);
                                 setError(null);
-                                // Al abrir el modal también auto-asigna la disciplina
                                 setNuevaClase({
                                     id_disciplina: isMonitor && (profile as any)?.id_disciplina ? (profile as any).id_disciplina : '',
                                     id_monitor: isMonitor && profile?.id_usuario ? profile.id_usuario : '',
@@ -477,9 +479,9 @@ export const ClasesPage = () => {
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Disciplina</label>
                                 <select
                                     className={`w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none transition-all ${isMonitor ? 'opacity-60 cursor-not-allowed' : 'focus:border-fitbox-red'}`}
-                                    value={nuevaClase.id_disciplina} 
+                                    value={nuevaClase.id_disciplina}
                                     onChange={(e) => setNuevaClase({ ...nuevaClase, id_disciplina: e.target.value })}
-                                    disabled={isMonitor} 
+                                    disabled={isMonitor}
                                 >
                                     <option value="">Selecciona...</option>
                                     {disciplinas.map(d => <option key={d.id_disciplina} value={d.id_disciplina}>{d.nombre} (Aforo: {d.aforo_maximo || 20})</option>)}
@@ -492,7 +494,7 @@ export const ClasesPage = () => {
                                     className={`w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none transition-all ${isMonitor ? 'opacity-60 cursor-not-allowed' : 'focus:border-fitbox-red'}`}
                                     value={nuevaClase.id_monitor}
                                     onChange={(e) => setNuevaClase({ ...nuevaClase, id_monitor: e.target.value })}
-                                    disabled={isMonitor} 
+                                    disabled={isMonitor}
                                 >
                                     <option value="">Sin Monitor</option>
                                     {monitores.map(m => <option key={m.id_usuario} value={m.id_usuario}>{m.nombre} {m.apellidos}</option>)}

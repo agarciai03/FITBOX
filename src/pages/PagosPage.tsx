@@ -61,9 +61,9 @@ export const PagosPage = () => {
                 setSuccessPay(true);
                 try {
                     await PaymentRepository.registrarPago(profile!.id_usuario, 19.99, "Membresía Mensual FITBOX");
-
-                    setTimeout(() => {
-                        checkSession();
+                    
+                    setTimeout(() => { 
+                        checkSession(); 
                         cargarPagos();
                         setSuccessPay(false);
                     }, 2500);
@@ -82,7 +82,7 @@ export const PagosPage = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-extrabold text-fitbox-text flex items-center gap-3 uppercase tracking-tight">
-                        <CreditCard className="w-8 h-8 text-fitbox-red" />
+                        <CreditCard className="size-8 text-fitbox-red" />
                         {isAdminOrMonitor ? 'GESTIÓN DE' : 'MIS'} <span className="text-fitbox-red">PAGOS Y FACTURAS</span>
                     </h1>
                     <p className="text-fitbox-text-muted mt-1">
@@ -107,7 +107,7 @@ export const PagosPage = () => {
                                 </p>
                             </div>
                             <div className={`p-3 rounded-full ${estadoPago === 'activo' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                                {estadoPago === 'activo' ? <CheckCircle className="w-8 h-8 text-green-500" /> : <AlertTriangle className="w-8 h-8 text-fitbox-red" />}
+                                {estadoPago === 'activo' ? <CheckCircle className="size-8 text-green-500" /> : <AlertTriangle className="size-8 text-fitbox-red" />}
                             </div>
                         </div>
                     </Card>
@@ -116,26 +116,26 @@ export const PagosPage = () => {
                         <Card className="p-6 bg-neutral-950 border border-neutral-800 shadow-xl relative overflow-hidden">
                             {successPay ? (
                                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-green-950/90 z-10 animate-in fade-in">
-                                    <CheckCircle className="w-16 h-16 text-green-400 mb-4 animate-bounce" />
+                                    <CheckCircle className="size-16 text-green-400 mb-4 animate-in zoom-in duration-700 ease-out" />
                                     <h3 className="text-xl font-bold text-white uppercase tracking-wider">¡Pago Completado!</h3>
-                                    <p className="text-green-300 text-sm mt-2">Activando tu cuenta...</p>
+                                    <p className="text-green-300 text-sm mt-2">Activando tu cuenta…</p>
                                 </div>
                             ) : (
                                 <>
                                     <div className="mb-6 flex justify-between items-center">
-                                        <h3 className="text-lg font-bold text-white flex items-center gap-2"><CreditCard className="text-fitbox-red w-5 h-5" /> Pasarela Segura</h3>
+                                        <h3 className="text-lg font-bold text-white flex items-center gap-2"><CreditCard className="text-fitbox-red size-5"/> Pasarela Segura</h3>
                                         <span className="text-2xl font-black text-fitbox-red">19.99 €</span>
                                     </div>
-
-                                    {errorPay && <div className="p-3 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg mb-4 flex items-center gap-2 text-xs font-bold"><AlertCircle className="w-4 h-4 shrink-0" /> {errorPay}</div>}
+                                    
+                                    {errorPay && <div className="p-3 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg mb-4 flex items-center gap-2 text-xs font-bold"><AlertCircle className="size-4 shrink-0" /> {errorPay}</div>}
 
                                     <form onSubmit={handleSubmit(onSubmitPay)} className="space-y-4">
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Número de tarjeta</label>
-                                            <Input
-                                                placeholder="0000 0000 0000 0000"
-                                                maxLength={19}
-                                                className={`bg-neutral-900 border-neutral-800 text-base tracking-widest font-mono text-white ${errors.cardNumber ? 'border-red-500' : 'focus:border-fitbox-red'}`}
+                                            <Input 
+                                                placeholder="0000 0000 0000 0000" 
+                                                maxLength={19} 
+                                                className={`bg-neutral-900 border-neutral-800 text-base tracking-widest font-mono text-white ${errors.cardNumber ? 'border-red-500' : 'focus:border-fitbox-red'}`} 
                                                 {...register("cardNumber", {
                                                     required: "El número es obligatorio",
                                                     pattern: { value: /^(\d{4}\s?){4}$/, message: "Deben ser 16 dígitos numéricos" },
@@ -151,10 +151,10 @@ export const PagosPage = () => {
                                         <div className="flex gap-4">
                                             <div className="space-y-1 flex-1">
                                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Caducidad</label>
-                                                <Input
-                                                    placeholder="MM/YY"
-                                                    maxLength={5}
-                                                    className={`bg-neutral-900 border-neutral-800 font-mono text-white ${errors.expiry ? 'border-red-500' : 'focus:border-fitbox-red'}`}
+                                                <Input 
+                                                    placeholder="MM/YY" 
+                                                    maxLength={5} 
+                                                    className={`bg-neutral-900 border-neutral-800 font-mono text-white ${errors.expiry ? 'border-red-500' : 'focus:border-fitbox-red'}`} 
                                                     {...register("expiry", {
                                                         required: "Obligatorio",
                                                         pattern: { value: /^(0[1-9]|1[0-2])\/\d{2}$/, message: "Formato MM/YY válido" },
@@ -171,11 +171,11 @@ export const PagosPage = () => {
                                             </div>
                                             <div className="space-y-1 flex-1">
                                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">CVC</label>
-                                                <Input
-                                                    placeholder="123"
-                                                    maxLength={4}
-                                                    type="password"
-                                                    className={`bg-neutral-900 border-neutral-800 font-mono text-white ${errors.cvc ? 'border-red-500' : 'focus:border-fitbox-red'}`}
+                                                <Input 
+                                                    placeholder="123" 
+                                                    maxLength={4} 
+                                                    type="password" 
+                                                    className={`bg-neutral-900 border-neutral-800 font-mono text-white ${errors.cvc ? 'border-red-500' : 'focus:border-fitbox-red'}`} 
                                                     {...register("cvc", {
                                                         required: "Obligatorio",
                                                         pattern: { value: /^\d{3,4}$/, message: "3 o 4 dígitos" },
@@ -189,7 +189,7 @@ export const PagosPage = () => {
                                             </div>
                                         </div>
                                         <Button type="submit" disabled={loadingPay} className="w-full bg-fitbox-red hover:bg-red-700 text-white font-black py-6 mt-2 shadow-lg shadow-fitbox-red/20">
-                                            {loadingPay ? 'Procesando con Stripe...' : 'Abonar Mensualidad'}
+                                            {loadingPay ? 'Procesando con Stripe…' : 'Abonar Mensualidad'}
                                         </Button>
                                     </form>
                                 </>
@@ -220,7 +220,7 @@ export const PagosPage = () => {
                         </thead>
                         <tbody className="divide-y divide-neutral-800">
                             {isLoadingPagos ? (
-                                <tr><td colSpan={isAdminOrMonitor ? 5 : 4} className="px-6 py-12 text-center text-gray-500">Cargando datos...</td></tr>
+                                <tr><td colSpan={isAdminOrMonitor ? 5 : 4} className="px-6 py-12 text-center text-gray-500">Cargando datos desde la base de datos…</td></tr>
                             ) : historialPagos.length > 0 ? (
                                 historialPagos.map((pago) => (
                                     <tr key={pago.id_pago} className="hover:bg-neutral-800/20 transition-colors">
@@ -236,7 +236,7 @@ export const PagosPage = () => {
                                         <td className="px-6 py-4 font-black text-fitbox-text">{Number(pago.importe).toFixed(2)} €</td>
                                         <td className="px-6 py-4 text-right">
                                             <button className="text-gray-500 hover:text-fitbox-text transition-colors" title="Descargar PDF">
-                                                <Download className="w-4 h-4" />
+                                                <Download className="size-4" />
                                             </button>
                                         </td>
                                     </tr>
