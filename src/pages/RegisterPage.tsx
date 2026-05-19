@@ -27,7 +27,6 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
     const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormInputs>();
     const watchPassword = watch('password');
 
-    // VALIDACIÓN DE SEGURIDAD PARA LA FOTO
     const handleAvatarSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -38,14 +37,12 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
             return;
         }
 
-        // Validar tamaño 
         const maxSizeInBytes = 5 * 1024 * 1024; 
         if (file.size > maxSizeInBytes) {
             setAuthError("La imagen es demasiado pesada. El tamaño máximo es 5MB.");
             return;
         }
 
-        // Si pasa las pruebas, limpiamos errores y guardamos la imagen
         setAuthError(null);
         setAvatarFile(file);
         setAvatarPreview(URL.createObjectURL(file));
@@ -81,13 +78,12 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
 
                 if (!uploadError) {
                     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
-                    finalAvatarUrl = publicUrl; // Nos guardamos la URL de la foto subida
+                    finalAvatarUrl = publicUrl; 
                 } else {
                     console.error("No se pudo subir la imagen al Storage:", uploadError);
                 }
             }
 
-            // preparamos los datos 
             const datosLimpios = {
                 ...restData,
                 email: emailLimpio,
@@ -103,7 +99,6 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                 avatar_url: finalAvatarUrl 
             };
 
-            // registramos en supabase y obtenemos el ID del usuario creado
             const authResponse = await AuthRepository.register(emailLimpio, password as string, datosLimpios);
             const userId = authResponse.user?.id;
 
@@ -144,7 +139,7 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
 
                     {onClose && (
                         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-fitbox-red transition-colors">
-                            <X className="w-6 h-6" />
+                            <X className="size-6" />
                         </button>
                     )}
 
@@ -165,20 +160,20 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
 
                         <div className="flex flex-col items-center justify-center mb-8">
-                            <label className="cursor-pointer relative group block">
-                                <Avatar className="h-24 w-24 border-2 border-dashed border-neutral-700 group-hover:border-fitbox-red transition-colors shadow-lg">
+                            <label htmlFor="reg-avatar" className="cursor-pointer relative group block">
+                                <Avatar className="size-24 border-2 border-dashed border-neutral-700 group-hover:border-fitbox-red transition-colors shadow-lg">
                                     {avatarPreview ? (
                                         <AvatarImage src={avatarPreview} className="object-cover" />
                                     ) : (
                                         <AvatarFallback className="bg-neutral-900 text-neutral-500 flex flex-col items-center justify-center">
-                                            <Camera className="w-8 h-8 mb-1" />
+                                            <Camera className="size-8 mb-1" />
                                         </AvatarFallback>
                                     )}
                                 </Avatar>
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
                                     <span className="text-xs font-bold text-white">Subir Foto</span>
                                 </div>
-                                <input type="file" accept="image/jpeg, image/png, image/jpg, image/webp" className="hidden" onChange={handleAvatarSelection} />
+                                <input id="reg-avatar" type="file" accept="image/jpeg, image/png, image/jpg, image/webp" className="hidden" onChange={handleAvatarSelection} />
                             </label>
                             <p className="text-xs text-gray-500 mt-3 uppercase tracking-wider font-bold">Foto de Perfil (Opcional)</p>
                         </div>
@@ -188,8 +183,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Nombre</label>
+                                    <label htmlFor="reg-nombre" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Nombre</label>
                                     <Input
+                                        id="reg-nombre"
                                         placeholder="Ej. Alberto"
                                         className={`bg-neutral-900 border-neutral-800 ${errors.nombre ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("nombre", {
@@ -205,8 +201,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Apellidos</label>
+                                    <label htmlFor="reg-apellidos" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Apellidos</label>
                                     <Input
+                                        id="reg-apellidos"
                                         placeholder="Ej. García"
                                         className={`bg-neutral-900 border-neutral-800 ${errors.apellidos ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("apellidos", {
@@ -222,8 +219,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">DNI / NIE</label>
+                                    <label htmlFor="reg-dni" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">DNI / NIE</label>
                                     <Input
+                                        id="reg-dni"
                                         placeholder="12345678X"
                                         className={`bg-neutral-900 border-neutral-800 uppercase ${errors.dni ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("dni", {
@@ -241,8 +239,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Fecha de Nacimiento</label>
+                                    <label htmlFor="reg-fecha" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Fecha de Nacimiento</label>
                                     <Input
+                                        id="reg-fecha"
                                         type="date"
                                         className={`bg-neutral-900 border-neutral-800 text-white ${errors.fecha_nacimiento ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("fecha_nacimiento", {
@@ -263,8 +262,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                 </div>
 
                                 <div className="space-y-2 md:col-span-2">
-                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Sexo</label>
+                                    <label htmlFor="reg-sexo" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Sexo</label>
                                     <select
+                                        id="reg-sexo"
                                         className={`w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-fitbox-red transition-all ${errors.sexo ? 'border-red-500' : ''}`}
                                         {...register("sexo", { required: "Selecciona una opción" })}
                                     >
@@ -283,8 +283,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                                 <div className="space-y-2 md:col-span-2">
-                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Teléfono de Contacto</label>
+                                    <label htmlFor="reg-telefono" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Teléfono de Contacto</label>
                                     <Input
+                                        id="reg-telefono"
                                         type="tel"
                                         placeholder="600 000 000"
                                         className={`bg-neutral-900 border-neutral-800 ${errors.telefono ? 'border-red-500' : 'focus:border-fitbox-red'}`}
@@ -301,8 +302,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">País</label>
+                                    <label htmlFor="reg-pais" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">País</label>
                                     <Input
+                                        id="reg-pais"
                                         placeholder="Ej. España"
                                         className={`bg-neutral-900 border-neutral-800 ${errors.pais ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("pais", {
@@ -317,8 +319,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Provincia</label>
+                                    <label htmlFor="reg-provincia" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Provincia</label>
                                     <Input
+                                        id="reg-provincia"
                                         placeholder="Ej. Madrid"
                                         className={`bg-neutral-900 border-neutral-800 ${errors.provincia ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("provincia", {
@@ -333,8 +336,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Localidad / Ciudad</label>
+                                    <label htmlFor="reg-localidad" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Localidad / Ciudad</label>
                                     <Input
+                                        id="reg-localidad"
                                         placeholder="Ej. Getafe"
                                         className={`bg-neutral-900 border-neutral-800 ${errors.localidad ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("localidad", {
@@ -349,8 +353,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Código Postal</label>
+                                    <label htmlFor="reg-cp" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Código Postal</label>
                                     <Input
+                                        id="reg-cp"
                                         placeholder="28000"
                                         className={`bg-neutral-900 border-neutral-800 ${errors.codigo_postal ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("codigo_postal", {
@@ -372,8 +377,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                                 <div className="md:col-span-2 space-y-2">
-                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Correo Electrónico</label>
+                                    <label htmlFor="reg-email" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Correo Electrónico</label>
                                     <Input
+                                        id="reg-email"
                                         type="email"
                                         placeholder="ejemplo@correo.com"
                                         className={`bg-neutral-900 border-neutral-800 ${errors.email ? 'border-red-500' : 'focus:border-fitbox-red'}`}
@@ -389,8 +395,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Contraseña</label>
+                                    <label htmlFor="reg-password" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Contraseña</label>
                                     <Input
+                                        id="reg-password"
                                         type="password"
                                         placeholder="Mínimo 6 caracteres"
                                         className={`bg-neutral-900 border-neutral-800 ${errors.password ? 'border-red-500' : 'focus:border-fitbox-red'}`}
@@ -403,8 +410,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Confirmar Contraseña</label>
+                                    <label htmlFor="reg-confirm" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Confirmar Contraseña</label>
                                     <Input
+                                        id="reg-confirm"
                                         type="password"
                                         placeholder="Repite la contraseña"
                                         className={`bg-neutral-900 border-neutral-800 ${errors.confirmPassword ? 'border-red-500' : 'focus:border-fitbox-red'}`}

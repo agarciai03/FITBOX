@@ -24,8 +24,6 @@ export const LoginPage = () => {
 
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showRegisterModal, setShowRegisterModal] = useState(false);
-
-    // Estados para la recuperación de contraseña
     const [showResetModal, setShowResetModal] = useState(false);
     const [resetEmail, setResetEmail] = useState('');
     const [resetSuccess, setResetSuccess] = useState(false);
@@ -39,7 +37,6 @@ export const LoginPage = () => {
 
     const onSubmit = (data: LoginFormInputs) => {
         setAuthError(null);
-
         startTransitionLogin(async () => {
             try {
                 const { data: authData, error } = await supabase.auth.signInWithPassword({
@@ -48,7 +45,6 @@ export const LoginPage = () => {
                 });
 
                 if (error) throw error;
-
                 if (authData.user) {
                     await setUser(authData.user);
                     navigate('/dashboard');
@@ -79,10 +75,8 @@ export const LoginPage = () => {
 
     return (
         <div className="min-h-screen bg-neutral-950 flex flex-col relative overflow-hidden">
-            {/* Fondo decorativo (Foco de luz corporativo) */}
             <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-150 md:w-250 h-125 bg-fitbox-red/20 rounded-full blur-[120px] pointer-events-none animate-in fade-in duration-1000"></div>
 
-            {/* Contenido Landing */}
             <main className="relative z-10 grow flex flex-col items-center justify-center px-4 pt-20 pb-32">
                 <div className="text-center space-y-6 max-w-4xl">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-950/30 border border-red-900/50 rounded-full text-fitbox-red text-xs font-bold uppercase tracking-widest animate-fade-in">
@@ -115,15 +109,14 @@ export const LoginPage = () => {
                     </div>
                 </div>
 
-                {/* Grid de características */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-32 w-full max-w-6xl">
                     {[
                         { icon: Dumbbell, label: "Equipamiento Pro", val: "Premium" },
                         { icon: Users, label: "Comunidad", val: "+500" },
                         { icon: CalendarCheck, label: "Clases Diarias", val: "24h" },
                         { icon: Flame, label: "Intensidad", val: "100%" }
-                    ].map((item, i) => (
-                        <div key={i} className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-neutral-900/40 border border-neutral-800/50 backdrop-blur-sm">
+                    ].map((item) => (
+                        <div key={item.label} className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-neutral-900/40 border border-neutral-800/50 backdrop-blur-sm">
                             <item.icon className="size-8 text-fitbox-red mb-2" />
                             <span className="text-white font-black uppercase text-xl italic">{item.val}</span>
                             <span className="text-gray-500 text-xs font-bold uppercase tracking-widest">{item.label}</span>
@@ -132,7 +125,6 @@ export const LoginPage = () => {
                 </div>
             </main>
 
-            {/* --- MODAL DE LOGIN --- */}
             {showLoginModal && (
                 <div className="fixed inset-0 z-100 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
                     <div className="w-full max-w-md relative">
@@ -154,8 +146,9 @@ export const LoginPage = () => {
 
                             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Email Corporativo</label>
+                                    <label htmlFor="login-email" className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Email Corporativo</label>
                                     <Input
+                                        id="login-email"
                                         type="email"
                                         placeholder="socio@fitbox.com"
                                         className="bg-neutral-900 border-neutral-800 text-white h-12 focus:border-fitbox-red transition-all"
@@ -164,8 +157,9 @@ export const LoginPage = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Contraseña</label>
+                                    <label htmlFor="login-password" className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Contraseña</label>
                                     <Input
+                                        id="login-password"
                                         type="password"
                                         placeholder="••••••••"
                                         className="bg-neutral-900 border-neutral-800 text-white h-12 focus:border-fitbox-red transition-all"
@@ -173,7 +167,6 @@ export const LoginPage = () => {
                                     />
                                 </div>
 
-                                {/* ENLACE RECUPERACIÓN */}
                                 <div className="text-right">
                                     <button
                                         type="button"
@@ -211,7 +204,6 @@ export const LoginPage = () => {
                 </div>
             )}
 
-            {/* --- NUEVO MODAL DE RECUPERACIÓN --- */}
             {showResetModal && (
                 <div className="fixed inset-0 z-110 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
                     <Card className="w-full max-w-md p-8 bg-neutral-950/90 border-neutral-800 relative overflow-hidden shadow-2xl">
@@ -221,7 +213,7 @@ export const LoginPage = () => {
                         </button>
 
                         <div className="text-center mb-6">
-                            <div className="w-16 h-16 bg-red-950/30 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-900/50">
+                            <div className="size-16 bg-red-950/30 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-900/50">
                                 <Mail className="text-fitbox-red size-8" />
                             </div>
                             <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Recuperar <span className="text-fitbox-red">Acceso</span></h2>
@@ -239,8 +231,9 @@ export const LoginPage = () => {
                             <form onSubmit={handleResetPassword} className="space-y-6">
                                 <p className="text-sm text-gray-400 text-center">Introduce el email de tu cuenta y te enviaremos las instrucciones de restablecimiento.</p>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Email de Registro</label>
+                                    <label htmlFor="reset-email" className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Email de Registro</label>
                                     <Input
+                                        id="reset-email"
                                         type="email"
                                         placeholder="tu@email.com"
                                         required
@@ -258,7 +251,6 @@ export const LoginPage = () => {
                 </div>
             )}
 
-            {/* --- MODAL DE REGISTRO --- */}
             {showRegisterModal && (
                 <RegisterPage
                     onClose={() => setShowRegisterModal(false)}

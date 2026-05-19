@@ -32,7 +32,6 @@ export const ClasesPage = () => {
 
     const [isCreando, setIsCreando] = useState(false);
 
-    // Autocompletado inteligente de Disciplina y Monitor
     const [nuevaClase, setNuevaClase] = useState({
         id_disciplina: isMonitor && (profile as any)?.id_disciplina ? (profile as any).id_disciplina : '',
         id_monitor: isMonitor && profile?.id_usuario ? profile.id_usuario : '',
@@ -113,15 +112,14 @@ export const ClasesPage = () => {
         if (canManage && clases.length > 0) {
             const cleanup = async () => {
                 const limiteBorrado = new Date(ahora.getTime() - 2 * 60 * 60 * 1000);
-                for (const clase of clases) {
-                    const fechaFinClase = new Date(`${clase.fecha}T${clase.hora_fin}`);
-                    if (fechaFinClase < limiteBorrado) {
-                        try {
-                            await ClassRepository.deleteClase(clase.id_clase);
-                        } catch (e) {
-                            console.error("Fallo borrado automático:", e);
-                        }
-                    }
+                const clasesViejas = clases.filter(clase => new Date(`${clase.fecha}T${clase.hora_fin}`) < limiteBorrado);
+                
+                if (clasesViejas.length > 0) {
+                    await Promise.all(
+                        clasesViejas.map(clase => 
+                            ClassRepository.deleteClase(clase.id_clase).catch(e => console.error("Fallo borrado:", e))
+                        )
+                    );
                 }
             };
             cleanup();
@@ -221,7 +219,7 @@ export const ClasesPage = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
-                        <Calendar className="w-8 h-8 text-fitbox-red" />
+                        <Calendar className="size-8 text-fitbox-red" />
                         HORARIOS Y <span className="text-fitbox-red">RESERVAS</span>
                     </h1>
                     <p className="text-fitbox-text-muted mt-1">Gestiona tus entrenamientos y consulta plazas libres.</p>
@@ -231,7 +229,7 @@ export const ClasesPage = () => {
             {error && <div className="p-4 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg font-medium">{error}</div>}
             {successMessage && (
                 <div className="p-4 bg-green-500/10 border border-green-500/50 text-green-500 rounded-lg flex items-center gap-2 font-medium">
-                    <CheckCircle className="w-5 h-5" /> {successMessage}
+                    <CheckCircle className="size-5" /> {successMessage}
                 </div>
             )}
 
@@ -253,7 +251,7 @@ export const ClasesPage = () => {
                             }}
                             className="bg-white text-black hover:bg-fitbox-red hover:text-white font-black transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] border border-white/20 px-6 py-5 rounded-xl flex items-center gap-2 uppercase italic tracking-tighter"
                         >
-                            <Plus className="w-5 h-5 stroke-[3px]" />
+                            <Plus className="size-5 stroke-[3px]" />
                             Programar Sesión
                         </Button>
                     </div>
@@ -261,8 +259,8 @@ export const ClasesPage = () => {
 
                 {!isLoading && clases.length === 0 ? (
                     <div className="bg-fitbox-card border border-neutral-800 rounded-xl p-12 flex flex-col items-center justify-center text-center shadow-2xl animate-in fade-in duration-500">
-                        <div className="w-20 h-20 bg-neutral-900 rounded-full flex items-center justify-center mb-6 border border-neutral-800">
-                            <CalendarX2 className="w-10 h-10 text-gray-500" />
+                        <div className="size-20 bg-neutral-900 rounded-full flex items-center justify-center mb-6 border border-neutral-800">
+                            <CalendarX2 className="size-10 text-gray-500" />
                         </div>
                         <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">No hay <span className="text-fitbox-red">clases programadas</span></h2>
                         <p className="text-gray-400 max-w-md mb-8">
@@ -291,7 +289,7 @@ export const ClasesPage = () => {
                             </thead>
                             <tbody className="divide-y divide-neutral-800">
                                 {isLoading ? (
-                                    <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500">Actualizando calendario...</td></tr>
+                                    <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500">Actualizando calendario…</td></tr>
                                 ) : (
                                     clases.map((clase) => {
                                         const reservasActivas = clase.reservas?.filter(r => r.estado === 'activa') || [];
@@ -307,12 +305,12 @@ export const ClasesPage = () => {
 
                                         return (
                                             <tr key={clase.id_clase} className={`transition-colors ${estaFinalizada ? 'bg-black/40 opacity-75' : 'hover:bg-neutral-800/20'}`}>
-                                                <td className="px-6 py-4 font-bold text-white whitespace-nowrap">
+                                                <td suppressHydrationWarning className="px-6 py-4 font-bold text-white whitespace-nowrap">
                                                     {new Date(clase.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className={`flex items-center gap-2 ${estaFinalizada ? 'text-gray-500' : 'text-gray-300'}`}>
-                                                        <Clock className={`w-4 h-4 ${estaFinalizada ? 'text-gray-600' : 'text-fitbox-red'}`} />
+                                                        <Clock className={`size-4 ${estaFinalizada ? 'text-gray-600' : 'text-fitbox-red'}`} />
                                                         {clase.hora_inicio.slice(0, 5)} - {clase.hora_fin.slice(0, 5)}
                                                     </div>
                                                 </td>
@@ -322,7 +320,6 @@ export const ClasesPage = () => {
                                                     </span>
                                                 </td>
 
-                                                {/* ABRIR MODAL DE MATERIAL */}
                                                 <td className="px-6 py-4 text-center">
                                                     <Button
                                                         variant="outline"
@@ -334,7 +331,7 @@ export const ClasesPage = () => {
                                                             nombre_disciplina: clase.disciplinas?.nombre || 'General'
                                                         })}
                                                     >
-                                                        <Dumbbell className="w-3.5 h-3.5 mr-1" />
+                                                        <Dumbbell className="size-3.5 mr-1" />
                                                         Ver Material
                                                     </Button>
                                                 </td>
@@ -355,7 +352,7 @@ export const ClasesPage = () => {
                                                         {reservasActivas.length > 0 ? (
                                                             reservasActivas.map(r => (
                                                                 <span key={r.id} className="bg-neutral-900 border border-neutral-700 text-[10px] text-gray-300 px-2 py-0.5 rounded-md flex items-center gap-1.5 whitespace-nowrap">
-                                                                    <div className={`w-1.5 h-1.5 rounded-full ${estaFinalizada ? 'bg-gray-600' : 'bg-green-500 animate-pulse'}`}></div>
+                                                                    <div className={`size-1.5 rounded-full ${estaFinalizada ? 'bg-gray-600' : 'bg-green-500 animate-pulse'}`}></div>
                                                                     {r.usuarios?.nombre} {r.usuarios?.apellidos?.charAt(0)}.
                                                                 </span>
                                                             ))
@@ -367,7 +364,7 @@ export const ClasesPage = () => {
                                                 <td className="px-6 py-4 text-right">
                                                     {canManage && (
                                                         <button onClick={() => handleBorrarClase(clase.id_clase)} className="text-red-500 hover:text-red-400 mr-4">
-                                                            <Trash2 className="w-5 h-5" />
+                                                            <Trash2 className="size-5" />
                                                         </button>
                                                     )}
 
@@ -379,14 +376,14 @@ export const ClasesPage = () => {
                                                         miReserva ? (
                                                             <div className="flex items-center justify-end gap-3">
                                                                 <span className="text-green-500 font-bold text-xs flex items-center gap-1">
-                                                                    <CheckCircle className="w-4 h-4" /> APUNTADO
+                                                                    <CheckCircle className="size-4" /> APUNTADO
                                                                 </span>
                                                                 <button
                                                                     onClick={() => handleCancelarReserva(miReserva.id)}
                                                                     className="text-red-500 hover:text-white hover:bg-red-500 p-1.5 rounded-md transition-colors"
                                                                     title="Cancelar Reserva"
                                                                 >
-                                                                    <X className="w-4 h-4" />
+                                                                    <X className="size-4" />
                                                                 </button>
                                                             </div>
                                                         ) : (
@@ -423,7 +420,7 @@ export const ClasesPage = () => {
                                 <p className="text-gray-400 mt-1 text-sm font-medium">Estado del equipamiento en tiempo real.</p>
                             </div>
                             <button onClick={() => setModalMaterial({ isOpen: false, id_disciplina: '', nombre_disciplina: '' })} className="text-gray-500 hover:text-white transition-colors">
-                                <X className="w-6 h-6" />
+                                <X className="size-6" />
                             </button>
                         </div>
 
@@ -434,7 +431,7 @@ export const ClasesPage = () => {
                                 if (maquinasSala.length === 0) {
                                     return (
                                         <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6 text-center">
-                                            <Dumbbell className="w-10 h-10 text-neutral-700 mx-auto mb-3" />
+                                            <Dumbbell className="size-10 text-neutral-700 mx-auto mb-3" />
                                             <p className="text-sm text-gray-400 italic">No hay equipamiento técnico asignado a esta disciplina. ¡Todo es peso libre o cardio!</p>
                                         </div>
                                     );
@@ -450,11 +447,10 @@ export const ClasesPage = () => {
                                             <div className="flex justify-between items-center">
                                                 <span className={`font-bold text-sm ${esDefectuoso ? 'text-red-400 line-through opacity-70' : 'text-white'}`}>{m.nombre}</span>
 
-                                                {esCorrecto && <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-green-500/20"><CheckCircle className="w-3 h-3" /> Operativa</span>}
-                                                {esDefectuoso && <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-red-500/20"><AlertTriangle className="w-3 h-3" /> Averiada</span>}
-                                                {esObs && <span className="text-[10px] bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-yellow-500/20"><Info className="w-3 h-3" /> En revisión</span>}
+                                                {esCorrecto && <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-green-500/20"><CheckCircle className="size-3" /> Operativa</span>}
+                                                {esDefectuoso && <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-red-500/20"><AlertTriangle className="size-3" /> Averiada</span>}
+                                                {esObs && <span className="text-[10px] bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-yellow-500/20"><Info className="size-3" /> En revisión</span>}
                                             </div>
-                                            {/* Mostramos las observaciones si el monitor ha escrito algo */}
                                             {!esCorrecto && m.observaciones && (
                                                 <div className="mt-2 pt-2 border-t border-black/20">
                                                     <p className={`text-xs italic font-medium ${esDefectuoso ? 'text-red-400' : 'text-yellow-500'}`}>"{m.observaciones}"</p>
@@ -480,10 +476,10 @@ export const ClasesPage = () => {
                                 <select
                                     className={`w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none transition-all ${isMonitor ? 'opacity-60 cursor-not-allowed' : 'focus:border-fitbox-red'}`}
                                     value={nuevaClase.id_disciplina}
-                                    onChange={(e) => setNuevaClase({ ...nuevaClase, id_disciplina: e.target.value })}
+                                    onChange={(e) => setNuevaClase(prev => ({ ...prev, id_disciplina: e.target.value }))}
                                     disabled={isMonitor}
                                 >
-                                    <option value="">Selecciona...</option>
+                                    <option value="">Selecciona…</option>
                                     {disciplinas.map(d => <option key={d.id_disciplina} value={d.id_disciplina}>{d.nombre} (Aforo: {d.aforo_maximo || 20})</option>)}
                                 </select>
                             </div>
@@ -493,7 +489,7 @@ export const ClasesPage = () => {
                                 <select
                                     className={`w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none transition-all ${isMonitor ? 'opacity-60 cursor-not-allowed' : 'focus:border-fitbox-red'}`}
                                     value={nuevaClase.id_monitor}
-                                    onChange={(e) => setNuevaClase({ ...nuevaClase, id_monitor: e.target.value })}
+                                    onChange={(e) => setNuevaClase(prev => ({ ...prev, id_monitor: e.target.value }))}
                                     disabled={isMonitor}
                                 >
                                     <option value="">Sin Monitor</option>
@@ -508,7 +504,7 @@ export const ClasesPage = () => {
                                         type="date"
                                         className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-all"
                                         value={nuevaClase.fecha}
-                                        onChange={(e) => setNuevaClase({ ...nuevaClase, fecha: e.target.value })}
+                                        onChange={(e) => setNuevaClase(prev => ({ ...prev, fecha: e.target.value }))}
                                     />
                                     {nuevaClase.id_disciplina && disciplinas.find(d => d.id_disciplina === nuevaClase.id_disciplina)?.nombre !== 'Sala de Máquinas' && (
                                         <p className="text-[10px] text-fitbox-red italic mt-1 font-bold">Solo de Lunes a Viernes</p>
@@ -518,11 +514,11 @@ export const ClasesPage = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Inicio</label>
-                                    <input type="time" className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none" onChange={(e) => setNuevaClase({ ...nuevaClase, hora_inicio: e.target.value })} />
+                                    <input type="time" className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none" onChange={(e) => setNuevaClase(prev => ({ ...prev, hora_inicio: e.target.value }))} />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fin</label>
-                                    <input type="time" className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none" onChange={(e) => setNuevaClase({ ...nuevaClase, hora_fin: e.target.value })} />
+                                    <input type="time" className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none" onChange={(e) => setNuevaClase(prev => ({ ...prev, hora_fin: e.target.value }))} />
                                 </div>
                             </div>
                         </div>

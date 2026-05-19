@@ -12,7 +12,7 @@ export const Header = () => {
 
     const user = useAuthStore((state) => state.user);
     const profile = useAuthStore((state) => state.profile);
-    const toggleMobileMenu = useAuthStore((state) => state.toggleMobileMenu); // <-- OBTENEMOS LA FUNCIÓN
+    const toggleMobileMenu = useAuthStore((state) => state.toggleMobileMenu); 
     const esRutaPublica = location.pathname === '/' || location.pathname === '/registro';
 
     const irAlInicio = () => {
@@ -53,20 +53,23 @@ export const Header = () => {
         <header className="bg-neutral-950/60 backdrop-blur-xl border-b border-neutral-800/50 p-4 sticky top-0 z-50 transition-colors duration-300">
             <div className="w-full px-2 flex justify-between items-center">
 
-                {/* menu desplegable */}
                 <div className="flex items-center gap-3">
                     {user && !esRutaPublica && (
                         <button
                             onClick={toggleMobileMenu}
                             className="md:hidden text-gray-400 hover:text-white transition-colors p-1"
                         >
-                            <Menu className="w-6 h-6" />
+                            <Menu className="size-6" />
                         </button>
                     )}
 
                     <h1
-                        className="flex items-center gap-3 text-2xl font-extrabold text-white cursor-pointer hover:opacity-80 transition-opacity"
+                        className="flex items-center gap-3 text-2xl font-extrabold text-white cursor-pointer hover:opacity-80 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-fitbox-red rounded-lg"
                         onClick={irAlInicio}
+                        onKeyDown={(e) => { if (e.key === 'Enter') irAlInicio(); }}
+                        tabIndex={0}
+                        role="button"
+                        aria-label="Ir al inicio"
                     >
                         <img src="/favicon.png" alt="Logo FITBOX" className="h-12 w-auto object-contain hidden sm:block" />
                         <span>FIT<span className="text-fitbox-red">BOX</span></span>
@@ -76,25 +79,18 @@ export const Header = () => {
                 <div className="flex items-center gap-4 sm:gap-6">
                     {user && !esRutaPublica && (
                         <div className="flex items-center gap-2 border-r border-neutral-700 pr-4 sm:pr-6">
-                            {/* <button
-                                onClick={() => setIsDark(!isDark)}
-                                className="p-2 text-gray-400 hover:text-fitbox-red hover:bg-neutral-800/50 rounded-full transition-all"
-                            >
-                                {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                            </button> */}
-
                             <button
                                 onClick={toggleIdioma}
                                 className="flex items-center gap-1 p-2 text-gray-400 hover:text-fitbox-red hover:bg-neutral-800/50 rounded-full transition-all font-bold text-xs"
                             >
-                                <Globe className="w-5 h-5" />
+                                <Globe className="size-5" />
                                 <span className="hidden sm:inline-block">{idioma}</span>
                             </button>
                         </div>
                     )}
 
                     {user && !esRutaPublica && (
-                        <Link to="/perfil" className="flex items-center gap-2 group cursor-pointer">
+                        <Link to="/perfil" className="flex items-center gap-2 group cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-fitbox-red rounded-full p-1">
                             <div className="text-right hidden sm:block">
                                 <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
                                     {t('menu.mi_cuenta', 'Mi Cuenta')}
@@ -104,7 +100,7 @@ export const Header = () => {
                                 </p>
                             </div>
 
-                            <Avatar className="w-10 h-10 border border-neutral-700 transition-colors group-hover:border-fitbox-red">
+                            <Avatar className="size-10 border border-neutral-700 transition-colors group-hover:border-fitbox-red">
                                 {profile?.avatar_url && (
                                     <AvatarImage src={profile.avatar_url} className="object-cover" />
                                 )}
