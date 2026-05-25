@@ -62,5 +62,15 @@ export const UserRepository = {
             console.error("Error al modificar XP:", error);
             throw error;
         }
+    },
+
+    // Cambiar estado de pago del usuario (activo/pendiente) - Gestión de suscripción
+    updateEstadoPago: async (id_usuario: string, nuevoEstado: 'activo' | 'pendiente'): Promise<void> => {
+        const { error } = await supabase
+            .from('usuarios')
+            .update({ estado_pago: nuevoEstado })
+            .eq('id_usuario', id_usuario);
+
+        if (error) throw error;
     }
 };

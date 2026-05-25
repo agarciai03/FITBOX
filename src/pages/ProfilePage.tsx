@@ -7,10 +7,11 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
-import { LogOut, Save, Camera, CheckCircle, Shield, Trophy, Zap } from 'lucide-react';
+import { LogOut, Save, Camera, CheckCircle, Shield, Trophy, Zap, Trash2 } from 'lucide-react';
 import { supabase } from '../database/supabase/Client';
 import { REGEX } from '../utils/regex';
 import { AuthRepository } from '../database/repositories/AuthRepository';
+import { UserRepository } from '../database/repositories/UserRepository';
 
 export const PerfilPage = () => {
     const { profile, logout, setUser } = useAuthStore();
@@ -35,6 +36,7 @@ export const PerfilPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [loadingBaja, setLoadingBaja] = useState(false);
 
     // 2. CARGAMOS LOS DATOS DEL PERFIL AL INICIAR
     useEffect(() => {
@@ -74,6 +76,25 @@ export const PerfilPage = () => {
     const handleLogout = async () => {
         await logout();
         navigate('/');
+    };
+
+    // Función para dar de baja/cambiar estado a pendiente - Usuario deja de pagar y pierde acceso
+    const handleDarDeBaja = async () => {
+        if (!window.confirm('¿Estás seguro de que deseas darte de baja? Perderás acceso a todas las funcionalidades hasta que vuelvas a pagar.')) {
+            return;
+        }
+
+        setLoadingBaja(true);
+        try {
+            await UserRepository.updateEstadoPago(profile.id_usuario, 'pendiente');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await logout();
+            navigate('/');
+        } catch (error) {
+            console.error("Error al dar de baja:", error);
+            setError('Ocurrió un error al procesar tu baja. Intenta nuevamente.');
+            setLoadingBaja(false);
+        }
     };
 
     // 3. FUNCIÓN: SUBIR FOTO DE AVATAR A SUPABASE STORAGE
@@ -352,6 +373,7 @@ export const PerfilPage = () => {
                                 </div>
                             </div>
                         </div>
+
                     </div>
 
                     {/* BLOQUE 2: Información Personal (EDITABLE) */}
@@ -453,6 +475,18 @@ export const PerfilPage = () => {
                                 />
                             </div>
                         </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-neutral-800 flex gap-2">
+                        <Button
+                            onClick={handleDarDeBaja}
+                            disabled={loadingBaja}
+                            className="bg-red-600/80 hover:bg-red-700 text-white font-bold transition-colors flex items-center gap-2"
+                            title="Dar de baja tu suscripción. Perderás acceso temporal."
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            {loadingBaja ? 'Procesando baja...' : 'Dar de Baja Suscripción'}
+                        </Button>
                     </div>
 
                     {/* BOTÓN DE GUARDAR */}

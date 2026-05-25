@@ -4,8 +4,9 @@ import { useAuthStore } from '../store/authStore';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { CheckCircle, AlertTriangle, Receipt, Download, Users, CreditCard, AlertCircle } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Receipt, Download, Users, CreditCard, AlertCircle, LogOut } from 'lucide-react';
 import { PaymentRepository, type Pago } from '../database/repositories/PaymentRepository';
+import { UserRepository } from '../database/repositories/UserRepository';
 
 interface PaymentFormInputs {
     cardNumber: string;
@@ -15,7 +16,7 @@ interface PaymentFormInputs {
 
 export const PagosPage = () => {
     const profile = useAuthStore((state) => state.profile);
-    const { checkSession } = useAuthStore();
+    const { checkSession, logout } = useAuthStore();
     const rol = profile?.roles?.nombre_rol || 'Socio';
     const isAdminOrMonitor = rol === 'Administrador' || rol === 'Monitor';
 
@@ -28,6 +29,7 @@ export const PagosPage = () => {
     const [loadingPay, setLoadingPay] = useState(false);
     const [errorPay, setErrorPay] = useState<string | null>(null);
     const [successPay, setSuccessPay] = useState(false);
+    const [loadingBaja, setLoadingBaja] = useState(false);
 
     const cargarPagos = useCallback(async () => {
         if (!profile?.id_usuario) return;
@@ -77,6 +79,25 @@ export const PagosPage = () => {
         }, 2000);
     };
 
+    // Función para dar de baja/cambiar estado a pendiente - Usuario deja de pagar y pierde acceso
+    const handleDarDeBaja = async () => {
+        if (!window.confirm('¿Estás seguro de que deseas darte de baja? Perderás acceso a todas las funcionalidades hasta que vuelvas a pagar.')) {
+            return;
+        }
+
+        setLoadingBaja(true);
+        try {
+            await UserRepository.updateEstadoPago(profile!.id_usuario, 'pendiente');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await checkSession();
+            await logout();
+        } catch (error) {
+            console.error("Error al dar de baja:", error);
+            alert('Ocurrió un error al procesar tu baja. Intenta nuevamente.');
+            setLoadingBaja(false);
+        }
+    };
+
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 relative">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -106,8 +127,19 @@ export const PagosPage = () => {
                                     {estadoPago === 'activo' ? 'Todo al día. Gracias por confiar en FITBOX.' : 'Tu acceso está temporalmente suspendido. Renueva tu cuota para desbloquear la plataforma.'}
                                 </p>
                             </div>
-                            <div className={`p-3 rounded-full ${estadoPago === 'activo' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                                {estadoPago === 'activo' ? <CheckCircle className="size-8 text-green-500" /> : <AlertTriangle className="size-8 text-fitbox-red" />}
+                            <div className="flex flex-col items-end gap-3">
+                                <div className={`p-3 rounded-full ${estadoPago === 'activo' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                                    {estadoPago === 'activo' ? <CheckCircle className="size-8 text-green-500" /> : <AlertTriangle className="size-8 text-fitbox-red" />}
+                                </div>
+                                <Button 
+                                    onClick={handleDarDeBaja}
+                                    disabled={loadingBaja}
+                                    className="bg-red-600/80 hover:bg-red-700 text-white text-xs font-bold px-3 py-2 transition-colors flex items-center gap-1"
+                                    title="Dar de baja tu suscripción y perder acceso temporal"
+                                >
+                                    <LogOut className="size-3" />
+                                    {loadingBaja ? 'Procesando...' : 'Dar de Baja'}
+                                </Button>
                             </div>
                         </div>
                     </Card>
@@ -131,7 +163,7 @@ export const PagosPage = () => {
 
                                     <form onSubmit={handleSubmit(onSubmitPay)} className="space-y-4">
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Número de tarjeta</label>
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Número de tarjeta (Usa 4242 4242 4242 4242)</label>
                                             <Input 
                                                 placeholder="0000 0000 0000 0000" 
                                                 maxLength={19} 
@@ -178,9 +210,9 @@ export const PagosPage = () => {
                                                     className={`bg-neutral-900 border-neutral-800 font-mono text-white ${errors.cvc ? 'border-red-500' : 'focus:border-fitbox-red'}`} 
                                                     {...register("cvc", {
                                                         required: "Obligatorio",
-                                                        pattern: { value: /^\d{3,4}$/, message: "3 o 4 dígitos" },
+                                                        pattern: { value: /^\d{3}$/, message: "3 dígitos" },
                                                         onChange: (e) => {
-                                                            const val = e.target.value.replace(/\D/g, '');
+                                                            const val = e.target.value.replace(/\D/g, '').slice(0, 3);
                                                             setValue("cvc", val, { shouldValidate: true });
                                                         }
                                                     })}

@@ -1,9 +1,10 @@
+// src/pages/MaquinasPage.tsx
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { MachineRepository, type EstadoMaquina, type Maquina } from '../database/repositories/MachineRepository';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Dumbbell, AlertTriangle, CheckCircle, Info, Trash2, ExternalLink, BookOpen, Plus, X, Settings } from 'lucide-react';
+import { Dumbbell, AlertTriangle, CheckCircle, Info, Trash2, BookOpen, Plus, X, Settings } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Alert } from '../components/ui/Alert';
 
@@ -21,7 +22,6 @@ export const MaquinasPage = () => {
     const profile = useAuthStore((state) => state.profile);
     const rol = profile?.roles?.nombre_rol || 'Socio';
     const idRol = profile?.id_rol;
-
     const isAdmin = rol === 'Administrador' || idRol === 1;
     const isMonitor = rol === 'Monitor' || idRol === 2;
     const isStaff = isAdmin || isMonitor;
@@ -30,17 +30,15 @@ export const MaquinasPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
     const [categoriaActiva, setCategoriaActiva] = useState<string>('Sala de Máquinas');
-
+    
     const [maquinaSeleccionada, setMaquinaSeleccionada] = useState<Maquina | null>(null);
     const [nuevoEstado, setNuevoEstado] = useState<EstadoMaquina>('Correcto');
     const [nuevasObservaciones, setNuevasObservaciones] = useState('');
-
+    
     const [isCreando, setIsCreando] = useState(false);
     const [nombreNuevaMaquina, setNombreNuevaMaquina] = useState('');
     const [descripcionNuevaMaquina, setDescripcionNuevaMaquina] = useState('');
-    const [tutorialNuevaMaquina, setTutorialNuevaMaquina] = useState('');
 
     const [maquinaParaLeer, setMaquinaParaLeer] = useState<Maquina | null>(null);
 
@@ -64,7 +62,6 @@ export const MaquinasPage = () => {
     const handleActualizarEstado = async () => {
         if (!maquinaSeleccionada || !profile?.id_usuario) return;
         setError(null); setSuccessMessage(null);
-
         try {
             await MachineRepository.updateEstado(
                 maquinaSeleccionada.id_maquina,
@@ -83,13 +80,13 @@ export const MaquinasPage = () => {
     const handleCrearMaquina = async () => {
         if (!nombreNuevaMaquina.trim()) return;
         setError(null); setSuccessMessage(null);
-
         try {
-            await MachineRepository.createMaquina(nombreNuevaMaquina, descripcionNuevaMaquina, tutorialNuevaMaquina);
+            // Se asume disciplina null por defecto al no existir selector de disciplina en el formulario
+            await MachineRepository.createMaquina(nombreNuevaMaquina, null, descripcionNuevaMaquina);
             setIsCreando(false);
-            setNombreNuevaMaquina(''); setDescripcionNuevaMaquina(''); setTutorialNuevaMaquina('');
+            setNombreNuevaMaquina(''); 
+            setDescripcionNuevaMaquina('');
             setSuccessMessage("Máquina registrada con éxito en el sistema.");
-
             setCategoriaActiva(getCategoria(nombreNuevaMaquina));
             cargarMaquinas();
         } catch (errorCatch: any) {
@@ -98,9 +95,8 @@ export const MaquinasPage = () => {
     };
 
     const handleBorrarMaquina = async (id_maquina: string, nombre: string) => {
-        if (!window.confirm(`ATENCIÓN: ¿Seguro que quieres borrar DEFINITIVAMENTE "${nombre}" del gimnasio?`)) return;
+        if (!window.confirm(`¡ATENCIÓN! ¿Seguro que quieres borrar DEFINITIVAMENTE "${nombre}" del gimnasio?`)) return;
         setError(null); setSuccessMessage(null);
-
         try {
             await MachineRepository.deleteMaquina(id_maquina);
             setSuccessMessage("Máquina eliminada del inventario.");
@@ -114,7 +110,6 @@ export const MaquinasPage = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 relative">
-
             {/* CABECERA */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-neutral-800 pb-6">
                 <div>
@@ -129,7 +124,6 @@ export const MaquinasPage = () => {
                         }
                     </p>
                 </div>
-
                 {isAdmin && (
                     <Button
                         onClick={() => setIsCreando(true)}
@@ -154,7 +148,6 @@ export const MaquinasPage = () => {
                     {CATEGORIAS.map(cat => {
                         const cantidad = maquinas.filter(m => getCategoria(m.nombre) === cat).length;
                         const activa = categoriaActiva === cat;
-
                         return (
                             <button
                                 key={cat}
@@ -178,7 +171,7 @@ export const MaquinasPage = () => {
             {isLoading ? (
                 <div className="py-20 text-center flex flex-col items-center">
                     <Dumbbell className="size-12 text-fitbox-red animate-spin mx-auto mb-4" />
-                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Cargando base de datos…</p>
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Cargando base de datos...</p>
                 </div>
             ) : maquinasCategoriaActual.length === 0 ? (
                 <div className="py-20 text-center border border-dashed border-neutral-800 rounded-2xl bg-neutral-900/20 flex flex-col items-center">
@@ -209,18 +202,17 @@ export const MaquinasPage = () => {
 
                                     return (
                                         <tr key={maq.id_maquina} className={`hover:bg-neutral-900/50 transition-colors ${esDefectuoso ? 'bg-red-950/10' : ''}`}>
-
                                             {/* NOMBRE E INFO */}
                                             <td className="px-6 py-5">
                                                 <div className="flex items-center gap-3">
                                                     <span className={`font-black text-base uppercase tracking-tight ${esDefectuoso ? 'text-red-400' : 'text-white'}`}>
                                                         {maq.nombre}
                                                     </span>
-                                                    {(maq.descripcion || maq.tutorial_url) && (
+                                                    {(maq.descripcion) && (
                                                         <button
                                                             onClick={() => setMaquinaParaLeer(maq)}
                                                             className="text-blue-400 hover:text-white p-1.5 bg-blue-500/10 rounded-md transition-colors border border-blue-500/20 hover:bg-blue-500/30 shrink-0"
-                                                            title="Ver manual y tutorial"
+                                                            title="Ver manual"
                                                         >
                                                             <BookOpen className="size-4" />
                                                         </button>
@@ -279,7 +271,6 @@ export const MaquinasPage = () => {
                                                         >
                                                             Gestionar Estado
                                                         </Button>
-
                                                         {isAdmin && (
                                                             <button
                                                                 onClick={() => handleBorrarMaquina(maq.id_maquina, maq.nombre)}
@@ -306,11 +297,10 @@ export const MaquinasPage = () => {
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
                     <Card className="bg-neutral-950 border border-neutral-800 p-6 md:p-8 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-fitbox-red to-red-900"></div>
-
                         <button onClick={() => setIsCreando(false)} className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors">
                             <X className="size-6" />
                         </button>
-
+                        
                         <div className="mb-6">
                             <h3 className="text-2xl font-black text-white uppercase tracking-tight italic">
                                 Registrar <span className="text-fitbox-red">Máquina</span>
@@ -331,22 +321,11 @@ export const MaquinasPage = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="url_tutorial">URL Vídeo Tutorial (Opcional)</label>
-                                <Input
-                                    id="url_tutorial"
-                                    className="w-full bg-neutral-900 border-neutral-800 text-white px-4 py-3 outline-none focus:border-fitbox-red transition-colors"
-                                    placeholder="Enlace a YouTube, Vimeo…"
-                                    value={tutorialNuevaMaquina}
-                                    onChange={(e) => setTutorialNuevaMaquina(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest" htmlFor="ficha_tecnica">Ficha Técnica / Instrucciones (Opcional)</label>
                                 <textarea
                                     id="ficha_tecnica"
                                     className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none min-h-30 resize-y focus:border-fitbox-red placeholder:text-neutral-600 text-sm"
-                                    placeholder="Pautas de uso, precauciones de seguridad, peso máximo…"
+                                    placeholder="Pautas de uso, precauciones de seguridad, peso máximo..."
                                     value={descripcionNuevaMaquina}
                                     onChange={(e) => setDescripcionNuevaMaquina(e.target.value)}
                                 />
@@ -367,11 +346,10 @@ export const MaquinasPage = () => {
             {maquinaSeleccionada && isStaff && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
                     <Card className="bg-neutral-950 border border-neutral-800 p-6 md:p-8 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden">
-
                         <div className={`absolute top-0 left-0 w-full h-1 transition-colors duration-500 ${nuevoEstado === 'Correcto' ? 'bg-green-500' :
                             nuevoEstado === 'Defectuoso' ? 'bg-red-500' : 'bg-yellow-500'
                             }`}></div>
-
+                        
                         <h3 className="text-xl font-semibold text-white mb-6 pr-6 leading-tight">
                             Gestión: <span className="text-fitbox-red uppercase">{maquinaSeleccionada.nombre}</span>
                         </h3>
@@ -397,7 +375,7 @@ export const MaquinasPage = () => {
                                     <textarea
                                         id="reporte_problema"
                                         className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none min-h-30 resize-y focus:border-fitbox-red placeholder:text-neutral-600 text-sm font-medium"
-                                        placeholder="Detalla qué pieza falla, si hay ruido extraño, cable suelto…"
+                                        placeholder="Detalla qué pieza falla, si hay ruido extraño, cable suelto..."
                                         value={nuevasObservaciones}
                                         onChange={(e) => setNuevasObservaciones(e.target.value)}
                                     />
@@ -415,14 +393,14 @@ export const MaquinasPage = () => {
                 </div>
             )}
 
-            {/* MODAL: VER MANUAL / TUTORIAL */}
+            {/* MODAL: VER MANUAL */}
             {maquinaParaLeer && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
                     <Card className="bg-neutral-950 border border-neutral-800 p-6 md:p-8 rounded-2xl w-full max-w-lg shadow-2xl relative">
                         <button onClick={() => setMaquinaParaLeer(null)} className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors">
                             <X className="size-6" />
                         </button>
-
+                        
                         <div className="mb-6 pr-8 border-b border-neutral-800 pb-4">
                             <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter flex items-center gap-3">
                                 <BookOpen className="text-blue-400 size-6" /> {maquinaParaLeer.nombre}
@@ -439,21 +417,10 @@ export const MaquinasPage = () => {
                                     </div>
                                 </div>
                             )}
-
-                            {maquinaParaLeer.tutorial_url && (
-                                <div className="pt-2">
-                                    <a href={maquinaParaLeer.tutorial_url} target="_blank" rel="noreferrer" className="block">
-                                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 text-md shadow-lg shadow-blue-500/20">
-                                            <ExternalLink className="size-5 mr-2" /> Abrir Vídeo Tutorial
-                                        </Button>
-                                    </a>
-                                </div>
-                            )}
                         </div>
                     </Card>
                 </div>
             )}
-
         </div>
     );
 };
