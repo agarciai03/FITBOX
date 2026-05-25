@@ -10,9 +10,11 @@ import { Alert } from '../components/ui/Alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera, X } from 'lucide-react';
 import { REGEX, isValidDNI, limpiarDNI } from '../utils/regex';
+import { PolicyModal } from '../components/ui/PoliticasModal';
 
 interface FormInputs extends RegisterData {
     confirmPassword?: string;
+    aceptarTerminos?: boolean;
 }
 
 export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; onShowLogin?: () => void }) => {
@@ -23,9 +25,11 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
 
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [policyModalOpen, setPolicyModalOpen] = useState(false);
 
     const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormInputs>();
     const watchPassword = watch('password');
+    const watchAceptarTerminos = watch('aceptarTerminos');
 
     const handleAvatarSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -190,7 +194,8 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                         className={`bg-neutral-900 border-neutral-800 ${errors.nombre ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("nombre", {
                                             required: "El nombre es obligatorio",
-                                            pattern: { value: REGEX.TEXTO_PURO, message: "Solo letras y espacios (mín. 2)" },
+                                            minLength: { value: 2, message: "El nombre debe tener al menos 2 caracteres" },
+                                            pattern: { value: REGEX.TEXTO_PURO, message: "Solo letras y espacios permitidos" },
                                             onChange: (e) => {
                                                 const valorLimpio = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
                                                 setValue("nombre", valorLimpio, { shouldValidate: true });
@@ -208,7 +213,8 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                         className={`bg-neutral-900 border-neutral-800 ${errors.apellidos ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("apellidos", {
                                             required: "Los apellidos son obligatorios",
-                                            pattern: { value: REGEX.TEXTO_PURO, message: "Solo letras y espacios" },
+                                            minLength: { value: 2, message: "Los apellidos deben tener al menos 2 caracteres" },
+                                            pattern: { value: REGEX.TEXTO_PURO, message: "Solo letras y espacios permitidos" },
                                             onChange: (e) => {
                                                 const valorLimpio = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
                                                 setValue("apellidos", valorLimpio, { shouldValidate: true });
@@ -240,6 +246,7 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
 
                                 <div className="space-y-2">
                                     <label htmlFor="reg-fecha" className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Fecha de Nacimiento</label>
+                                    <p className="text-[10px] text-gray-600 italic mb-1">Debes tener entre 16 y 90 años</p>
                                     <Input
                                         id="reg-fecha"
                                         type="date"
@@ -247,14 +254,33 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                         {...register("fecha_nacimiento", {
                                             required: "La fecha es obligatoria",
                                             validate: (value) => {
+                                                if (!value) return "La fecha es obligatoria";
+                                                
                                                 const hoy = new Date();
                                                 const fechaNac = new Date(value);
+                                                
+                                                // Evitar fechas futuras
+                                                if (fechaNac > hoy) {
+                                                    return "La fecha de nacimiento no puede ser futura";
+                                                }
+                                                
+                                                // Calcular edad exacta
                                                 let edad = hoy.getFullYear() - fechaNac.getFullYear();
                                                 const mes = hoy.getMonth() - fechaNac.getMonth();
+                                                
                                                 if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
                                                     edad--;
                                                 }
-                                                return edad >= 16 || "Debes tener al menos 16 años.";
+                                                
+                                                // Validar rango de edad
+                                                if (edad < 16) {
+                                                    return `Tienes ${edad} años. Debes tener mínimo 16 años para registrarte.`;
+                                                }
+                                                if (edad > 90) {
+                                                    return `Tienes ${edad} años. No se permite registrar personas mayores de 90 años.`;
+                                                }
+                                                
+                                                return true;
                                             }
                                         })}
                                     />
@@ -291,7 +317,9 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                         className={`bg-neutral-900 border-neutral-800 ${errors.telefono ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("telefono", {
                                             required: "El teléfono es obligatorio",
-                                            pattern: { value: REGEX.TELEFONO, message: "Debe tener 9 dígitos numéricos" }
+                                            minLength: { value: 9, message: "El teléfono debe tener 9 dígitos" },
+                                            maxLength: { value: 9, message: "El teléfono debe tener exactamente 9 dígitos" },
+                                            pattern: { value: REGEX.TELEFONO, message: "Debe ser un teléfono español válido (6, 7, 8 o 9 seguido de 8 dígitos)" }
                                         })}
                                         onChange={(e) => {
                                             const valorLimpio = e.target.value.replace(/\D/g, '').slice(0, 9);
@@ -359,8 +387,10 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                         placeholder="28000"
                                         className={`bg-neutral-900 border-neutral-800 ${errors.codigo_postal ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("codigo_postal", {
-                                            required: "Obligatorio",
-                                            pattern: { value: REGEX.CODIGO_POSTAL, message: "Código postal inválido (5 cifras numéricas)" }
+                                            required: "El código postal es obligatorio",
+                                            minLength: { value: 5, message: "El código postal debe tener 5 dígitos" },
+                                            maxLength: { value: 5, message: "El código postal debe tener exactamente 5 dígitos" },
+                                            pattern: { value: REGEX.CODIGO_POSTAL, message: "Código postal español inválido" }
                                         })}
                                         onChange={(e) => {
                                             const valorLimpio = e.target.value.replace(/\D/g, '').slice(0, 5);
@@ -385,7 +415,7 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                         className={`bg-neutral-900 border-neutral-800 ${errors.email ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("email", {
                                             required: "El correo es obligatorio",
-                                            pattern: { value: REGEX.EMAIL_GENERAL, message: "Formato de correo inválido" },
+                                            pattern: { value: REGEX.EMAIL_GENERAL, message: "Correo debe ser válido (soportados: es, com, org, net, eu, info, cat, gal)" },
                                             onChange: (e) => {
                                                 setValue("email", e.target.value.replace(/\s/g, ''), { shouldValidate: true });
                                             }
@@ -403,7 +433,8 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                         className={`bg-neutral-900 border-neutral-800 ${errors.password ? 'border-red-500' : 'focus:border-fitbox-red'}`}
                                         {...register("password", {
                                             required: "La contraseña es obligatoria",
-                                            pattern: { value: REGEX.PASSWORD, message: "Mínimo 6 caracteres" }
+                                            minLength: { value: 6, message: "La contraseña debe tener al menos 6 caracteres" },
+                                            pattern: { value: REGEX.PASSWORD, message: "La contraseña debe tener al menos 6 caracteres" }
                                         })}
                                     />
                                     {errors.password && <span className="text-xs text-red-500 font-medium">{errors.password.message}</span>}
@@ -426,8 +457,33 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                             </div>
                         </div>
 
+                        <div className="space-y-4">
+                            <div className="flex items-start gap-3 p-4 bg-neutral-900/50 border border-neutral-800 rounded-lg">
+                                <input 
+                                    type="checkbox" 
+                                    id="aceptarTerminos"
+                                    {...register("aceptarTerminos", {
+                                        required: "Debes aceptar los términos y condiciones"
+                                    })}
+                                    className="w-5 h-5 mt-1 cursor-pointer accent-fitbox-red"
+                                />
+                                <label htmlFor="aceptarTerminos" className="text-xs text-gray-400 cursor-pointer flex-1">
+                                    Acepto la{' '}
+                                    <button
+                                        type="button"
+                                        onClick={() => setPolicyModalOpen(true)}
+                                        className="text-fitbox-red hover:underline font-bold"
+                                    >
+                                        Política de Privacidad y Términos de Servicio
+                                    </button>
+                                    {' '}de FITBOX
+                                </label>
+                            </div>
+                            {errors.aceptarTerminos && <span className="text-xs text-red-500 font-medium block">{errors.aceptarTerminos.message}</span>}
+                        </div>
+
                         <div className="pt-6">
-                            <Button type="submit" className="w-full bg-fitbox-red hover:bg-red-700 text-white font-bold py-6 text-lg shadow-lg" disabled={isLoading}>
+                            <Button type="submit" className="w-full bg-fitbox-red hover:bg-red-700 text-white font-bold py-6 text-lg shadow-lg" disabled={isLoading || !watchAceptarTerminos}>
                                 {isLoading ? 'Creando ficha de socio...' : 'Completar Registro'}
                             </Button>
                         </div>
@@ -453,6 +509,8 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                     </div>
                 </Card>
             </div>
+
+            <PolicyModal isOpen={policyModalOpen} onClose={() => setPolicyModalOpen(false)} />
         </div>
     );
 };

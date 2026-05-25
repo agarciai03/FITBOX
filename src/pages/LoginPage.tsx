@@ -9,9 +9,11 @@ import { Input } from '../components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '../components/ui/Alert';
 import { REGEX } from '../utils/regex';
-import { Dumbbell, Flame, Users, CalendarCheck, X, CheckCircle, Mail } from 'lucide-react';
+import { Dumbbell, Flame, Users, CalendarCheck, X, CheckCircle, Mail, TrendingUp, Shield, Clock, Zap, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { RegisterPage } from './RegisterPage';
 import { AuthRepository } from '../database/repositories/AuthRepository';
+import { Footer } from '../components/layout/Footer';
+import '../styles/LoginPage.css';
 
 interface LoginFormInputs {
     email: string;
@@ -27,6 +29,7 @@ export const LoginPage = () => {
     const [showResetModal, setShowResetModal] = useState(false);
     const [resetEmail, setResetEmail] = useState('');
     const [resetSuccess, setResetSuccess] = useState(false);
+    const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
     
     const [isPendingLogin, startTransitionLogin] = useTransition();
     const [isPendingReset, startTransitionReset] = useTransition();
@@ -79,7 +82,7 @@ export const LoginPage = () => {
 
             <main className="relative z-10 grow flex flex-col items-center justify-center px-4 pt-20 pb-32">
                 <div className="text-center space-y-6 max-w-4xl">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-950/30 border border-red-900/50 rounded-full text-fitbox-red text-xs font-bold uppercase tracking-widest animate-fade-in">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-950/30 border border-red-900/50 rounded-full text-fitbox-red text-xs font-bold uppercase tracking-widest animate-fade-in-up">
                         <Flame className="size-3" />
                         Tu mejor versión empieza aquí
                     </div>
@@ -88,21 +91,21 @@ export const LoginPage = () => {
                         FIT<span className="text-fitbox-red text-shadow-red">BOX</span>
                     </h1>
 
-                    <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto font-medium">
+                    <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto font-medium animate-fade-in-up animate-delay-200">
                         Entrenamiento de élite, tecnología de vanguardia y una comunidad imparable. Únete al club más exclusivo.
                     </p>
 
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8 animate-fade-in-up animate-delay-300">
                         <Button
                             onClick={() => setShowRegisterModal(true)}
-                            className="bg-fitbox-red hover:bg-red-700 text-white font-black px-10 py-7 text-xl rounded-2xl shadow-[0_0_30px_rgba(239,68,68,0.3)] transition-all hover:scale-105"
+                            className="bg-fitbox-red hover:bg-red-700 text-white font-black px-10 py-7 text-xl rounded-2xl shadow-[0_0_30px_rgba(239,68,68,0.3)] transition-all hover:scale-105 btn-glow"
                         >
                             EMPEZAR AHORA
                         </Button>
                         <Button
                             variant="outline"
                             onClick={() => setShowLoginModal(true)}
-                            className="bg-transparent border-neutral-800 text-white hover:bg-neutral-900 px-10 py-7 text-xl rounded-2xl font-bold"
+                            className="bg-transparent border-neutral-800 text-white hover:bg-neutral-900 px-10 py-7 text-xl rounded-2xl font-bold hover-glow"
                         >
                             ACCESO SOCIOS
                         </Button>
@@ -115,15 +118,139 @@ export const LoginPage = () => {
                         { icon: Users, label: "Comunidad", val: "+500" },
                         { icon: CalendarCheck, label: "Clases Diarias", val: "24h" },
                         { icon: Flame, label: "Intensidad", val: "100%" }
-                    ].map((item) => (
-                        <div key={item.label} className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-neutral-900/40 border border-neutral-800/50 backdrop-blur-sm">
+                    ].map((item, idx) => (
+                        <div key={item.label} className={`flex flex-col items-center gap-2 p-6 rounded-3xl bg-neutral-900/40 border border-neutral-800/50 backdrop-blur-sm animate-fade-in-up hover-lift`} style={{animationDelay: `${idx * 100}ms`}}>
                             <item.icon className="size-8 text-fitbox-red mb-2" />
                             <span className="text-white font-black uppercase text-xl italic">{item.val}</span>
                             <span className="text-gray-500 text-xs font-bold uppercase tracking-widest">{item.label}</span>
                         </div>
                     ))}
                 </div>
+
+                {/* SECCIÓN: POR QUÉ ELEGIR FITBOX */}
+                <div className="mt-40 w-full max-w-6xl">
+                    <h2 className="text-4xl md:text-5xl font-black text-white text-center uppercase tracking-tight mb-16 italic animate-fade-in-up">
+                        Por qué elegir <span className="text-fitbox-red">FITBOX</span>
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {[
+                            { icon: Shield, title: "Entrenamiento Personalizado", desc: "Programas diseñados por monitores certificados adaptados a tu nivel actual" },
+                            { icon: TrendingUp, title: "Seguimiento Real", desc: "Registra tu progreso con métricas reales de tus entrenamientos" },
+                            { icon: Clock, title: "Horarios Flexibles", desc: "Clases disponibles en horarios variados para adaptarse a tu rutina" },
+                            { icon: Users, title: "Ambiente Motivador", desc: "Entrena con gente comprometida que comparte tus objetivos de fitness" },
+                            { icon: Zap, title: "Sistema Moderno", desc: "Plataforma para reservar clases y gestionar tu membresía fácilmente" },
+                            { icon: Star, title: "Monitores Certificados", desc: "Profesionales que te enseñarán la técnica correcta en cada ejercicio" }
+                        ].map((item, idx) => (
+                            <div key={idx} className={`p-8 rounded-2xl bg-neutral-900/50 border border-neutral-700 hover-lift hover:border-neutral-600 animate-fade-in-up`} style={{animationDelay: `${idx * 80}ms`}}>
+                                <item.icon className="size-10 text-fitbox-red mb-4" />
+                                <h3 className="text-white font-black uppercase text-lg mb-2">{item.title}</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* SECCIÓN: PLANES */}
+                <div className="mt-40 w-full max-w-4xl">
+                    <h2 className="text-4xl md:text-5xl font-black text-white text-center uppercase tracking-tight mb-16 italic animate-fade-in-up">
+                        Plan de <span className="text-fitbox-red">Membresía</span>
+                    </h2>
+                    <div className="flex justify-center animate-scale-in">
+                        <div className="p-8 rounded-2xl border-2 border-neutral-700 bg-neutral-900/60 shadow-lg w-full max-w-sm hover-lift hover:border-neutral-600 transition-all">
+                            <h3 className="text-fitbox-red font-black uppercase text-2xl mb-2">Membresía Mensual</h3>
+                            <p className="text-white font-black text-4xl mb-6">19.99€<span className="text-sm text-gray-400">/mes</span></p>
+                            <ul className="space-y-3 mb-8">
+                                {["Acceso a todas las clases", "Reservas online disponibles", "Estadísticas de entrenamientos", "Soporte de monitores"].map((feat, i) => (
+                                    <li key={i} className="text-gray-300 text-sm flex items-start gap-2 animate-fade-in-up" style={{animationDelay: `${i * 50 + 200}ms`}}>
+                                        <CheckCircle className="size-4 text-fitbox-red mt-0.5 shrink-0" />
+                                        {feat}
+                                    </li>
+                                ))}
+                            </ul>
+                            <Button onClick={() => setShowRegisterModal(true)} className="w-full font-bold py-4 bg-fitbox-red hover:bg-red-700 btn-glow">
+                                Seleccionar Plan
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* SECCIÓN: TESTIMONIOS */}
+                <div className="mt-40 w-full max-w-6xl">
+                    <h2 className="text-4xl md:text-5xl font-black text-white text-center uppercase tracking-tight mb-16 italic animate-fade-in-up">
+                        Historias de <span className="text-fitbox-red">Transformación</span>
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {[
+                            { name: "Carlos M.", role: "Socio desde hace 1 año", quote: "Los monitores son muy atentos. He mejorado bastante mi forma física y me siento mejor." },
+                            { name: "Laura P.", role: "Socio hace 8 meses", quote: "Me encanta el ambiente del gym. Los horarios son flexibles y siempre hay alguien disponible para ayudarte." },
+                            { name: "Miguel D.", role: "Nuevo socio", quote: "Buena experiencia hasta ahora. El precio está bien y el equipo está en buen estado." }
+                        ].map((testimonial, idx) => (
+                            <div key={idx} className={`p-8 rounded-2xl bg-neutral-900/50 border border-neutral-700 hover-lift hover:border-neutral-600 animate-fade-in-up`} style={{animationDelay: `${idx * 100}ms`}}>
+                                <div className="flex gap-1 mb-4">
+                                    {[...Array(5)].map((_, i) => <Star key={i} className="size-4 fill-fitbox-red text-fitbox-red" />)}
+                                </div>
+                                <p className="text-gray-300 italic mb-4">"{testimonial.quote}"</p>
+                                <div className="border-t border-fitbox-red/20 pt-4">
+                                    <p className="text-white font-black uppercase">{testimonial.name}</p>
+                                    <p className="text-fitbox-red text-xs font-bold uppercase tracking-wider">{testimonial.role}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* SECCIÓN: FAQ */}
+                <div className="mt-40 w-full max-w-4xl">
+                    <h2 className="text-4xl md:text-5xl font-black text-white text-center uppercase tracking-tight mb-16 italic animate-fade-in-up">
+                        Preguntas <span className="text-fitbox-red">Frecuentes</span>
+                    </h2>
+                    <div className="space-y-4">
+                        {[
+                            { q: "¿Cuál es el compromiso de permanencia?", a: "No hay permanencia mínima. Puedes cancelar tu membresía en cualquier momento desde tu cuenta." },
+                            { q: "¿Qué incluye la membresía?", a: "Acceso a todas las clases, uso completo de las instalaciones, acceso a estadísticas de entrenamientos y soporte de los monitores." },
+                            { q: "¿Puedo cambiar de horarios?", a: "Claro, puedes reservar en los horarios disponibles que más te convengan. Las reservas se gestionan desde la plataforma." },
+                            { q: "¿Cómo funciona el soporte de monitores?", a: "Nuestros monitores están disponibles durante las clases para ayudarte con la técnica y recomendaciones personalizadas." }
+                        ].map((item, idx) => (
+                            <button 
+                                key={idx}
+                                onClick={() => setExpandedFAQ(expandedFAQ === idx ? null : idx)}
+                                className={`w-full p-6 rounded-xl bg-neutral-900/50 border border-neutral-700 hover:border-neutral-600 transition-all text-left faq-item-active animate-fade-in-up ${expandedFAQ === idx ? 'faq-item-active' : ''}`}
+                                style={{animationDelay: `${idx * 60}ms`}}
+                            >
+                                <div className="flex justify-between items-start gap-4">
+                                    <p className="font-black text-white uppercase">{item.q}</p>
+                                    <div className="faq-icon-rotate">
+                                        {expandedFAQ === idx ? <ChevronUp className="text-fitbox-red shrink-0 size-5" /> : <ChevronDown className="text-gray-500 shrink-0 size-5" />}
+                                    </div>
+                                </div>
+                                {expandedFAQ === idx && (
+                                    <p className="text-gray-300 mt-4 text-sm leading-relaxed faq-expand">{item.a}</p>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* SECCIÓN: CTA FINAL */}
+                <div className="mt-40 mb-20 w-full max-w-4xl text-center animate-fade-in-up">
+                    <div className="p-12 rounded-3xl bg-neutral-900/60 border border-neutral-700 backdrop-blur-sm hover-lift hover:border-neutral-600 transition-all">
+                        <h3 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight mb-4 italic">
+                            ¿Listo para <span className="text-fitbox-red">entrenar</span>?
+                        </h3>
+                        <p className="text-gray-300 mb-8 text-lg">Comienza hoy tu suscripción a FITBOX. Sin compromisos, fácil acceso, y con el mejor equipo.</p>
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <Button onClick={() => setShowRegisterModal(true)} className="bg-fitbox-red hover:bg-red-700 text-white font-black px-10 py-6 text-lg btn-glow">
+                                INICIAR AHORA
+                            </Button>
+                            <Button variant="outline" onClick={() => setShowLoginModal(true)} className="border-fitbox-red text-fitbox-red hover:bg-red-950/20 px-10 py-6 text-lg font-bold hover-glow">
+                                YA SOY MIEMBRO
+                            </Button>
+                        </div>
+                    </div>
+                </div>
             </main>
+
+            <Footer />
 
             {showLoginModal && (
                 <div className="fixed inset-0 z-100 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
