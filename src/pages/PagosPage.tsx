@@ -131,15 +131,17 @@ export const PagosPage = () => {
                                 <div className={`p-3 rounded-full ${estadoPago === 'activo' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
                                     {estadoPago === 'activo' ? <CheckCircle className="size-8 text-green-500" /> : <AlertTriangle className="size-8 text-fitbox-red" />}
                                 </div>
-                                <Button 
-                                    onClick={handleDarDeBaja}
-                                    disabled={loadingBaja}
-                                    className="bg-red-600/80 hover:bg-red-700 text-white text-xs font-bold px-3 py-2 transition-colors flex items-center gap-1"
-                                    title="Dar de baja tu suscripción y perder acceso temporal"
-                                >
-                                    <LogOut className="size-3" />
-                                    {loadingBaja ? 'Procesando...' : 'Dar de Baja'}
-                                </Button>
+                                {rol === 'Socio' && (
+                                    <Button 
+                                        onClick={handleDarDeBaja}
+                                        disabled={loadingBaja}
+                                        className="bg-red-600/80 hover:bg-red-700 text-white text-xs font-bold px-3 py-2 transition-colors flex items-center gap-1"
+                                        title="Dar de baja tu suscripción y perder acceso temporal"
+                                    >
+                                        <LogOut className="size-3" />
+                                        {loadingBaja ? 'Procesando...' : 'Dar de Baja'}
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     </Card>
@@ -190,6 +192,27 @@ export const PagosPage = () => {
                                                     {...register("expiry", {
                                                         required: "Obligatorio",
                                                         pattern: { value: /^(0[1-9]|1[0-2])\/\d{2}$/, message: "Formato MM/YY válido" },
+                                                        validate: (value) => {
+                                                            const [month, year] = value.split('/');
+                                                            const monthNum = parseInt(month, 10);
+                                                            
+                                                            // Validar que el mes esté entre 01 y 12
+                                                            if (monthNum < 1 || monthNum > 12) {
+                                                                return "Mes inválido (01-12)";
+                                                            }
+                                                            
+                                                            // Validar que no sea una fecha caducada
+                                                            const currentDate = new Date();
+                                                            const currentYear = currentDate.getFullYear() % 100; // Últimos 2 dígitos
+                                                            const currentMonth = currentDate.getMonth() + 1;
+                                                            const cardYear = parseInt(year, 10);
+                                                            
+                                                            if (cardYear < currentYear || (cardYear === currentYear && monthNum < currentMonth)) {
+                                                                return "La tarjeta está caducada";
+                                                            }
+                                                            
+                                                            return true;
+                                                        },
                                                         onChange: (e) => {
                                                             let val = e.target.value.replace(/\D/g, '');
                                                             if (val.length >= 2) {

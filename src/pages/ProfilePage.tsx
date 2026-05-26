@@ -17,7 +17,7 @@ export const PerfilPage = () => {
     const { profile, logout, setUser } = useAuthStore();
     const navigate = useNavigate();
 
-    // 1. ESTADO LOCAL PARA EL FORMULARIO
+    // ESTADO LOCAL PARA EL FORMULARIO
     const [formData, setFormData] = useState({
         nombre: '',
         apellidos: '',
@@ -38,7 +38,7 @@ export const PerfilPage = () => {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [loadingBaja, setLoadingBaja] = useState(false);
 
-    // 2. CARGAMOS LOS DATOS DEL PERFIL AL INICIAR
+    // CARGAMOS LOS DATOS DEL PERFIL AL INICIAR
     useEffect(() => {
         if (profile) {
             setFormData({
@@ -66,7 +66,7 @@ export const PerfilPage = () => {
     const inicial = profile.nombre ? profile.nombre.charAt(0).toUpperCase() : 'F';
     const isSocio = profile.roles?.nombre_rol === 'Socio' || profile.id_rol === 3;
 
-    // --- CÁLCULOS DE GAMIFICACIÓN ---
+    // GAMIFICACIÓN
     const nivel = (profile as any).nivel || 1;
     const xpActual = (profile as any).xp || 0;
     const xpParaSiguienteNivel = nivel * 200; // Fórmula: Nivel actual * 200
@@ -97,7 +97,7 @@ export const PerfilPage = () => {
         }
     };
 
-    // 3. FUNCIÓN: SUBIR FOTO DE AVATAR A SUPABASE STORAGE
+    // SUBIR FOTO DE AVATAR A SUPABASE STORAGE
     const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         try {
             const file = event.target.files?.[0];
@@ -256,7 +256,7 @@ export const PerfilPage = () => {
                             <input type="file" accept="image/jpeg, image/png, image/jpg, image/webp" className="hidden" onChange={handleAvatarUpload} disabled={isLoading} />
                         </label>
 
-                        {/* --- Textos del Perfil y BARRA DE XP (SÓLO SOCIOS) --- */}
+                        {/* Textos del Perfil y BARRA DE XP (SÓLO SOCIOS) */}
                         <div className="flex flex-col items-center sm:items-start w-full">
                             <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight text-center sm:text-left">
                                 {formData.nombre} {formData.apellidos}
@@ -319,7 +319,7 @@ export const PerfilPage = () => {
                         </div>
                     )}
 
-                    {/* BLOQUE 1: Datos de la Cuenta (SOLO LECTURA) */}
+                    {/* Datos de la Cuenta (SOLO LECTURA) */}
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold text-white border-b border-neutral-800 pb-2">
                             Cuenta y Seguridad <span className="text-xs text-gray-500 font-normal ml-2">(Lectura)</span>
@@ -336,7 +336,7 @@ export const PerfilPage = () => {
                         </div>
                     </div>
 
-                    {/* --- BLOQUE: SEGURIDAD Y CONTRASEÑA --- */}
+                    {/* SEGURIDAD Y CONTRASEÑA */}
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold text-white border-b border-neutral-800 pb-2 flex items-center gap-2">
                             <Shield className="w-5 h-5 text-fitbox-red" />
@@ -376,7 +376,7 @@ export const PerfilPage = () => {
 
                     </div>
 
-                    {/* BLOQUE 2: Información Personal (EDITABLE) */}
+                    {/* Información Personal (EDITABLE) */}
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold text-white border-b border-neutral-800 pb-2">
                             Información Personal
@@ -429,7 +429,7 @@ export const PerfilPage = () => {
                         </div>
                     </div>
 
-                    {/* BLOQUE 3: Dirección (EDITABLE) */}
+                    {/* Dirección (EDITABLE) */}
                     <div className="space-y-4">
                         <h3 className="text-xl font-semibold text-white border-b border-neutral-800 pb-2">
                             Ubicación
@@ -477,17 +477,19 @@ export const PerfilPage = () => {
                         </div>
                     </div>
 
-                    <div className="pt-4 border-t border-neutral-800 flex gap-2">
-                        <Button
-                            onClick={handleDarDeBaja}
-                            disabled={loadingBaja}
-                            className="bg-red-600/80 hover:bg-red-700 text-white font-bold transition-colors flex items-center gap-2"
-                            title="Dar de baja tu suscripción. Perderás acceso temporal."
-                        >
-                            <Trash2 className="w-4 h-4" />
-                            {loadingBaja ? 'Procesando baja...' : 'Dar de Baja Suscripción'}
-                        </Button>
-                    </div>
+                    {isSocio && (
+                        <div className="pt-4 border-t border-neutral-800 flex gap-2">
+                            <Button
+                                onClick={handleDarDeBaja}
+                                disabled={loadingBaja}
+                                className="bg-red-600/80 hover:bg-red-700 text-white font-bold transition-colors flex items-center gap-2"
+                                title="Dar de baja tu suscripción. Perderás acceso temporal."
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                {loadingBaja ? 'Procesando baja...' : 'Dar de Baja Suscripción'}
+                            </Button>
+                        </div>
+                    )}
 
                     {/* BOTÓN DE GUARDAR */}
                     <div className="pt-6 border-t border-neutral-800 flex justify-end">

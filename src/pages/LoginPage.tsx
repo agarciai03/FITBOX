@@ -30,6 +30,31 @@ export const LoginPage = () => {
     const [resetEmail, setResetEmail] = useState('');
     const [resetSuccess, setResetSuccess] = useState(false);
     const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
+    const [showCommentForm, setShowCommentForm] = useState(false);
+    const [comentarios, setComentarios] = useState<Array<{ id: string; nombre: string; comentario: string; valoracion: number; fecha: string }>>([
+        {
+            id: "1",
+            nombre: "Carlos M.",
+            comentario: "Los monitores son muy atentos. He mejorado bastante mi forma física y me siento mejor.",
+            valoracion: 5,
+            fecha: "Socio desde hace 1 año"
+        },
+        {
+            id: "2",
+            nombre: "Laura P.",
+            comentario: "Me encanta el ambiente del gym. Los horarios son flexibles y siempre hay alguien disponible para ayudarte.",
+            valoracion: 5,
+            fecha: "Socio hace 8 meses"
+        },
+        {
+            id: "3",
+            nombre: "Miguel D.",
+            comentario: "Buena experiencia hasta ahora. El precio está bien y el equipo está en buen estado.",
+            valoracion: 5,
+            fecha: "Nuevo socio"
+        }
+    ]);
+    const [nuevoComentario, setNuevoComentario] = useState({ nombre: '', comentario: '', valoracion: 5 });
     
     const [isPendingLogin, startTransitionLogin] = useTransition();
     const [isPendingReset, startTransitionReset] = useTransition();
@@ -37,6 +62,29 @@ export const LoginPage = () => {
     const [authError, setAuthError] = useState<string | null>(null);
 
     const { register, handleSubmit } = useForm<LoginFormInputs>();
+
+    const handleAgregarComentario = () => {
+        if (!nuevoComentario.nombre.trim() || !nuevoComentario.comentario.trim()) {
+            alert("Por favor, completa el nombre y el comentario.");
+            return;
+        }
+
+        const fechaFormato = `Hace ${Math.floor(Math.random() * 30) + 1} días`;
+
+        setComentarios([
+            ...comentarios,
+            {
+                id: Date.now().toString(),
+                nombre: nuevoComentario.nombre,
+                comentario: nuevoComentario.comentario,
+                valoracion: nuevoComentario.valoracion,
+                fecha: fechaFormato
+            }
+        ]);
+
+        setNuevoComentario({ nombre: '', comentario: '', valoracion: 5 });
+        setShowCommentForm(false);
+    };
 
     const onSubmit = (data: LoginFormInputs) => {
         setAuthError(null);
@@ -176,23 +224,80 @@ export const LoginPage = () => {
 
                 {/* SECCIÓN: TESTIMONIOS */}
                 <div className="mt-40 w-full max-w-6xl">
-                    <h2 className="text-4xl md:text-5xl font-black text-white text-center uppercase tracking-tight mb-16 italic animate-fade-in-up">
-                        Historias de <span className="text-fitbox-red">Transformación</span>
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {[
-                            { name: "Carlos M.", role: "Socio desde hace 1 año", quote: "Los monitores son muy atentos. He mejorado bastante mi forma física y me siento mejor." },
-                            { name: "Laura P.", role: "Socio hace 8 meses", quote: "Me encanta el ambiente del gym. Los horarios son flexibles y siempre hay alguien disponible para ayudarte." },
-                            { name: "Miguel D.", role: "Nuevo socio", quote: "Buena experiencia hasta ahora. El precio está bien y el equipo está en buen estado." }
-                        ].map((testimonial, idx) => (
-                            <div key={idx} className={`p-8 rounded-2xl bg-neutral-900/50 border border-neutral-700 hover-lift hover:border-neutral-600 animate-fade-in-up`} style={{animationDelay: `${idx * 100}ms`}}>
-                                <div className="flex gap-1 mb-4">
-                                    {[...Array(5)].map((_, i) => <Star key={i} className="size-4 fill-fitbox-red text-fitbox-red" />)}
+                    <div className="flex justify-between items-center mb-16">
+                        <h2 className="text-4xl md:text-5xl font-black text-white text-center uppercase tracking-tight italic animate-fade-in-up flex-1">
+                            Historias de <span className="text-fitbox-red">Transformación</span>
+                        </h2>
+                        <Button 
+                            onClick={() => setShowCommentForm(!showCommentForm)}
+                            className="bg-fitbox-red hover:bg-red-700 text-white font-bold px-6 py-3 rounded-lg text-sm ml-4"
+                        >
+                            + Agregar Comentario
+                        </Button>
+                    </div>
+
+                    {showCommentForm && (
+                        <div className="mb-8 p-6 rounded-2xl bg-neutral-900/80 border border-fitbox-red/30 animate-in fade-in">
+                            <h3 className="text-white font-bold mb-4">Comparte tu Historia</h3>
+                            <div className="space-y-4">
+                                <input 
+                                    type="text"
+                                    placeholder="Tu nombre"
+                                    value={nuevoComentario.nombre}
+                                    onChange={(e) => setNuevoComentario({...nuevoComentario, nombre: e.target.value})}
+                                    className="w-full px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white placeholder-gray-500 focus:border-fitbox-red focus:outline-none"
+                                />
+                                <textarea 
+                                    placeholder="Tu comentario (máx. 500 caracteres)"
+                                    value={nuevoComentario.comentario}
+                                    onChange={(e) => setNuevoComentario({...nuevoComentario, comentario: e.target.value.slice(0, 500)})}
+                                    maxLength={500}
+                                    className="w-full px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white placeholder-gray-500 focus:border-fitbox-red focus:outline-none min-h-24 resize-none"
+                                />
+                                <div>
+                                    <label className="text-white text-sm mb-2 block">Valoración</label>
+                                    <div className="flex gap-2">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                                key={star}
+                                                onClick={() => setNuevoComentario({...nuevoComentario, valoracion: star})}
+                                                className="focus:outline-none transition-transform hover:scale-110"
+                                            >
+                                                <Star 
+                                                    className={`size-6 ${star <= nuevoComentario.valoracion ? 'fill-fitbox-red text-fitbox-red' : 'text-gray-600'}`}
+                                                />
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                                <p className="text-gray-300 italic mb-4">"{testimonial.quote}"</p>
+                                <div className="flex gap-3">
+                                    <Button 
+                                        onClick={handleAgregarComentario}
+                                        className="flex-1 bg-fitbox-red hover:bg-red-700 text-white font-bold py-2"
+                                    >
+                                        Publicar
+                                    </Button>
+                                    <Button 
+                                        onClick={() => setShowCommentForm(false)}
+                                        className="flex-1 bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-2"
+                                    >
+                                        Cancelar
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {comentarios.map((testimonial, idx) => (
+                            <div key={testimonial.id} className={`p-8 rounded-2xl bg-neutral-900/50 border border-neutral-700 hover-lift hover:border-neutral-600 animate-fade-in-up`} style={{animationDelay: `${idx * 100}ms`}}>
+                                <div className="flex gap-1 mb-4">
+                                    {[...Array(5)].map((_, i) => <Star key={i} className={`size-4 ${i < testimonial.valoracion ? 'fill-fitbox-red text-fitbox-red' : 'text-gray-600'}`} />)}
+                                </div>
+                                <p className="text-gray-300 italic mb-4 text-sm">"{testimonial.comentario}"</p>
                                 <div className="border-t border-fitbox-red/20 pt-4">
-                                    <p className="text-white font-black uppercase">{testimonial.name}</p>
-                                    <p className="text-fitbox-red text-xs font-bold uppercase tracking-wider">{testimonial.role}</p>
+                                    <p className="text-white font-black uppercase">{testimonial.nombre}</p>
+                                    <p className="text-fitbox-red text-xs font-bold uppercase tracking-wider">{testimonial.fecha}</p>
                                 </div>
                             </div>
                         ))}

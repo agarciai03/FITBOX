@@ -2,7 +2,7 @@ import { useEffect, useReducer } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '@/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
-import { Users, Calendar, AlertCircle, Activity, CreditCard, Clock, Dumbbell, Settings } from 'lucide-react';
+import { Users, Calendar, AlertCircle, Activity, CreditCard, Clock, Dumbbell, Settings, ClipboardList, AlertTriangle } from 'lucide-react';
 import { MachineRepository } from '../database/repositories/MachineRepository';
 import { supabase } from '../database/supabase/Client';
 import { OcupacionChart } from '../components/charts/OcupacionChart';
@@ -289,7 +289,7 @@ export const DashboardPage = () => {
 
                         <div className="xl:col-span-4 space-y-6 animate-fade-in-up" style={{animationDelay: '300ms'}}>
                             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3">
-                                {isAdminOrMonitor ? (
+                                {rol === 'Administrador' ? (
                                     <>
                                         <Button
                                             onClick={() => navigate('/socios')}
@@ -303,6 +303,22 @@ export const DashboardPage = () => {
                                             className="w-full h-16 bg-neutral-800 backdrop-blur-xl hover:bg-neutral-700 text-white font-black text-lg italic uppercase tracking-widest border border-neutral-700 shadow-lg transition-all hover:border-neutral-600 hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl"
                                         >
                                             <Settings className="w-5 h-5" /> Ver Inventario
+                                        </Button>
+                                    </>
+                                ) : rol === 'Monitor' ? (
+                                    <>
+                                        <Button
+                                            onClick={() => navigate('/clases')}
+                                            className="w-full h-16 bg-fitbox-red hover:bg-red-700 text-white font-black text-lg italic uppercase tracking-widest shadow-lg shadow-fitbox-red/20 transition-transform hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl btn-glow"
+                                        >
+                                            <ClipboardList className="w-5 h-5" /> Pasar Lista
+                                        </Button>
+
+                                        <Button
+                                            onClick={() => navigate('/maquinas')}
+                                            className="w-full h-16 bg-neutral-800 backdrop-blur-xl hover:bg-neutral-700 text-white font-black text-lg italic uppercase tracking-widest border border-neutral-700 shadow-lg transition-all hover:border-neutral-600 hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl"
+                                        >
+                                            <AlertTriangle className="w-5 h-5" /> Reportar Avería
                                         </Button>
                                     </>
                                 ) : (

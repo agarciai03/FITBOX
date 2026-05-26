@@ -132,6 +132,13 @@ export const ClasesPage = () => {
             return;
         }
 
+        // Validar que la fecha y hora no estén en el pasado
+        const fechaHoraInicio = new Date(`${nuevaClase.fecha}T${nuevaClase.hora_inicio}`);
+        if (fechaHoraInicio < ahora) {
+            setError("No puedes crear una clase en una fecha u hora que ya ha pasado. Por favor, selecciona una fecha y hora futuras.");
+            return;
+        }
+
         const disciplinaElegida = disciplinas.find(d => d.id_disciplina === nuevaClase.id_disciplina);
 
         if (disciplinaElegida && disciplinaElegida.nombre !== 'Sala de Máquinas') {

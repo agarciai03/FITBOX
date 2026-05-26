@@ -35,9 +35,9 @@ export const Sidebar = () => {
             )}
 
             {/* sidebar responsive */}
-            <aside className={`fixed md:relative z-50 bg-neutral-950 md:bg-neutral-950/40 backdrop-blur-md border-r border-neutral-800/50 min-h-screen p-4 flex flex-col transition-all duration-300 
+            <aside className={`fixed z-50 bg-neutral-950 md:bg-neutral-950/40 backdrop-blur-md border-r border-neutral-800/50 min-h-screen p-4 flex flex-col transition-all duration-300 
                 ${isCollapsed ? 'md:w-20 md:items-center' : 'w-64'} 
-                ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+                ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}> 
 
                 <div className={`flex items-center mb-6 w-full ${isCollapsed ? 'md:justify-center' : 'justify-between'}`}>
                     {!isCollapsed && (
