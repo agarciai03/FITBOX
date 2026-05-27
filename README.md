@@ -1,90 +1,149 @@
-<div align="center">
-  <img src="./src/assets/Fitbox.png" alt="FITBOX Logo" width="220"/>
-  <h1>FITBOX</h1>
-  <p><strong>Plataforma integral de gestión, acceso y control para centros deportivos modernos.</strong></p>
-  
-  ![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-  ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-  ![TailwindCSS](https://img.shields.io/badge/Tailwind_v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-  ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-  ![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)
-</div>
+# 💪 FITBOX — Sistema Integral de Gestión Deportiva
 
----
+![Frontend](https://img.shields.io/badge/Frontend-React-blue?logo=react&logoColor=white) ![Backend](https://img.shields.io/badge/Backend-Supabase-green?logo=supabase&logoColor=white) ![Estilos](https://img.shields.io/badge/Estilos-TailwindCSS-06B6D4?logo=tailwindcss&logoColor=white) ![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)
 
-**Autor:** Alberto García Izquierdo  
-**Tutor:** Francisco José Mera Calderón  
-**Curso:** 2º DAW - IES Albarregas (2025/2026)  
-**Estado del Proyecto:** 🟢 En Desarrollo Activo
+> 🧠 **FITBOX** es una aplicación web final del ciclo Desarrollo de Aplicaciones Web. Permite a cada centro deportivo gestionar su inventario, reservas, caja y los progresos de los socios mediante gamificación.
 
----
+FITBOX combina una arquitectura moderna y modular:
+🔹 **Gestión de usuarios:** login, roles (admin, monitor, socio), suscripción y perfil.
+🔹 **Diseño:** limpio, oscuro, responsive y con componentes reutilizables.
+🔹 **Objetivo:** centralizar la gestión de un gimnasio y fidelizar mediante gamificación.
 
-## 💡 El Problema y Nuestra Solución
+## 🚀 Despliegue
 
-Actualmente, los gimnasios de tamaño pequeño y mediano (como los boxes de Crossfit o centros de artes marciales) se enfrentan a un problema: las soluciones de software del mercado son demasiado caras, complejas o están anticuadas. Muchos siguen recurriendo a hojas de cálculo en Excel, cobros en efectivo descontrolados y tarjetas de acceso físicas que los socios pierden constantemente.
+Accede a la versión en producción: [https://fitbox-gym.vercel.app/](https://fitbox-gym.vercel.app/)
 
-**FITBOX** nace como una solución integral, alojada 100% en la nube (SaaS), que digitaliza y automatiza las tareas diarias del centro deportivo. Su diseño **Mobile-First**, su interfaz en **Modo Oscuro (Dark UI)** y la **Internalización (i18n)** de la página garantizan una experiencia de usuario premium tanto para el dueño del negocio como para el cliente final.
+## 🧱 Estructura del proyecto
 
-## 👥 Perfiles de Usuario 
+    fitbox/
+    │
+    ├── public/               # Recursos estáticos (imágenes, logos…)
+    │
+    ├── docs/                 # Documentación (manual de usuario y manual técnico)
+    │
+    ├── src/
+    │   ├── components/       # Layout, Modal, etc.
+    │   ├── pages/            # Landing, Login, Dashboard, Clases, Pagos, Inventario
+    │   ├── database/         # Cliente Supabase y repositorios
+    │   ├── store/            # Contexto y Estado de Autenticación (Zustand)
+    │   ├── App.tsx           # Enrutamiento principal
+    │   ├── main.tsx          # Entrada React
+    │   └── index.css         # Estilos globales Tailwind
+    │
+    ├── .env                  # Variables locales (NO se sube)
+    ├── package.json
+    ├── tailwind.config.js
+    ├── README.md
+    └── .gitignore
 
-El sistema utiliza un Control de Acceso Basado en Roles para ofrecer una interfaz única a cada usuario:
+## ⚙️ Instalación y ejecución local
 
-1. 👑 **Administrador:** Tiene control absoluto. Gestiona las finanzas, da de alta/baja a usuarios, crea los horarios semanales y visualiza las analíticas de ingresos y aforos.
-2. 🏋️ **Monitor:** Su interfaz está orientada a la operativa diaria. Puede ver las clases que imparte, pasar lista de los asistentes y reportar averías en la maquinaria del centro con un solo clic.
-3. 🏃 **Socio:** Interfaz enfocada al uso móvil. Permite reservar clases en un par de toques, comprobar el estado de sus pagos y generar un **Código QR dinámico** para abrir el torno del gimnasio.
+1️⃣ Clonar el repositorio
 
-## ✨ Módulos y Funcionalidades Principales
+    git clone [https://github.com/](https://github.com/)[TU_USUARIO]/FITBOX.git
+    cd FITBOX
 
-- **Módulo de Acceso:** Sustitución de las tarjetas físicas por un sistema de Código QR único vinculado al perfil del socio, validado en tiempo real.
-- **Módulo de Reservas:** Calendario interactivo con control de aforos. Impide reservar si la clase está llena o si el socio tiene recibos impagados.
-- **Módulo de Mantenimiento:** Sistema ágil de tickets internos. Si una cinta de correr falla, el monitor la marca como "En reparación" y el administrador recibe el aviso.
-- **Módulo Financiero:** Control del estado de las cuotas (Pagado / Pendiente) mediante un sistema visual de semáforos y resumen de ingresos mensuales.
-- **Autenticación Segura:** Sistema de login robusto con encriptación de contraseñas y recuperación de cuentas vía email.
+2️⃣ Instalar dependencias
 
-## ⚙️ Arquitectura Técnica
+    npm install
 
-FITBOX está diseñado como una **Single Page Application** de alto rendimiento:
+3️⃣ Ejecutar el entorno de desarrollo
 
-- **Frontend Reactivo:** Construido con **React 19** y **TypeScript** para garantizar la seguridad de tipado y evitar errores en tiempo de ejecución.
-- **Estilizado Moderno:** Uso de **Tailwind CSS v4** con una arquitectura orientada a utilidades, prescindiendo de archivos CSS tradicionales y garantizando una UI responsiva.
-- **Backend as a Service (BaaS):** Delegación de la base de datos, la autenticación y el almacenamiento en **Supabase** (PostgreSQL).
-- **Seguridad de Datos:** Implementación estricta de **Row Level Security (RLS)** directamente en la base de datos para garantizar que ningún usuario pueda acceder o modificar datos que no le corresponden, incluso si se interceptan las peticiones.
+    npm run dev
 
-## 📁 Estructura del Proyecto
+El proyecto se abrirá en: http://localhost:5173
 
-El proyecto está construido con React, Vite y TypeScript, siguiendo una arquitectura modular orientada a la escalabilidad:
+## 🗄️ Base de datos (Supabase)
 
-```text
-FITBOX/
- ├── docs/
- ├── public/
- ├── src/
- │    ├── assets/
- │    ├── components/
- │    ├    ├── charts
- |    |    ├── common
- |    |    ├── forms
- |    |    ├── ui
- |    |    └── utils
- │    ├── database/
- |    |    ├── repositories
- │    │    └── supabase/
- │    │         └── Client.ts
- |    ├── hooks
- │    ├── interfaces/
- │    ├── layouts/
- │    ├── locales/
- │    ├── pages/
- │    ├── router/
- │    ├── stores/
- |    ├── styles
- |    |      └── index.css
- |    ├── types
- |    ├── utils
- │    ├── App.tsx
- │    └── main.tsx
- ├── .env
- ├── package.json
- ├── tailwind.config.js
- └── vite.config.ts
-```
+Tablas principales de la base de datos relacional:
+
+| Tabla | Descripción y campos principales |
+| :--- | :--- |
+| **usuarios** | Perfil completo del usuario (`email`, `id_rol`, `estado_pago`, `xp`, `nivel`). |
+| **clases** | Cuadrante de horarios (`fecha`, `hora_inicio`, `hora_fin`, `aforo_maximo`, monitor). |
+| **reservas** | Registro de plazas y asistencias (tabla puente con `id_clase`, `id_socio`, `estado`, `asistencia`). |
+| **maquinas** | Inventario técnico y averías (`estado`, `fecha_averia`, `observaciones`, `tutorial_url`). |
+| **pagos** | Historial financiero y suscripciones (`importe`, `concepto`, `estado_pago`, `metodo_pago`). |
+| **rutinas** | Planes de entrenamiento organizados por `id_disciplina`, `dia_semana`, `titulo`, `descripcion`. |
+| **disciplinas** | Catálogo de actividades disponibles en el centro y aforos máximos predeterminados. |
+| **roles** | Definición de los niveles de acceso al aplicativo (Admin, Monitor, Socio). |
+
+Políticas RLS (Row Level Security):
+* **Socios:** Solo pueden leer y modificar sus propios datos personales, ver sus pagos y gestionar sus reservas.
+* **Monitores:** Pueden gestionar la asistencia de las reservas en las clases asignadas y actualizar maquinaria.
+* **Administradores:** Acceso global y total para auditar pagos, gestionar usuarios e inventario.
+
+## 👤 Roles de usuario
+
+| Rol | Permisos |
+| :--- | :--- |
+| **Socio** | Ver dashboard, reservar clases, consultar XP y pagar membresía |
+| **Monitor** | Ver clases asignadas, pasar lista y reportar averías de máquinas |
+| **Admin** | Gestionar pagos, métricas financieras, inventario y alta de empleados |
+
+## 🧠 Tecnologías principales
+
+| Tecnología | Uso |
+| :--- | :--- |
+| ⚛️ React + Vite | Frontend moderno y rápido |
+| 🎨 TailwindCSS | Estilos consistentes, adaptables y modo oscuro |
+| 🧰 Supabase | Backend con PostgreSQL, Auth y Storage |
+| 🧾 Markdown | Documentación del proyecto |
+
+## 💻 Comandos útiles
+
+| Acción | Comando |
+| :--- | :--- |
+| Instalar dependencias | `npm install` |
+| Ejecutar en desarrollo | `npm run dev` |
+| Build de producción | `npm run build` |
+| Previsualizar build | `npm run preview` |
+
+## 🧩 Características implementadas
+
+✅ Vistas: inicio, login, dashboard, clases, pagos, inventario, 404
+✅ Navegación con React Router
+✅ Componentes reutilizables (Navbar, Modal, Route Guards)
+✅ Estilo responsive con modo oscuro
+✅ Supabase con RLS y roles
+✅ Sistema de autenticación y rol de administrador
+✅ Gamificación automática de experiencia y niveles
+
+| Vista | Descripción |
+| :--- | :--- |
+| 🏠 Inicio | Presentación y CTA principal |
+| 🔐 Login / Registro | Acceso y autenticación de usuario |
+| 📊 Dashboard | Seguimiento de membresía y progreso |
+| 💳 Pagos | Pasarela financiera para abonar cuotas |
+| 🏋️ Clases | Motor de reservas y aforos |
+| ⚙️ Administración | Gestión técnica, staff y gráficas anuales |
+
+## 🧑‍🏫 Tutorías
+
+Tutor: Francisco José Mera Calderón
+
+Resumen de las tutorías:
+Se mantuvo una reunión semanal, siguiendo un plan estructurado para el desarrollo del TFG.
+* **Semana 1** — Inicio y planificación: definición de alcance, objetivos y criterios de evaluación.
+* **Semana 2** — Elección de stack y estructura básica del proyecto (React + Vite, Tailwind, Supabase).
+* **Semana 3** — Modelado de datos en Supabase: tablas, roles y políticas RLS.
+* **Semana 4** — Implementación de vistas principales: Landing, Dashboard, Clases.
+* **Semana 5** — Diseño y componentes UI: Navbar, Footer, cards y botones reutilizables; responsive y modo oscuro.
+* **Semana 6** — Autenticación y gestión de sesiones con Supabase Auth.
+* **Semana 7** — Integración de lógica de reservas, gamificación y roles.
+* **Semana 8** — Pruebas, pasarela de pagos, corrección de bugs y ajustes en políticas RLS.
+* **Semana 9** — Documentación final: consolidación del manual técnico y de usuario; preparación para entrega y defensa.
+
+Notas del seguimiento:
+Cada sesión siguió la estructura: resumen de avances, demo funcional, bloqueo/riesgos y tareas para la siguiente semana.
+
+## 👩‍💻 Autoría
+
+Alberto García Izquierdo  
+CFGS en Desarrollo de Aplicaciones Web (DAW)  
+📍 IES Albarregas – Mérida (España)  
+📘 Proyecto TFG: FITBOX – Sistema Integral de Gestión Deportiva (2026)
+
+## 🏷️ Licencia
+
+Distribuido bajo licencia MIT.
