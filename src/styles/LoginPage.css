@@ -1,4 +1,4 @@
-/* === ANIMACIONES PRINCIPALES === */
+/* ANIMACIONES PRINCIPALES */
 
 @keyframes fadeInUp {
   from {
@@ -73,7 +73,7 @@
   }
 }
 
-/* === CLASES DE ANIMACIÓN === */
+/* CLASES DE ANIMACIÓN */
 
 .animate-fade-in-up {
   animation: fadeInUp 0.6s ease-out;
@@ -99,7 +99,7 @@
   animation: pulseGlow 2s ease-in-out infinite;
 }
 
-/* === VARIACIONES CON DELAY === */
+/* VARIACIONES CON DELAY */
 
 .animate-delay-100 {
   animation-delay: 100ms;
@@ -125,7 +125,7 @@
   animation-delay: 600ms;
 }
 
-/* === EFECTOS HOVER === */
+/* EFECTOS HOVER */
 
 .hover-lift {
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -145,7 +145,6 @@
   box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
 }
 
-/* === ANIMACIÓN DE EXPANSIÓN FAQ === */
 
 .faq-expand {
   animation: fadeInUp 0.3s ease-out;
@@ -159,7 +158,7 @@
   transform: rotate(180deg);
 }
 
-/* === ANIMACIÓN DE BOTONES === */
+/* ANIMACIÓN DE BOTONES */
 
 .btn-glow {
   position: relative;
@@ -184,7 +183,6 @@
   height: 300px;
 }
 
-/* === GRADIENTES NEUTRAL === */
 
 .bg-gradient-red-dark {
   background: linear-gradient(135deg, rgba(63, 63, 70, 0.15) 0%, rgba(63, 63, 70, 0.05) 100%);
@@ -205,7 +203,7 @@
   box-shadow: inset 0 0 30px rgba(120, 113, 108, 0.1), 0 0 20px rgba(120, 113, 108, 0.1);
 }
 
-/* === TARJETAS CON ANIMACIÓN === */
+/* TARJETAS CON ANIMACIÓN */
 
 .card-animate {
   animation: fadeInUp 0.5s ease-out;
@@ -226,7 +224,7 @@
   animation: fadeInDown 0.6s ease-out;
 }
 
-/* === EFECTO GLOW DINÁMICO === */
+/* EFECTO GLOW */
 
 .glow-red {
   box-shadow: 0 0 15px rgba(120, 113, 108, 0.1);
@@ -235,4 +233,39 @@
 
 .glow-red:hover {
   box-shadow: 0 0 30px rgba(120, 113, 108, 0.15);
+}
+
+/* ANIMACIÓN FLOAT */
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(45deg);
+  }
+  25% {
+    transform: translateY(-15px) rotate(45deg);
+  }
+  50% {
+    transform: translateY(0px) rotate(45deg);
+  }
+  75% {
+    transform: translateY(-10px) rotate(45deg);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* ANIMACIÓN */
+
+.animate-delay-700 {
+  animation-delay: 700ms;
+}
+
+.animate-delay-800 {
+  animation-delay: 800ms;
+}
+
+.animate-delay-900 {
+  animation-delay: 900ms;
 }

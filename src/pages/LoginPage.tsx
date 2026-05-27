@@ -126,7 +126,13 @@ export const LoginPage = () => {
 
     return (
         <div className="min-h-screen bg-neutral-950 flex flex-col relative overflow-hidden">
-            <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-150 md:w-250 h-125 bg-fitbox-red/20 rounded-full blur-[120px] pointer-events-none animate-in fade-in duration-1000"></div>
+            <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-150 md:w-250 h-125 bg-fitbox-red/35 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
+            <div className="absolute bottom-1/4 right-[-10%] w-120 h-120 bg-red-900/20 rounded-full blur-[100px] pointer-events-none animate-in fade-in duration-1000"></div>
+            <div className="absolute top-1/3 left-[-15%] w-140 h-140 bg-red-800/15 rounded-full blur-[110px] pointer-events-none animate-in fade-in duration-1000 animate-delay-500"></div>
+            <div className="absolute top-1/2 right-1/4 w-100 h-100 bg-red-700/8 rounded-full blur-[90px] pointer-events-none animate-in fade-in duration-1000 animate-delay-700"></div>
+            <div className="absolute top-1/4 left-0 right-0 h-px bg-linear-to-r from-transparent via-fitbox-red/30 to-transparent pointer-events-none"></div>
+            <div className="absolute bottom-1/3 left-0 right-0 h-px bg-linear-to-r from-transparent via-red-900/20 to-transparent pointer-events-none"></div>
+            <div className="absolute top-2/3 left-0 right-0 h-px bg-linear-to-r from-transparent via-fitbox-red/20 to-transparent pointer-events-none"></div>
 
             <main className="relative z-10 grow flex flex-col items-center justify-center px-4 pt-20 pb-32">
                 <div className="text-center space-y-6 max-w-4xl">
@@ -228,12 +234,6 @@ export const LoginPage = () => {
                         <h2 className="text-4xl md:text-5xl font-black text-white text-center uppercase tracking-tight italic animate-fade-in-up flex-1">
                             Historias de <span className="text-fitbox-red">Transformación</span>
                         </h2>
-                        <Button 
-                            onClick={() => setShowCommentForm(!showCommentForm)}
-                            className="bg-fitbox-red hover:bg-red-700 text-white font-bold px-6 py-3 rounded-lg text-sm ml-4"
-                        >
-                            + Agregar Comentario
-                        </Button>
                     </div>
 
                     {showCommentForm && (
