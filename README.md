@@ -12,29 +12,42 @@ FITBOX combina una arquitectura moderna y modular:
 ## 🚀 Despliegue
 
 Accede a la versión en producción: [https://fitbox-gym.vercel.app/](https://fitbox-gym.vercel.app/)
+<img width="1904" height="909" alt="image" src="https://github.com/user-attachments/assets/13343e76-3b31-4926-b030-0afa8e2c4480" />
+
 
 ## 🧱 Estructura del proyecto
 
     fitbox/
-    │
-    ├── public/               # Recursos estáticos (imágenes, logos…)
-    │
-    ├── docs/                 # Documentación (manual de usuario y manual técnico)
-    │
-    ├── src/
-    │   ├── components/       # Layout, Modal, etc.
-    │   ├── pages/            # Landing, Login, Dashboard, Clases, Pagos, Inventario
-    │   ├── database/         # Cliente Supabase y repositorios
-    │   ├── store/            # Contexto y Estado de Autenticación (Zustand)
-    │   ├── App.tsx           # Enrutamiento principal
-    │   ├── main.tsx          # Entrada React
-    │   └── index.css         # Estilos globales Tailwind
-    │
-    ├── .env                  # Variables locales (NO se sube)
-    ├── package.json
-    ├── tailwind.config.js
+    ├── docs/
+    ├── public/
+    └── src/
+        ├── assets/
+        ├── components/
+        ├── database/
+        ├── interfaces/
+        ├── lib/
+        ├── locales/
+        ├── pages/
+        ├── store/
+        ├── styles/
+        ├── utils/
+        ├── App.tsx
+        ├── i18n.ts
+        └── main.tsx
+    ├── .env
+    ├── .gitattributes
+    ├── .gitignore
     ├── README.md
-    └── .gitignore
+    ├── components.json
+    ├── eslint.config.js
+    ├── index.html
+    ├── package-lock.json
+    ├── package.json
+    ├── tsconfig.app.json
+    ├── tsconfig.json
+    ├── tsconfig.node.json
+    ├── vercel.json
+    └── vite.config.ts
 
 ## ⚙️ Instalación y ejecución local
 
@@ -143,7 +156,3 @@ Alberto García Izquierdo
 CFGS en Desarrollo de Aplicaciones Web (DAW)  
 📍 IES Albarregas – Mérida (España)  
 📘 Proyecto TFG: FITBOX – Sistema Integral de Gestión Deportiva (2026)
-
-## 🏷️ Licencia
-
-Distribuido bajo licencia MIT.
