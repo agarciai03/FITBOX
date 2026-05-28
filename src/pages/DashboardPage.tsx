@@ -172,7 +172,7 @@ export const DashboardPage = () => {
     }, []);
 
     return (
-        <div className="relative w-full pb-12">
+        <div className="relative min-h-screen w-full overflow-x-hidden">
             <div className="fixed inset-0 bg-neutral-950 z-[-2]"></div>
             <div className="fixed inset-0 bg-linear-to-br from-neutral-950 via-neutral-900/20 to-neutral-950 z-[-1] pointer-events-none"></div>
             <div className="fixed top-0 left-1/2 -translate-x-1/2 w-150 md:w-250 h-125 bg-neutral-800/10 rounded-full blur-[120px] pointer-events-none z-[-1]"></div>
@@ -191,7 +191,7 @@ export const DashboardPage = () => {
                     </Button>
                 </div>
             ) : (
-                <div className="p-4 md:p-6 lg:p-8 w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-700 relative z-10">
+                <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-700 relative z-10 p-4 md:p-6 lg:p-8">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-neutral-800/50 pb-4 animate-fade-in-down">
                         <div>
                             <h1 className="text-3xl md:text-4xl font-black text-white italic tracking-tighter uppercase">

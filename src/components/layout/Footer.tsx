@@ -1,7 +1,9 @@
 import { MapPin, X } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const Footer = () => {
+    const { t } = useTranslation();
     const [modalOpen, setModalOpen] = useState<'privacidad' | 'terminos' | 'cookies' | null>(null);
 
     const modales = {
@@ -68,20 +70,20 @@ export const Footer = () => {
                         {/* Enlaces Legales */}
                         <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
                             <button onClick={() => setModalOpen('terminos')} className="text-xs font-bold text-gray-500 hover:text-white uppercase tracking-widest transition-colors">
-                                Términos y Condiciones
+                                {t('footer.terminos_condiciones', 'Términos y Condiciones')}
                             </button>
                             <button onClick={() => setModalOpen('privacidad')} className="text-xs font-bold text-gray-500 hover:text-white uppercase tracking-widest transition-colors">
-                                Política de Privacidad
+                                {t('footer.politica_privacidad', 'Política de Privacidad')}
                             </button>
                             <button onClick={() => setModalOpen('cookies')} className="text-xs font-bold text-gray-500 hover:text-white uppercase tracking-widest transition-colors">
-                                Política de Cookies
+                                {t('footer.politica_cookies', 'Política de Cookies')}
                             </button>
                         </div>
 
                         {/* Copyright */}
                         <div className="text-right">
                             <p suppressHydrationWarning className="text-xs font-bold text-neutral-600 uppercase tracking-widest">
-                                © {new Date().getFullYear()} FITBOX. Todos los derechos reservados.
+                                © {new Date().getFullYear()} FITBOX. {t('footer.derechos_reservados', 'Todos los derechos reservados')}.
                             </p>
                         </div>
                     </div>

@@ -69,7 +69,7 @@ export const Header = () => {
                         onKeyDown={(e) => { if (e.key === 'Enter') irAlInicio(); }}
                         tabIndex={0}
                         role="button"
-                        aria-label="Ir al inicio"
+                        aria-label={t('dashboard.bienvenido', 'Bienvenido')}
                     >
                         <img src="/favicon.png" alt="Logo FITBOX" className="h-12 w-auto object-contain hidden sm:block" />
                         <span>FIT<span className="text-fitbox-red">BOX</span></span>
@@ -81,6 +81,7 @@ export const Header = () => {
                         <div className="flex items-center gap-2 border-r border-neutral-700 pr-4 sm:pr-6">
                             <button
                                 onClick={toggleIdioma}
+                                title={t('header.cambiar_idioma', 'Cambiar Idioma')}
                                 className="flex items-center gap-1 p-2 text-gray-400 hover:text-fitbox-red hover:bg-neutral-800/50 rounded-full transition-all font-bold text-xs"
                             >
                                 <Globe className="size-5" />

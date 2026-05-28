@@ -256,6 +256,12 @@ export const RegisterPage = ({ onClose, onShowLogin }: { onClose?: () => void; o
                                             validate: (value) => {
                                                 if (!value) return "La fecha es obligatoria";
                                                 
+                                                // Validar que el año tenga exactamente 4 dígitos
+                                                const yearMatch = value.match(/^(\d{4})-/);
+                                                if (!yearMatch || yearMatch[1].length !== 4) {
+                                                    return "El año debe tener exactamente 4 dígitos";
+                                                }
+                                                
                                                 const hoy = new Date();
                                                 const fechaNac = new Date(value);
                                                 

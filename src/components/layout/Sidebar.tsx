@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Home, Users, Calendar, Dumbbell, ClipboardList, Wrench, CreditCard, Activity, ChevronLeft, ChevronRight, X, BarChart3, AlertTriangle } from 'lucide-react';
 
 export const Sidebar = () => {
+    const { t } = useTranslation();
     const profile = useAuthStore((state) => state.profile);
     const isMobileMenuOpen = useAuthStore((state) => state.isMobileMenuOpen);
     const closeMobileMenu = useAuthStore((state) => state.closeMobileMenu);
@@ -42,7 +44,7 @@ export const Sidebar = () => {
                 <div className={`flex items-center mb-6 w-full ${isCollapsed ? 'md:justify-center' : 'justify-between'}`}>
                     {!isCollapsed && (
                         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider truncate">
-                            Menú - {rol}
+                            {t('menu.inicio', 'Menú')} - {rol}
                         </p>
                     )}
 
@@ -69,7 +71,7 @@ export const Sidebar = () => {
                 <nav className="flex flex-col gap-2 w-full overflow-y-auto pb-20 scrollbar-hide">
                     {/* Botón de Inicio (Visible para todos) */}
                     <button
-                        title="Inicio"
+                        title={t('menu.inicio', 'Inicio')}
                         onClick={() => handleNavigation('/dashboard')}
                         className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/dashboard'
                             ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -77,14 +79,14 @@ export const Sidebar = () => {
                             } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                     >
                         <Home className="w-5 h-5 shrink-0" />
-                        <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Inicio</span>
+                        <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.inicio', 'Inicio')}</span>
                     </button>
 
                     {/* ESTADÍSTICAS Y CAJA: SOLO ADMIN Y MONITORES */}
                     {(rol === 'Administrador' || rol === 'Monitor') && (
                         <>
                             <button
-                                title="Estadísticas"
+                                title={t('menu.estadisticas', 'Estadísticas')}
                                 onClick={() => handleNavigation('/estadisticas')}
                                 className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/estadisticas'
                                     ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -92,11 +94,11 @@ export const Sidebar = () => {
                                     } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                             >
                                 <BarChart3 className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Estadísticas</span>
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.estadisticas', 'Estadísticas')}</span>
                             </button>
 
                             <button
-                                title="Control de Caja"
+                                title={t('menu.cajon_pagos', 'Cajón de Pagos')}
                                 onClick={() => handleNavigation('/gestion-pagos')}
                                 className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/gestion-pagos'
                                     ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -104,12 +106,12 @@ export const Sidebar = () => {
                                     } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                             >
                                 <CreditCard className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Control de Caja</span>
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.cajon_pagos', 'Cajón de Pagos')}</span>
                             </button>
                             
                             {/* Boton de morosos */}
                             <button
-                                title="Control Morosos"
+                                title={t('menu.morosos', 'Morosos')}
                                 onClick={() => handleNavigation('/morosos')}
                                 className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/morosos'
                                     ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -117,7 +119,7 @@ export const Sidebar = () => {
                                     } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                             >
                                 <AlertTriangle className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Control Morosos</span>
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.morosos', 'Morosos')}</span>
                             </button>
                         </>
                     )}
@@ -125,7 +127,7 @@ export const Sidebar = () => {
                     {rol === 'Administrador' && (
                         <>
                             <button
-                                title="Gestión de Usuarios"
+                                title={t('menu.gestion_usuarios', 'Gestión de Usuarios')}
                                 onClick={() => handleNavigation('/socios')}
                                 className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/socios'
                                     ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -133,11 +135,11 @@ export const Sidebar = () => {
                                     } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                             >
                                 <Users className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Gestión de Usuarios</span>
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.gestion_usuarios', 'Gestión de Usuarios')}</span>
                             </button>
 
                             <button
-                                title="Gestión de Horarios"
+                                title={t('menu.gestion_horarios', 'Gestión de Horarios')}
                                 onClick={() => handleNavigation('/clases')}
                                 className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/clases'
                                     ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -145,10 +147,11 @@ export const Sidebar = () => {
                                     } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                             >
                                 <Calendar className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Gestión de Horarios</span>
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.gestion_horarios', 'Gestión de Horarios')}</span>
                             </button>
+                            
                             <button
-                                title="Planes de Entrenamiento"
+                                title={t('menu.rutinas', 'Rutinas')}
                                 onClick={() => handleNavigation('/rutinas')}
                                 className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/rutinas'
                                     ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -156,10 +159,11 @@ export const Sidebar = () => {
                                     } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                             >
                                 <Activity className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Planes de Entrenamiento</span>
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.rutinas', 'Rutinas')}</span>
                             </button>
+                            
                             <button
-                                title="Inventario"
+                                title={t('menu.inventario', 'Inventario')}
                                 onClick={() => handleNavigation('/maquinas')}
                                 className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/maquinas'
                                     ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -167,7 +171,7 @@ export const Sidebar = () => {
                                     } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                             >
                                 <Dumbbell className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Inventario</span>
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.inventario', 'Inventario')}</span>
                             </button>
                         </>
                     )}
@@ -175,7 +179,7 @@ export const Sidebar = () => {
                     {rol === 'Monitor' && (
                         <>
                             <button
-                                title="Horarios y Clases"
+                                title={t('menu.gestion_horarios', 'Gestión de Horarios')}
                                 onClick={() => handleNavigation('/clases')}
                                 className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/clases'
                                     ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -183,10 +187,11 @@ export const Sidebar = () => {
                                     } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                             >
                                 <Calendar className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Horarios y Clases</span>
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.gestion_horarios', 'Gestión de Horarios')}</span>
                             </button>
+
                             <button
-                                title="Mis Clases (Pasar Lista)"
+                                title={t('menu.mis_clases', 'Mis Clases')}
                                 onClick={() => handleNavigation('/mis-clases')}
                                 className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/mis-clases'
                                     ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -194,10 +199,11 @@ export const Sidebar = () => {
                                     } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                             >
                                 <ClipboardList className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Mis Clases (Pasar Lista)</span>
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.mis_clases', 'Mis Clases')}</span>
                             </button>
+
                             <button
-                                title="Planes de Entrenamiento"
+                                title={t('menu.rutinas', 'Rutinas')}
                                 onClick={() => handleNavigation('/rutinas')}
                                 className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/rutinas'
                                     ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -205,10 +211,11 @@ export const Sidebar = () => {
                                     } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                             >
                                 <Activity className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Planes de Entrenamiento</span>
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.rutinas', 'Rutinas')}</span>
                             </button>
+
                             <button
-                                title="Reportar Avería"
+                                title={t('menu.inventario', 'Inventario')}
                                 onClick={() => handleNavigation('/maquinas')}
                                 className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/maquinas'
                                     ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -216,7 +223,7 @@ export const Sidebar = () => {
                                     } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                             >
                                 <Wrench className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Reportar Avería</span>
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.inventario', 'Inventario')}</span>
                             </button>
                         </>
                     )}
@@ -228,7 +235,7 @@ export const Sidebar = () => {
                             {haPagado && (
                                 <>
                                     <button
-                                        title="Horarios y Reservas"
+                                        title={t('menu.clases', 'Clases')}
                                         onClick={() => handleNavigation('/clases')}
                                         className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/clases'
                                             ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -236,10 +243,11 @@ export const Sidebar = () => {
                                             } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                                     >
                                         <Calendar className="w-5 h-5 shrink-0" />
-                                        <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Horarios y Reservas</span>
+                                        <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.clases', 'Clases')}</span>
                                     </button>
+
                                     <button
-                                        title="Planes de Entrenamiento"
+                                        title={t('menu.rutinas', 'Rutinas')}
                                         onClick={() => handleNavigation('/rutinas')}
                                         className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/rutinas'
                                             ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -247,12 +255,12 @@ export const Sidebar = () => {
                                             } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                                     >
                                         <Activity className="w-5 h-5 shrink-0" />
-                                        <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Planes de Entrenamiento</span>
+                                        <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.rutinas', 'Rutinas')}</span>
                                     </button>
-                                    
+
                                     {/* Máquinas para socios */}
                                     <button
-                                        title="Equipamiento"
+                                        title={t('menu.inventario', 'Inventario')}
                                         onClick={() => handleNavigation('/maquinas')}
                                         className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/maquinas'
                                             ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -260,14 +268,14 @@ export const Sidebar = () => {
                                             } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                                     >
                                         <Dumbbell className="w-5 h-5 shrink-0" />
-                                        <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Equipamiento</span>
+                                        <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.inventario', 'Inventario')}</span>
                                     </button>
                                 </>
                             )}
 
                             {/* El botón de pagos se muestra siempre */}
                             <button
-                                title="Mis Pagos"
+                                title={t('menu.mis_pagos', 'Mis Pagos')}
                                 onClick={() => handleNavigation('/pagos')}
                                 className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/pagos'
                                     ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -275,7 +283,7 @@ export const Sidebar = () => {
                                     } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                             >
                                 <CreditCard className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>Mis Pagos</span>
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.mis_pagos', 'Mis Pagos')}</span>
                             </button>
                         </>
                     )}
