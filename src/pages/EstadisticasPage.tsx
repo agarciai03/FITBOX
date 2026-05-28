@@ -95,7 +95,7 @@ export const EstadisticasPage = () => {
                     dataDisc.sort((a, b) => b.value - a.value);
                 }
 
-                // FIX: Actualizamos los 4 estados en una sola transacción
+                // Actualizamos el estado con los datos obtenidos
                 setState({
                     datosIngresos: ingresos,
                     datosReservas: reservas,
@@ -112,6 +112,7 @@ export const EstadisticasPage = () => {
         cargarEstadisticas();
     }, [isStaff]);
 
+    // Si el usuario no es staff, mostramos un mensaje de acceso denegado
     if (!isStaff) {
         return (
             <div className="p-8 text-center flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in">

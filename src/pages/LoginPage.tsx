@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../database/supabase/Client';
 import { useAuthStore } from '../store/authStore';
-
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '@/components/ui/Button';

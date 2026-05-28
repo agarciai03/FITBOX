@@ -1,4 +1,3 @@
-// src/pages/MaquinasPage.tsx
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { MachineRepository, type EstadoMaquina, type Maquina } from '../database/repositories/MachineRepository';

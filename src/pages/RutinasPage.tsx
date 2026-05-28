@@ -110,7 +110,7 @@ export const RutinasPage = () => {
         }
     };
 
-    // --- NUEVA LÓGICA DE DÍAS PERMITIDOS ---
+    // Días permitidos para la creación de rutinas según la disciplina seleccionada
     const isSalaMaquinas = disciplinas.find(d => d.id_disciplina === disciplinaSeleccionada)?.nombre === 'Sala de Máquinas';
     const diasPermitidos = isSalaMaquinas
         ? Object.keys(ORDEN_DIAS) // Lunes a Domingo

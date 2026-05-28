@@ -8,7 +8,7 @@ import { Users, Shield, UserCheck, AlertTriangle, UserPlus, CheckCircle, Trash2,
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { supabase } from '../database/supabase/Client';
 import { REGEX, isValidDNI, calcularLetraDNI } from '../utils/regex';
-// --- AÑADIDO: Importamos tu AuthRepository (Cliente en la sombra) ---
+// authrepository para registro de staff con auth incluida
 import { AuthRepository } from '../database/repositories/AuthRepository';
 
 export const SociosPage = () => {
@@ -75,7 +75,7 @@ export const SociosPage = () => {
         }
     }, [isAdmin, cargarUsuarios, cargarDisciplinas]);
 
-    // --- FUNCIÓN: SUBIR FOTO DEL MONITOR ---
+    // subir avatar a supabase y obtener URL pública
     const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         try {
             const file = event.target.files?.[0];
@@ -101,7 +101,7 @@ export const SociosPage = () => {
         }
     };
 
-    // Función: Añadir Staff (REGISTRO COMPLETO CON AUTH)
+    // añadir nuevo staff (con registro en auth y creación de ficha en usuarios)
     const handleContratarStaff = async () => {
         setError(null);
         setSuccessMessage(null);
@@ -109,7 +109,7 @@ export const SociosPage = () => {
         const telefonoLimpio = nuevoStaff.telefono.trim();
         const dniLimpio = nuevoStaff.dni.trim().toUpperCase();
 
-        // 1. Comprobamos campos obligatorios (incluido confirmPassword)
+        // Comprobamos campos obligatorios 
         if (!nuevoStaff.nombre || !nuevoStaff.apellidos || !nuevoStaff.dni || !nuevoStaff.email || !nuevoStaff.password || !nuevoStaff.confirmPassword || !nuevoStaff.id_disciplina) {
             setError("Por favor, rellena los campos obligatorios marcados con (*). Recuerda asignar una disciplina.");
             return;
@@ -121,7 +121,7 @@ export const SociosPage = () => {
             return;
         }
 
-        // 2. Validaciones REGEX
+        // Validaciones REGEX
         if (!REGEX.TEXTO_PURO.test(nuevoStaff.nombre.trim()) || !REGEX.TEXTO_PURO.test(nuevoStaff.apellidos.trim())) {
             setError("El nombre y los apellidos solo pueden contener letras y espacios (mínimo 2 caracteres).");
             return;
