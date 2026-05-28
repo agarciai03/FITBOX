@@ -40,7 +40,7 @@ Accede a la versión en producción: [https://fitbox-gym.vercel.app/](https://fi
 
 1️⃣ Clonar el repositorio
 
-    git clone [https://github.com/](https://github.com/)[TU_USUARIO]/FITBOX.git
+    git clone https://github.com/agarciai03/FITBOX.git
     cd FITBOX
 
 2️⃣ Instalar dependencias
