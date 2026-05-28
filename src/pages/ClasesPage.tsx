@@ -292,7 +292,7 @@ export const ClasesPage = () => {
                                     <th className="px-6 py-4">{t('horario')}</th>
                                     <th className="px-6 py-4">{t('disciplina')}</th>
                                     <th className="px-6 py-4 text-center">{t('equipamiento')}</th>
-                                    <th className="px-6 py-4 text-center">{t('aforo_plazas')}</th>
+                                    <th className="px-6 py-4 text-center">{t('aforo')}</th>
                                     <th className="px-6 py-4 text-right">{t('accion')}</th>
                                 </tr>
                             </thead>
