@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
 import { ClassRepository, type Clase, type Disciplina } from '../database/repositories/ClassRepository';
 import { MachineRepository, type Maquina } from '../database/repositories/MachineRepository';
@@ -13,6 +14,7 @@ interface MonitorBasico {
 }
 
 export const ClasesPage = () => {
+    const { t } = useTranslation();
     const profile = useAuthStore((state) => state.profile);
     const rol = profile?.roles?.nombre_rol || 'Socio';
 
@@ -79,11 +81,11 @@ export const ClasesPage = () => {
 
         } catch (errorCatch) {
             console.error("Fallo al cargar datos:", errorCatch);
-            setError('Error de conexión. No se han podido cargar las clases.');
+            setError(t('mensajes.error_conexion_clases'));
         } finally {
             setIsLoading(false);
         }
-    }, [isSocio, profile?.id_usuario, clases.length]);
+    }, [isSocio, profile?.id_usuario, clases.length, t]);
 
     useEffect(() => {
         cargarDatos();
@@ -128,14 +130,14 @@ export const ClasesPage = () => {
 
     const handleCrearClase = async () => {
         if (!nuevaClase.id_disciplina || !nuevaClase.fecha || !nuevaClase.hora_inicio || !nuevaClase.hora_fin) {
-            setError("Por favor, rellena todos los campos obligatorios.");
+            setError(t('validaciones.campos_obligatorios'));
             return;
         }
 
         // Validar que la fecha y hora no estén en el pasado
         const fechaHoraInicio = new Date(`${nuevaClase.fecha}T${nuevaClase.hora_inicio}`);
         if (fechaHoraInicio < ahora) {
-            setError("No puedes crear una clase en una fecha u hora que ya ha pasado. Por favor, selecciona una fecha y hora futuras.");
+            setError(t('validaciones.fecha_pasada'));
             return;
         }
 
@@ -145,7 +147,7 @@ export const ClasesPage = () => {
             const fechaSeleccionada = new Date(nuevaClase.fecha);
             const diaSemana = fechaSeleccionada.getDay();
             if (diaSemana === 0 || diaSemana === 6) {
-                setError(`La disciplina "${disciplinaElegida.nombre}" solo puede programarse de Lunes a Viernes.`);
+                setError(t('validaciones.solo_lunes_viernes', { disciplina: disciplinaElegida.nombre }));
                 return;
             }
         }
@@ -175,19 +177,19 @@ export const ClasesPage = () => {
         } catch (errorCatch) {
             console.error("Error al crear:", errorCatch);
             if (errorCatch instanceof Error) setError(errorCatch.message);
-            else setError('Error desconocido al crear la clase.');
+            else setError(t('mensajes.error_desconocido_crear'));
         }
     };
 
     const handleBorrarClase = async (id_clase: string) => {
-        if (!window.confirm("¿Seguro que quieres borrar esta clase?")) return;
+        if (!window.confirm(t('mensajes.confirmar_borrar_clase'))) return;
         try {
             await ClassRepository.deleteClase(id_clase);
             cargarDatos();
         } catch (errorCatch) {
             console.error("Error al borrar:", errorCatch);
             if (errorCatch instanceof Error) setError(errorCatch.message);
-            else setError("No se ha podido eliminar la clase.");
+            else setError(t('mensajes.error_borrar_clase'));
         }
     };
 
@@ -198,26 +200,26 @@ export const ClasesPage = () => {
 
         try {
             await ClassRepository.reservarClase(id_clase, profile.id_usuario);
-            setSuccessMessage("¡Plaza reservada con éxito!");
+            setSuccessMessage(t('mensajes.reserva_exito'));
             cargarDatos();
         } catch (errorCatch) {
             console.error("Error reserva:", errorCatch);
             if (errorCatch instanceof Error) setError(errorCatch.message);
-            else setError("Error al intentar reservar.");
+            else setError(t('mensajes.error_reservar'));
         }
     };
 
     const handleCancelarReserva = async (id_reserva: string) => {
-        if (!window.confirm("¿Seguro que quieres anular tu asistencia a esta clase?")) return;
+        if (!window.confirm(t('mensajes.confirmar_cancelar_reserva'))) return;
         setError(null);
         setSuccessMessage(null);
         try {
             await ClassRepository.cancelarReserva(id_reserva);
-            setSuccessMessage("Reserva cancelada correctamente.");
+            setSuccessMessage(t('mensajes.cancelar_reserva_exito'));
             cargarDatos();
         } catch (errorCatch) {
             console.error("Error al cancelar:", errorCatch);
-            setError("No se ha podido cancelar la reserva.");
+            setError(t('mensajes.error_cancelar_reserva'));
         }
     };
 
@@ -227,9 +229,9 @@ export const ClasesPage = () => {
                 <div>
                     <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
                         <Calendar className="size-8 text-fitbox-red" />
-                        HORARIOS Y <span className="text-fitbox-red">RESERVAS</span>
+                        {t('clases.horarios_y')}<span className="text-fitbox-red">{t('clases.reservas_highlight')}</span>
                     </h1>
-                    <p className="text-fitbox-text-muted mt-1">Gestiona tus entrenamientos y consulta plazas libres.</p>
+                    <p className="text-fitbox-text-muted mt-1">{t('clases.subtitulo_horarios')}</p>
                 </div>
             </div>
 
@@ -259,7 +261,7 @@ export const ClasesPage = () => {
                             className="bg-white text-black hover:bg-fitbox-red hover:text-white font-black transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] border border-white/20 px-6 py-5 rounded-xl flex items-center gap-2 uppercase italic tracking-tighter"
                         >
                             <Plus className="size-5 stroke-[3px]" />
-                            Programar Sesión
+                            {t('clases.programar_sesion')}
                         </Button>
                     </div>
                 )}
@@ -269,15 +271,15 @@ export const ClasesPage = () => {
                         <div className="size-20 bg-neutral-900 rounded-full flex items-center justify-center mb-6 border border-neutral-800">
                             <CalendarX2 className="size-10 text-gray-500" />
                         </div>
-                        <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">No hay <span className="text-fitbox-red">clases programadas</span></h2>
+                        <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">{t('clases.no_hay')}<span className="text-fitbox-red">{t('clases.clases_programadas_highlight')}</span></h2>
                         <p className="text-gray-400 max-w-md mb-8">
                             {canManage
-                                ? "Actualmente el calendario está vacío. Como parte del equipo, puedes crear la primera sesión ahora mismo."
-                                : "El gimnasio no tiene ninguna sesión programada en este momento. Vuelve a consultar más tarde."}
+                                ? t('clases.calendario_vacio_staff')
+                                : t('clases.calendario_vacio_socio')}
                         </p>
                         {canManage && (
                             <Button onClick={() => setIsCreando(true)} className="bg-fitbox-red hover:bg-red-700 shadow-lg shadow-fitbox-red/20 font-bold px-8">
-                                CREAR CLASE
+                                {t('clases.crear_clase')}
                             </Button>
                         )}
                     </div>
@@ -286,17 +288,17 @@ export const ClasesPage = () => {
                         <table className="w-full text-left text-sm">
                             <thead className="bg-neutral-800/50 text-fitbox-text-muted uppercase text-[10px] tracking-widest font-bold">
                                 <tr>
-                                    <th className="px-6 py-4">Día / Fecha</th>
-                                    <th className="px-6 py-4">Horario</th>
-                                    <th className="px-6 py-4">Disciplina</th>
-                                    <th className="px-6 py-4 text-center">Equipamiento</th>
-                                    <th className="px-6 py-4 text-center">Aforo / Plazas</th>
-                                    <th className="px-6 py-4 text-right">Acción</th>
+                                    <th className="px-6 py-4">{t('dia_fecha')}</th>
+                                    <th className="px-6 py-4">{t('horario')}</th>
+                                    <th className="px-6 py-4">{t('disciplina')}</th>
+                                    <th className="px-6 py-4 text-center">{t('equipamiento')}</th>
+                                    <th className="px-6 py-4 text-center">{t('aforo_plazas')}</th>
+                                    <th className="px-6 py-4 text-right">{t('accion')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-800">
                                 {isLoading ? (
-                                    <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500">Actualizando calendario…</td></tr>
+                                    <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500">{t('clases.actualizando_calendario')}</td></tr>
                                 ) : (
                                     clases.map((clase) => {
                                         const reservasActivas = clase.reservas?.filter(r => r.estado === 'activa') || [];
@@ -339,14 +341,14 @@ export const ClasesPage = () => {
                                                         })}
                                                     >
                                                         <Dumbbell className="size-3.5 mr-1" />
-                                                        Ver Material
+                                                        {t('clases.ver_material')}
                                                     </Button>
                                                 </td>
 
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col gap-1 items-center">
                                                         <span className={`text-[11px] font-bold ${estaFinalizada ? 'text-gray-500' : estaLlena ? 'text-red-500' : 'text-gray-400'}`}>
-                                                            {estaFinalizada ? 'CLASE FINALIZADA' : `${ocupadas} / ${total} ${estaLlena ? '(LLENO)' : 'Plazas'}`}
+                                                            {estaFinalizada ? t('clases.clase_finalizada') : `${ocupadas} / ${total} ${estaLlena ? t('clases.lleno') : t('clases.plazas_texto')}`}
                                                         </span>
                                                         <div className={`w-24 h-1.5 rounded-full overflow-hidden border ${estaFinalizada ? 'bg-neutral-900 border-neutral-800' : 'bg-neutral-800 border-neutral-700'}`}>
                                                             <div
@@ -364,7 +366,7 @@ export const ClasesPage = () => {
                                                                 </span>
                                                             ))
                                                         ) : (
-                                                            <span className="text-[10px] text-gray-500 italic">Sin asistentes</span>
+                                                            <span className="text-[10px] text-gray-500 italic">{t('clases.sin_asistentes')}</span>
                                                         )}
                                                     </div>
                                                 </td>
@@ -377,18 +379,18 @@ export const ClasesPage = () => {
 
                                                     {estaFinalizada ? (
                                                         <span className="text-gray-500 font-bold text-[10px] px-3 py-1.5 border border-gray-700 rounded-md bg-gray-900/50 uppercase tracking-widest inline-block">
-                                                            Completada
+                                                            {t('clases.completada')}
                                                         </span>
                                                     ) : isSocio && (
                                                         miReserva ? (
                                                             <div className="flex items-center justify-end gap-3">
                                                                 <span className="text-green-500 font-bold text-xs flex items-center gap-1">
-                                                                    <CheckCircle className="size-4" /> APUNTADO
+                                                                    <CheckCircle className="size-4" /> {t('clases.apuntado')}
                                                                 </span>
                                                                 <button
                                                                     onClick={() => handleCancelarReserva(miReserva.id)}
                                                                     className="text-red-500 hover:text-white hover:bg-red-500 p-1.5 rounded-md transition-colors"
-                                                                    title="Cancelar Reserva"
+                                                                    title={t('clases.cancelar_reserva')}
                                                                 >
                                                                     <X className="size-4" />
                                                                 </button>
@@ -400,7 +402,7 @@ export const ClasesPage = () => {
                                                                 className={`text-[11px] font-black uppercase tracking-tighter ${estaLlena ? 'bg-neutral-800 text-gray-600' : 'bg-fitbox-red hover:bg-red-700'}`}
                                                                 onClick={() => handleReservar(clase.id_clase)}
                                                             >
-                                                                {estaLlena ? 'Sin hueco' : 'Reservar'}
+                                                                {estaLlena ? t('clases.sin_hueco') : t('reservar')}
                                                             </Button>
                                                         )
                                                     )}
@@ -422,9 +424,9 @@ export const ClasesPage = () => {
                         <div className="flex justify-between items-start border-b border-neutral-800 pb-4">
                             <div>
                                 <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic">
-                                    INVENTARIO <span className="text-fitbox-red">{modalMaterial.nombre_disciplina}</span>
+                                    {t('maquinas.inventario')} <span className="text-fitbox-red">{modalMaterial.nombre_disciplina}</span>
                                 </h3>
-                                <p className="text-gray-400 mt-1 text-sm font-medium">Estado del equipamiento en tiempo real.</p>
+                                <p className="text-gray-400 mt-1 text-sm font-medium">{t('maquinas.estado_equipamiento')}</p>
                             </div>
                             <button onClick={() => setModalMaterial({ isOpen: false, id_disciplina: '', nombre_disciplina: '' })} className="text-gray-500 hover:text-white transition-colors">
                                 <X className="size-6" />
@@ -439,7 +441,7 @@ export const ClasesPage = () => {
                                     return (
                                         <div className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-6 text-center">
                                             <Dumbbell className="size-10 text-neutral-700 mx-auto mb-3" />
-                                            <p className="text-sm text-gray-400 italic">No hay equipamiento técnico asignado a esta disciplina. ¡Todo es peso libre o cardio!</p>
+                                            <p className="text-sm text-gray-400 italic">{t('maquinas.no_equipamiento')}</p>
                                         </div>
                                     );
                                 }
@@ -454,9 +456,9 @@ export const ClasesPage = () => {
                                             <div className="flex justify-between items-center">
                                                 <span className={`font-bold text-sm ${esDefectuoso ? 'text-red-400 line-through opacity-70' : 'text-white'}`}>{m.nombre}</span>
 
-                                                {esCorrecto && <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-green-500/20"><CheckCircle className="size-3" /> Operativa</span>}
-                                                {esDefectuoso && <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-red-500/20"><AlertTriangle className="size-3" /> Averiada</span>}
-                                                {esObs && <span className="text-[10px] bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-yellow-500/20"><Info className="size-3" /> En revisión</span>}
+                                                {esCorrecto && <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-green-500/20"><CheckCircle className="size-3" /> {t('maquinas.operativa')}</span>}
+                                                {esDefectuoso && <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-red-500/20"><AlertTriangle className="size-3" /> {t('maquinas.averiada')}</span>}
+                                                {esObs && <span className="text-[10px] bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded-full font-black uppercase tracking-wider flex items-center gap-1.5 border border-yellow-500/20"><Info className="size-3" /> {t('maquinas.en_revision')}</span>}
                                             </div>
                                             {!esCorrecto && m.observaciones && (
                                                 <div className="mt-2 pt-2 border-t border-black/20">
@@ -475,38 +477,38 @@ export const ClasesPage = () => {
             {isCreando && canManage && (
                 <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                     <div className="bg-fitbox-card border border-neutral-800 p-8 rounded-2xl w-full max-w-md space-y-6 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-                        <h3 className="text-2xl font-black text-white uppercase italic">Nueva Sesión</h3>
+                        <h3 className="text-2xl font-black text-white uppercase italic">{t('clases.nueva_sesion')}</h3>
                         <div className="space-y-4">
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Disciplina</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('clases.disciplina')}</label>
                                 <select
                                     className={`w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none transition-all ${isMonitor ? 'opacity-60 cursor-not-allowed' : 'focus:border-fitbox-red'}`}
                                     value={nuevaClase.id_disciplina}
                                     onChange={(e) => setNuevaClase(prev => ({ ...prev, id_disciplina: e.target.value }))}
                                     disabled={isMonitor}
                                 >
-                                    <option value="">Selecciona…</option>
-                                    {disciplinas.map(d => <option key={d.id_disciplina} value={d.id_disciplina}>{d.nombre} (Aforo: {d.aforo_maximo || 20})</option>)}
+                                    <option value="">{t('clases.selecciona')}</option>
+                                    {disciplinas.map(d => <option key={d.id_disciplina} value={d.id_disciplina}>{d.nombre} {t('clases.aforo_modal', { aforo: d.aforo_maximo || 20 })}</option>)}
                                 </select>
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monitor Asignado</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('clases.monitor_asignado')}</label>
                                 <select
                                     className={`w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none transition-all ${isMonitor ? 'opacity-60 cursor-not-allowed' : 'focus:border-fitbox-red'}`}
                                     value={nuevaClase.id_monitor}
                                     onChange={(e) => setNuevaClase(prev => ({ ...prev, id_monitor: e.target.value }))}
                                     disabled={isMonitor}
                                 >
-                                    <option value="">Sin Monitor</option>
+                                    <option value="">{t('clases.sin_monitor')}</option>
                                     {monitores.map(m => <option key={m.id_usuario} value={m.id_usuario}>{m.nombre} {m.apellidos}</option>)}
                                 </select>
                             </div>
 
                             <div className="grid grid-cols-1 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fecha</label>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('clases.fecha')}</label>
                                     <input
                                         type="date"
                                         className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red transition-all"
@@ -514,24 +516,24 @@ export const ClasesPage = () => {
                                         onChange={(e) => setNuevaClase(prev => ({ ...prev, fecha: e.target.value }))}
                                     />
                                     {nuevaClase.id_disciplina && disciplinas.find(d => d.id_disciplina === nuevaClase.id_disciplina)?.nombre !== 'Sala de Máquinas' && (
-                                        <p className="text-[10px] text-fitbox-red italic mt-1 font-bold">Solo de Lunes a Viernes</p>
+                                        <p className="text-[10px] text-fitbox-red italic mt-1 font-bold">{t('clases.solo_lunes_viernes_req')}</p>
                                     )}
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Inicio</label>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('clases.inicio')}</label>
                                     <input type="time" className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none" onChange={(e) => setNuevaClase(prev => ({ ...prev, hora_inicio: e.target.value }))} />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fin</label>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('clases.fin')}</label>
                                     <input type="time" className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none" onChange={(e) => setNuevaClase(prev => ({ ...prev, hora_fin: e.target.value }))} />
                                 </div>
                             </div>
                         </div>
                         <div className="flex gap-4 pt-4">
-                            <Button variant="ghost" className="flex-1" onClick={() => setIsCreando(false)}>Cerrar</Button>
-                            <Button className="flex-1 bg-fitbox-red" onClick={handleCrearClase}>Guardar</Button>
+                            <Button variant="ghost" className="flex-1" onClick={() => setIsCreando(false)}>{t('clases.cerrar')}</Button>
+                            <Button className="flex-1 bg-fitbox-red" onClick={handleCrearClase}>{t('socios.guardar')}</Button>
                         </div>
                     </div>
                 </div>

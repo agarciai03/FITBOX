@@ -11,7 +11,7 @@
         "rutinas": "Rutinas",
         "morosos": "Morosos",
         "mis_clases": "Mis Clases",
-        "cajon_pagos": "Cajón de Pagos"
+        "control_pagos": "Control de Pagos"
     },
     "header": {
         "cambiar_idioma": "Cambiar Idioma",
@@ -53,7 +53,14 @@
         "plazas": "Plazas",
         "acceso_restringido": "ACCESO RESTRINGIDO",
         "suscripcion_inactiva": "Tu suscripción se encuentra inactiva o pendiente de renovación. Por favor, regulariza tu situación en la pasarela de pagos para volver a disfrutar del club.",
-        "abonar_cuota": "Abonar Cuota Ahora"
+        "abonar_cuota": "Abonar Cuota Ahora",
+        "panel_prefix": "Panel de ",
+        "control": "Control",
+        "atleta": "Atleta",
+        "manana": "Mañana",
+        "clase_general": "Clase General",
+        "sin_asignar": "Sin asignar",
+        "por": "Por "
     },
     "registro": {
         "titulo": "Formulario de Inscripción",
@@ -151,35 +158,6 @@
         "cancelar": "Cancelar",
         "total_socios": "Total de Socios"
     },
-    "clases": {
-        "clases": "Clases",
-        "crear_clase": "Crear Clase",
-        "disciplina": "Disciplina",
-        "monitor": "Monitor",
-        "fecha": "Fecha",
-        "hora_inicio": "Hora de Inicio",
-        "hora_fin": "Hora de Fin",
-        "aforo": "Aforo Máximo",
-        "reservar": "Reservar",
-        "cancelar_reserva": "Cancelar Reserva",
-        "eliminar_clase": "Eliminar Clase",
-        "plazas_disponibles": "Plazas Disponibles",
-        "clase_completa": "Clase Completa"
-    },
-    "maquinas": {
-        "inventario": "Inventario",
-        "maquinas": "Máquinas",
-        "agregar_maquina": "Agregar Máquina",
-        "nombre": "Nombre",
-        "descripcion": "Descripción",
-        "estado": "Estado",
-        "correcto": "Correcto",
-        "averiado": "Averiado",
-        "en_reparacion": "En Reparación",
-        "observaciones": "Observaciones",
-        "actualizar_estado": "Actualizar Estado",
-        "eliminar": "Eliminar"
-    },
     "estadisticas": {
         "estadisticas": "Estadísticas",
         "ingresos_mensuales": "Ingresos Mensuales",
@@ -203,23 +181,88 @@
         "eliminar": "Eliminar"
     },
     "validaciones": {
-        "campo_obligatorio": "Este campo es obligatorio",
-        "email_invalido": "El correo electrónico no es válido",
-        "contrasena_corta": "La contraseña debe tener al menos 6 caracteres",
-        "contrasenas_no_coinciden": "Las contraseñas no coinciden",
-        "dni_invalido": "El DNI o NIE no es válido",
-        "telefono_invalido": "El teléfono debe tener exactamente 9 dígitos",
-        "codigo_postal_invalido": "El código postal no es válido",
-        "fecha_futura": "La fecha no puede ser futura",
-        "edad_minima": "Debes tener mínimo 16 años",
-        "edad_maxima": "No se permite registrar personas mayores de 90 años"
+        "campos_obligatorios": "Por favor, rellena todos los campos obligatorios.",
+        "fecha_pasada": "No puedes crear una clase en una fecha u hora que ya ha pasado. Por favor, selecciona una fecha y hora futuras.",
+        "solo_lunes_viernes": "La disciplina \"{{disciplina}}\" solo puede programarse de Lunes a Viernes."
     },
     "mensajes": {
-        "exito": "¡Operación completada con éxito!",
-        "error": "Ha ocurrido un error",
-        "cargando": "Cargando...",
-        "guardando": "Guardando...",
-        "eliminar_confirmacion": "¿Está seguro de que desea eliminar este elemento?",
-        "no_resultados": "No se encontraron resultados"
+        "error_conexion_clases": "Error de conexión. No se han podido cargar las clases.",
+        "error_desconocido_crear": "Error desconocido al crear la clase.",
+        "confirmar_borrar_clase": "¿Seguro que quieres borrar esta clase?",
+        "error_borrar_clase": "No se ha podido eliminar la clase.",
+        "reserva_exito": "¡Plaza reservada con éxito!",
+        "error_reservar": "Error al intentar reservar.",
+        "confirmar_cancelar_reserva": "¿Seguro que quieres anular tu asistencia a esta clase?",
+        "cancelar_reserva_exito": "Reserva cancelada correctamente.",
+        "error_cancelar_reserva": "No se ha podido cancelar la reserva."
+    },
+    "clases": {
+        "horarios_y": "HORARIOS Y ",
+        "reservas_highlight": "RESERVAS",
+        "subtitulo_horarios": "Gestiona tus entrenamientos y consulta plazas libres.",
+        "programar_sesion": "Programar Sesión",
+        "no_hay": "No hay ",
+        "clases_programadas_highlight": "clases programadas",
+        "calendario_vacio_staff": "Actualmente el calendario está vacío. Como parte del equipo, puedes crear la primera sesión ahora mismo.",
+        "calendario_vacio_socio": "El gimnasio no tiene ninguna sesión programada en este momento. Vuelve a consultar más tarde.",
+        "dia_fecha": "Día / Fecha",
+        "horario": "Horario",
+        "equipamiento": "Equipamiento",
+        "aforo_plazas": "Aforo / Plazas",
+        "accion": "Acción",
+        "actualizando_calendario": "Actualizando calendario…",
+        "ver_material": "Ver Material",
+        "clase_finalizada": "CLASE FINALIZADA",
+        "lleno": "(LLENO)",
+        "plazas_texto": "Plazas",
+        "sin_asistentes": "Sin asistentes",
+        "completada": "Completada",
+        "apuntado": "APUNTADO",
+        "sin_hueco": "Sin hueco",
+        "nueva_sesion": "Nueva Sesión",
+        "selecciona": "Selecciona…",
+        "aforo_modal": "(Aforo: {{aforo}})",
+        "monitor_asignado": "Monitor Asignado",
+        "sin_monitor": "Sin Monitor",
+        "solo_lunes_viernes_req": "Solo de Lunes a Viernes",
+        "inicio": "Inicio",
+        "fin": "Fin",
+        "cerrar": "Cerrar"
+    },
+    "maquinas": {
+        "estado_equipamiento": "Estado del equipamiento en tiempo real.",
+        "no_equipamiento": "No hay equipamiento técnico asignado a esta disciplina. ¡Todo es peso libre o cardio!",
+        "operativa": "Operativa",
+        "averiada": "Averiada",
+        "en_revision": "En revisión"
+    },
+    "gestion_pagos": {
+        "control_de": "CONTROL DE ",
+        "caja": "CAJA",
+        "subtitulo": "Historial de cobros y emisión de recibos manuales.",
+        "registrar_cobro": "REGISTRAR COBRO",
+        "buscar_socio": "Buscar por nombre de socio...",
+        "fecha": "Fecha",
+        "socio": "Socio",
+        "concepto": "Concepto",
+        "importe": "Importe",
+        "estado": "Estado",
+        "cargando_transacciones": "Cargando transacciones...",
+        "completado": "COMPLETADO",
+        "no_hay_transacciones": "No hay transacciones registradas.",
+        "pasarela_de": "Pasarela de ",
+        "cobro": "Cobro",
+        "transaccion_exitosa": "¡Transacción Exitosa!",
+        "selecciona_socio": "Selecciona Socio...",
+        "importe_euro": "Importe (€)",
+        "datos_tarjeta": "Datos de Tarjeta",
+        "confirmar_pago": "CONFIRMAR PAGO"
+    },
+    "validaciones_pagos": {
+        "selecciona_socio": "Selecciona un socio.",
+        "tarjeta_invalida": "Tarjeta inválida (16 dígitos).",
+        "caducidad_invalida": "Caducidad inválida (MM/YY).",
+        "cvc_invalido": "CVC inválido (3 dígitos).",
+        "error_procesar": "Error al procesar el cobro."
     }
 }

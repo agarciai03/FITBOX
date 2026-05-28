@@ -98,7 +98,7 @@ export const Sidebar = () => {
                             </button>
 
                             <button
-                                title={t('menu.cajon_pagos', 'Cajón de Pagos')}
+                                title={t('menu.control_pagos', 'Control de Pagos')}
                                 onClick={() => handleNavigation('/gestion-pagos')}
                                 className={`flex items-center p-3 rounded-lg font-bold transition-all overflow-hidden ${pathname === '/gestion-pagos'
                                     ? 'bg-fitbox-red/10 text-fitbox-red border border-fitbox-red/20'
@@ -106,7 +106,7 @@ export const Sidebar = () => {
                                     } ${isCollapsed ? 'md:justify-center' : 'gap-3 text-left'}`}
                             >
                                 <CreditCard className="w-5 h-5 shrink-0" />
-                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.cajon_pagos', 'Cajón de Pagos')}</span>
+                                <span className={`${isCollapsed ? 'md:hidden' : 'truncate'}`}>{t('menu.cajon_pagos', 'Control de Pagos')}</span>
                             </button>
                             
                             {/* Boton de morosos */}

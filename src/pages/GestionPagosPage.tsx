@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PaymentRepository, type Pago } from '../database/repositories/PaymentRepository';
 import { UserRepository, type Usuario } from '../database/repositories/UserRepository';
 import { Card } from '../components/ui/Card';
@@ -7,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { CreditCard, Search, Plus, X, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
 
 export const GestionPagosPage = () => {
+    const { t } = useTranslation();
     const [pagos, setPagos] = useState<Pago[]>([]);
     const [socios, setSocios] = useState<Usuario[]>([]);
     const [loading, setLoading] = useState(true);
@@ -16,7 +18,7 @@ export const GestionPagosPage = () => {
     const [showModal, setShowModal] = useState(false);
     const [socioId, setSocioId] = useState('');
     const [importe, setImporte] = useState('19.99');
-    const [concepto, setConcepto] = useState('Cuota Mensual');
+    const [concepto, setConcepto] = useState(t('pagos.cuota_mensual'));
 
     // Estados para la Tarjeta (Validaciones Europeas)
     const [numTarjeta, setNumTarjeta] = useState('');
@@ -47,13 +49,13 @@ export const GestionPagosPage = () => {
 
     const handleCobrar = async () => {
         setError(null);
-        if (!socioId) return setError("Selecciona un socio.");
+        if (!socioId) return setError(t('validaciones_pagos.selecciona_socio'));
 
         // REGEX VALIDACIONES
         const numLimpio = numTarjeta.replace(/\s/g, '');
-        if (numLimpio.length !== 16) return setError("Tarjeta inválida (16 dígitos).");
-        if (!/^\d{2}\/\d{2}$/.test(caducidad)) return setError("Caducidad inválida (MM/YY).");
-        if (cvc.length !== 3) return setError("CVC inválido (3 dígitos).");
+        if (numLimpio.length !== 16) return setError(t('validaciones_pagos.tarjeta_invalida'));
+        if (!/^\d{2}\/\d{2}$/.test(caducidad)) return setError(t('validaciones_pagos.caducidad_invalida'));
+        if (cvc.length !== 3) return setError(t('validaciones_pagos.cvc_invalido'));
 
         try {
             await PaymentRepository.registrarPago(socioId, parseFloat(importe), concepto);
@@ -66,7 +68,7 @@ export const GestionPagosPage = () => {
             }, 2000);
         } catch (errorCatch) {
             console.error("Fallo en la transacción:", errorCatch);
-            setError("Error al procesar el cobro.");
+            setError(t('validaciones_pagos.error_procesar'));
         }
     };
 
@@ -83,12 +85,12 @@ export const GestionPagosPage = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-white flex items-center gap-3 uppercase italic">
-                        <CreditCard className="text-fitbox-red w-8 h-8" /> CONTROL DE <span className="text-fitbox-red">CAJA</span>
+                        <CreditCard className="text-fitbox-red w-8 h-8" /> {t('gestion_pagos.control_de')} <span className="text-fitbox-red">{t('gestion_pagos.caja')}</span>
                     </h1>
-                    <p className="text-fitbox-text-muted">Historial de cobros y emisión de recibos manuales.</p>
+                    <p className="text-fitbox-text-muted">{t('gestion_pagos.subtitulo')}</p>
                 </div>
                 <Button onClick={() => setShowModal(true)} className="bg-fitbox-red hover:bg-red-700 font-bold">
-                    <Plus className="w-5 h-5 mr-2" /> REGISTRAR COBRO
+                    <Plus className="w-5 h-5 mr-2" /> {t('gestion_pagos.registrar_cobro')}
                 </Button>
             </div>
 
@@ -96,7 +98,7 @@ export const GestionPagosPage = () => {
                 <Search className="text-gray-500" />
                 <input
                     type="text"
-                    placeholder="Buscar por nombre de socio..."
+                    placeholder={t('gestion_pagos.buscar_socio')}
                     className="bg-transparent border-none text-white w-full outline-none"
                     value={filtro}
                     onChange={(e) => setFiltro(e.target.value)}
@@ -107,16 +109,16 @@ export const GestionPagosPage = () => {
                 <table className="w-full text-left text-sm">
                     <thead className="bg-neutral-800/50 text-fitbox-text-muted uppercase text-[10px] tracking-widest font-bold">
                         <tr>
-                            <th className="px-6 py-4">Fecha</th>
-                            <th className="px-6 py-4">Socio</th>
-                            <th className="px-6 py-4">Concepto</th>
-                            <th className="px-6 py-4">Importe</th>
-                            <th className="px-6 py-4 text-right">Estado</th>
+                            <th className="px-6 py-4">{t('gestion_pagos.fecha')}</th>
+                            <th className="px-6 py-4">{t('gestion_pagos.socio')}</th>
+                            <th className="px-6 py-4">{t('gestion_pagos.concepto')}</th>
+                            <th className="px-6 py-4">{t('gestion_pagos.importe')}</th>
+                            <th className="px-6 py-4 text-right">{t('gestion_pagos.estado')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-800">
                         {loading ? (
-                            <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">Cargando transacciones...</td></tr>
+                            <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">{t('gestion_pagos.cargando_transacciones')}</td></tr>
                         ) : pagosFiltrados.map(p => (
                             <tr key={p.id_pago} className="hover:bg-neutral-800/20 transition-colors">
                                 <td className="px-6 py-4 text-gray-300">
@@ -130,14 +132,14 @@ export const GestionPagosPage = () => {
                                 <td className="px-6 py-4 font-black text-white text-lg">{Number(p.importe).toFixed(2)}€</td>
                                 <td className="px-6 py-4 text-right">
                                     <span className="bg-green-500/10 text-green-500 border border-green-500/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                                        COMPLETADO
+                                        {t('gestion_pagos.completado')}
                                     </span>
                                 </td>
                             </tr>
                         ))}
                         {!loading && pagosFiltrados.length === 0 && (
                             <tr>
-                                <td colSpan={5} className="px-6 py-12 text-center text-gray-500 italic">No hay transacciones registradas.</td>
+                                <td colSpan={5} className="px-6 py-12 text-center text-gray-500 italic">{t('gestion_pagos.no_hay_transacciones')}</td>
                             </tr>
                         )}
                     </tbody>
@@ -149,27 +151,27 @@ export const GestionPagosPage = () => {
                 <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
                     <Card className="max-w-md w-full p-8 border-neutral-800 bg-neutral-950 shadow-[0_0_50px_rgba(239,68,68,0.2)]">
                         <div className="flex justify-between items-start mb-6">
-                            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Pasarela de <span className="text-fitbox-red">Cobro</span></h2>
+                            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">{t('gestion_pagos.pasarela_de')} <span className="text-fitbox-red">{t('gestion_pagos.cobro')}</span></h2>
                             <button onClick={() => setShowModal(false)}><X className="text-gray-500 hover:text-white" /></button>
                         </div>
 
                         {success ? (
                             <div className="py-12 flex flex-col items-center animate-in zoom-in">
                                 <CheckCircle className="w-20 h-20 text-green-500 mb-4 animate-bounce" />
-                                <p className="text-white font-black text-center uppercase">¡Transacción Exitosa!</p>
+                                <p className="text-white font-black text-center uppercase">{t('gestion_pagos.transaccion_exitosa')}</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
                                 {error && <div className="p-3 bg-red-500/10 border border-red-500/50 text-red-500 rounded-lg text-xs font-bold flex items-center gap-2"><AlertCircle className="w-4 h-4" />{error}</div>}
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Socio</label>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('gestion_pagos.socio')}</label>
                                     <select
                                         className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-lg px-4 py-3 outline-none focus:border-fitbox-red"
                                         value={socioId}
                                         onChange={(e) => setSocioId(e.target.value)}
                                     >
-                                        <option value="">Selecciona Socio...</option>
+                                        <option value="">{t('gestion_pagos.selecciona_socio')}</option>
                                         {/* HEMOS ELIMINADO EL DNI DE AQUÍ PARA EVITAR EL ERROR */}
                                         {socios.map(s => <option key={s.id_usuario} value={s.id_usuario}>{s.nombre} {s.apellidos}</option>)}
                                     </select>
@@ -177,17 +179,17 @@ export const GestionPagosPage = () => {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Importe (€)</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('gestion_pagos.importe_euro')}</label>
                                         <Input type="number" value={importe} onChange={(e) => setImporte(e.target.value)} className="bg-neutral-900 border-neutral-800 font-bold text-fitbox-red" />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Concepto</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('gestion_pagos.concepto')}</label>
                                         <Input value={concepto} onChange={(e) => setConcepto(e.target.value)} className="bg-neutral-900 border-neutral-800 text-xs" />
                                     </div>
                                 </div>
 
                                 <div className="pt-4 border-t border-neutral-900">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-3">Datos de Tarjeta</label>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-3">{t('gestion_pagos.datos_tarjeta')}</label>
                                     <div className="space-y-4">
                                         <Input
                                             placeholder="0000 0000 0000 0000"
@@ -221,7 +223,7 @@ export const GestionPagosPage = () => {
                                 </div>
 
                                 <Button onClick={handleCobrar} className="w-full bg-fitbox-red py-6 font-black text-lg mt-4 shadow-lg shadow-fitbox-red/20">
-                                    CONFIRMAR PAGO
+                                    {t('gestion_pagos.confirmar_pago')}
                                 </Button>
                             </div>
                         )}

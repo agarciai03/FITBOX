@@ -1,4 +1,5 @@
 import { useEffect, useReducer } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '@/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
@@ -42,6 +43,7 @@ const initialState: DashboardState = {
 };
 
 export const DashboardPage = () => {
+    const { t } = useTranslation();
     const profile = useAuthStore((state) => state.profile);
     const user = useAuthStore((state) => state.user);
     const navigate = useNavigate();
@@ -144,7 +146,7 @@ export const DashboardPage = () => {
                 });
 
                 if (!mejorHora) {
-                    mejorHora = '08:00 (Mañana)';
+                    mejorHora = `08:00 (${t('dashboard.manana')})`;
                     menorOcupacion = 0;
                 }
 
@@ -169,7 +171,7 @@ export const DashboardPage = () => {
         fetchClasesHoy();
 
         return () => { isMounted = false; };
-    }, []);
+    }, [t]);
 
     return (
         <div className="relative min-h-screen w-full overflow-x-hidden">
@@ -181,13 +183,13 @@ export const DashboardPage = () => {
             {!isAdminOrMonitor && !isActivo ? (
                 <div className="p-8 text-center flex flex-col items-center justify-center min-h-[70vh] animate-in fade-in duration-500 relative z-10">
                     <AlertCircle className="w-24 h-24 text-fitbox-red mb-6 opacity-80 animate-pulse" />
-                    <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">ACCESO RESTRINGIDO</h2>
+                    <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">{t('dashboard.acceso_restringido')}</h2>
                     <p className="text-gray-400 max-w-lg mb-8 text-lg">
-                        Tu suscripción se encuentra inactiva o pendiente de renovación. Por favor, regulariza tu situación en la pasarela de pagos para volver a disfrutar del club.
+                        {t('dashboard.suscripcion_inactiva')}
                     </p>
                     <Button onClick={() => navigate('/pagos')} className="bg-fitbox-red hover:bg-red-700 text-white font-black py-6 px-8 text-lg shadow-lg shadow-fitbox-red/20">
                         <CreditCard className="w-5 h-5 mr-2" />
-                        Abonar Cuota Ahora
+                        {t('dashboard.abonar_cuota')}
                     </Button>
                 </div>
             ) : (
@@ -195,11 +197,11 @@ export const DashboardPage = () => {
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-neutral-800/50 pb-4 animate-fade-in-down">
                         <div>
                             <h1 className="text-3xl md:text-4xl font-black text-white italic tracking-tighter uppercase">
-                                Panel de <span className="text-fitbox-red">{isAdminOrMonitor ? 'Control' : 'Atleta'}</span>
+                                {t('dashboard.panel_prefix')}<span className="text-fitbox-red">{isAdminOrMonitor ? t('dashboard.control') : t('dashboard.atleta')}</span>
                             </h1>
                             <p className="text-sm text-gray-400 mt-1 font-medium">
-                                Bienvenido/a, <span className="text-white capitalize">{profile?.nombre || user?.email?.split('@')[0]}</span>.
-                                {isAdminOrMonitor ? ' Visión general del estado del centro.' : ' Prepárate para entrenar.'}
+                                {t('dashboard.bienvenido')} <span className="text-white capitalize">{profile?.nombre || user?.email?.split('@')[0]}</span>.
+                                {isAdminOrMonitor ? ` ${t('dashboard.vision_general')}` : ` ${t('dashboard.preparate_entrenar')}`}
                             </p>
                         </div>
 
@@ -209,9 +211,9 @@ export const DashboardPage = () => {
                                     <CreditCard className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Membresía</p>
+                                    <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500">{t('dashboard.membresía')}</p>
                                     <p className={`text-xs font-black uppercase tracking-widest ${isActivo ? 'text-green-400' : 'text-fitbox-red'}`}>
-                                        {isActivo ? 'Activa' : 'Pendiente Pago'}
+                                        {isActivo ? t('dashboard.activa') : t('dashboard.pendiente_pago')}
                                     </p>
                                 </div>
                             </div>
@@ -221,7 +223,7 @@ export const DashboardPage = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                         <div className="bg-neutral-900/40 backdrop-blur-xl border border-white/5 rounded-xl p-4 shadow-lg hover:bg-neutral-800/50 transition-colors animate-fade-in-up card-animate glow-red" style={{animationDelay: '0ms'}}>
                             <div className="flex justify-between items-start mb-1">
-                                <span className="text-[9px] font-bold tracking-widest text-gray-500 uppercase">Total Socios</span>
+                                <span className="text-[9px] font-bold tracking-widest text-gray-500 uppercase">{t('dashboard.total_socios')}</span>
                                 <Users className="h-4 w-4 text-fitbox-red" />
                             </div>
                             <div className="text-2xl font-black text-white">{sociosCount}</div>
@@ -229,7 +231,7 @@ export const DashboardPage = () => {
 
                         <div className="bg-neutral-900/40 backdrop-blur-xl border border-white/5 rounded-xl p-4 shadow-lg hover:bg-neutral-800/50 transition-colors animate-fade-in-up card-animate glow-red" style={{animationDelay: '100ms'}}>
                             <div className="flex justify-between items-start mb-1">
-                                <span className="text-[9px] font-bold tracking-widest text-gray-500 uppercase">Clases Hoy</span>
+                                <span className="text-[9px] font-bold tracking-widest text-gray-500 uppercase">{t('dashboard.clases_hoy')}</span>
                                 <Calendar className="h-4 w-4 text-fitbox-red" />
                             </div>
                             <div className="text-2xl font-black text-white">{clasesCount}</div>
@@ -237,7 +239,7 @@ export const DashboardPage = () => {
 
                         <div className="bg-neutral-900/40 backdrop-blur-xl border border-white/5 rounded-xl p-4 shadow-lg hover:bg-neutral-800/50 transition-colors animate-fade-in-up card-animate glow-red" style={{animationDelay: '200ms'}}>
                             <div className="flex justify-between items-start mb-1">
-                                <span className="text-[9px] font-bold tracking-widest text-gray-500 uppercase">Incidencias</span>
+                                <span className="text-[9px] font-bold tracking-widest text-gray-500 uppercase">{t('dashboard.incidencias')}</span>
                                 <AlertCircle className={`h-4 w-4 ${incidencias > 0 ? 'text-fitbox-red animate-pulse' : 'text-green-500'}`} />
                             </div>
                             <div className={`text-2xl font-black ${incidencias > 0 ? 'text-fitbox-red' : 'text-green-400'}`}>
@@ -247,7 +249,7 @@ export const DashboardPage = () => {
 
                         <div className="bg-neutral-900/40 backdrop-blur-xl border border-white/5 rounded-xl p-4 shadow-lg hover:bg-neutral-800/50 transition-colors animate-fade-in-up card-animate glow-red" style={{animationDelay: '300ms'}}>
                             <div className="flex justify-between items-start mb-1">
-                                <span className="text-[9px] font-bold tracking-widest text-gray-500 uppercase">Hombres</span>
+                                <span className="text-[9px] font-bold tracking-widest text-gray-500 uppercase">{t('dashboard.hombres')}</span>
                                 <Activity className="h-4 w-4 text-blue-500/70" />
                             </div>
                             <div className="text-2xl font-black text-white">{hombresCount}</div>
@@ -255,7 +257,7 @@ export const DashboardPage = () => {
 
                         <div className="bg-neutral-900/40 backdrop-blur-xl border border-white/5 rounded-xl p-4 shadow-lg hover:bg-neutral-800/50 transition-colors animate-fade-in-up card-animate glow-red" style={{animationDelay: '400ms'}}>
                             <div className="flex justify-between items-start mb-1">
-                                <span className="text-[9px] font-bold tracking-widest text-gray-500 uppercase">Mujeres</span>
+                                <span className="text-[9px] font-bold tracking-widest text-gray-500 uppercase">{t('dashboard.mujeres')}</span>
                                 <Activity className="h-4 w-4 text-purple-500/70" />
                             </div>
                             <div className="text-2xl font-black text-white">{mujeresCount}</div>
@@ -267,15 +269,15 @@ export const DashboardPage = () => {
                             <div className="bg-neutral-900/40 backdrop-blur-2xl border border-neutral-700 p-6 rounded-2xl shadow-xl h-full flex flex-col hover:border-neutral-600 transition-all">
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
                                     <h3 className="text-white font-black text-lg uppercase tracking-tight flex items-center gap-2">
-                                        <Activity className="w-5 h-5 text-fitbox-red" /> Estado y Afluencia de la Sala
+                                        <Activity className="w-5 h-5 text-fitbox-red" /> {t('dashboard.estado_afluencia')}
                                     </h3>
 
                                     <div className={`px-3 py-1.5 rounded-lg border backdrop-blur-sm ${mensajeOcupacion.actual > 70 ? 'bg-red-500/10 border-red-500/30' : 'bg-green-500/10 border-green-500/30'}`}>
                                         <p className="text-[11px] font-bold text-gray-300">
                                             {mensajeOcupacion.actual > 70 ? (
-                                                <><span className="text-fitbox-red">Muy lleno ({mensajeOcupacion.actual}%).</span> Mejor a las {mensajeOcupacion.recomendada}.</>
+                                                <><span className="text-fitbox-red">{t('dashboard.muy_lleno')} ({mensajeOcupacion.actual}%).</span> {t('dashboard.mejor_hora')} {mensajeOcupacion.recomendada}.</>
                                             ) : (
-                                                <><span className="text-green-400">Tranquilo ({mensajeOcupacion.actual}%).</span> Buen momento para entrenar.</>
+                                                <><span className="text-green-400">{t('dashboard.tranquilo')} ({mensajeOcupacion.actual}%).</span> {t('dashboard.buen_momento')}</>
                                             )}
                                         </p>
                                     </div>
@@ -295,14 +297,14 @@ export const DashboardPage = () => {
                                             onClick={() => navigate('/socios')}
                                             className="w-full h-16 bg-fitbox-red hover:bg-red-700 text-white font-black text-lg italic uppercase tracking-widest shadow-lg shadow-fitbox-red/20 transition-transform hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl btn-glow"
                                         >
-                                            <Users className="w-5 h-5" /> Gestión Socios
+                                            <Users className="w-5 h-5" /> {t('dashboard.gestionar_socios')}
                                         </Button>
 
                                         <Button
                                             onClick={() => navigate('/maquinas')}
                                             className="w-full h-16 bg-neutral-800 backdrop-blur-xl hover:bg-neutral-700 text-white font-black text-lg italic uppercase tracking-widest border border-neutral-700 shadow-lg transition-all hover:border-neutral-600 hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl"
                                         >
-                                            <Settings className="w-5 h-5" /> Ver Inventario
+                                            <Settings className="w-5 h-5" /> {t('dashboard.ver_inventario')}
                                         </Button>
                                     </>
                                 ) : rol === 'Monitor' ? (
@@ -311,14 +313,14 @@ export const DashboardPage = () => {
                                             onClick={() => navigate('/clases')}
                                             className="w-full h-16 bg-fitbox-red hover:bg-red-700 text-white font-black text-lg italic uppercase tracking-widest shadow-lg shadow-fitbox-red/20 transition-transform hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl btn-glow"
                                         >
-                                            <ClipboardList className="w-5 h-5" /> Pasar Lista
+                                            <ClipboardList className="w-5 h-5" /> {t('dashboard.pasar_lista')}
                                         </Button>
 
                                         <Button
                                             onClick={() => navigate('/maquinas')}
                                             className="w-full h-16 bg-neutral-800 backdrop-blur-xl hover:bg-neutral-700 text-white font-black text-lg italic uppercase tracking-widest border border-neutral-700 shadow-lg transition-all hover:border-neutral-600 hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl"
                                         >
-                                            <AlertTriangle className="w-5 h-5" /> Reportar Avería
+                                            <AlertTriangle className="w-5 h-5" /> {t('dashboard.reportar_averia')}
                                         </Button>
                                     </>
                                 ) : (
@@ -327,14 +329,14 @@ export const DashboardPage = () => {
                                             onClick={() => navigate('/clases')}
                                             className="w-full h-16 bg-fitbox-red hover:bg-red-700 text-white font-black text-lg italic uppercase tracking-widest shadow-lg shadow-fitbox-red/20 transition-transform hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl btn-glow"
                                         >
-                                            <Calendar className="w-5 h-5" /> Reservar
+                                            <Calendar className="w-5 h-5" /> {t('dashboard.reservar')}
                                         </Button>
 
                                         <Button
                                             onClick={() => navigate('/maquinas')}
                                             className="w-full h-16 bg-neutral-800 backdrop-blur-xl hover:bg-neutral-700 text-white font-black text-lg italic uppercase tracking-widest border border-neutral-700 shadow-lg transition-all hover:border-neutral-600 hover:scale-[1.02] flex items-center justify-center gap-2 rounded-xl"
                                         >
-                                            <Dumbbell className="w-5 h-5" /> Máquinas
+                                            <Dumbbell className="w-5 h-5" /> {t('dashboard.maquinas')}
                                         </Button>
                                     </>
                                 )}
@@ -342,7 +344,7 @@ export const DashboardPage = () => {
 
                             <div className="bg-neutral-900/40 backdrop-blur-2xl border border-neutral-700 p-5 md:p-6 rounded-2xl shadow-xl h-full hover:border-neutral-600 transition-all">
                                 <h3 className="text-white font-black text-sm uppercase tracking-tight mb-4 flex items-center gap-2 border-b border-neutral-700 pb-3">
-                                    <Clock className="w-4 h-4 text-fitbox-red" /> Hoy en FITBOX
+                                    <Clock className="w-4 h-4 text-fitbox-red" /> {t('dashboard.hoy_fitbox')}
                                 </h3>
 
                                 <div className="space-y-3">
@@ -353,11 +355,11 @@ export const DashboardPage = () => {
                                             ))}
                                         </div>
                                     ) : proximasClases.length === 0 ? (
-                                        <p className="text-gray-500 text-xs italic text-center py-8 bg-neutral-950/30 rounded-xl border border-white/5">No hay clases programadas para hoy.</p>
+                                        <p className="text-gray-500 text-xs italic text-center py-8 bg-neutral-950/30 rounded-xl border border-white/5">{t('dashboard.no_clases_hoy')}</p>
                                     ) : (
                                         proximasClases.map((clase, idx) => {
-                                            const disciplina = clase.disciplinas?.nombre || 'Clase General';
-                                            const monitor = clase.usuarios?.nombre || 'Sin asignar';
+                                            const disciplina = clase.disciplinas?.nombre || t('dashboard.clase_general');
+                                            const monitor = clase.usuarios?.nombre || t('dashboard.sin_asignar');
                                             const horaFormateada = clase.hora_inicio ? clase.hora_inicio.substring(0, 5) : '--:--';
                                             const ocupacion = clase.reservas ? clase.reservas.length : 0;
                                             const maximo = clase.aforo_maximo || 20;
@@ -374,7 +376,7 @@ export const DashboardPage = () => {
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-white font-black text-sm uppercase tracking-tight truncate group-hover:text-fitbox-red transition-colors">{disciplina}</p>
                                                         <p className="text-[10px] text-gray-500 font-medium truncate mt-0.5">
-                                                            Por <span className="text-gray-300 group-hover:text-white transition-colors">{monitor}</span>
+                                                            {t('dashboard.por')} <span className="text-gray-300 group-hover:text-white transition-colors">{monitor}</span>
                                                         </p>
                                                     </div>
 
@@ -382,7 +384,7 @@ export const DashboardPage = () => {
                                                         <span className={`block font-black text-base leading-none mb-0.5 ${estaLlena ? 'text-fitbox-red' : 'text-green-400'}`}>
                                                             {ocupacion}/{maximo}
                                                         </span>
-                                                        <p className="text-[8px] uppercase tracking-widest text-gray-500 font-bold">Plazas</p>
+                                                        <p className="text-[8px] uppercase tracking-widest text-gray-500 font-bold">{t('dashboard.plazas')}</p>
                                                     </div>
                                                 </div>
                                             );
