@@ -54,6 +54,7 @@ export const EstadisticasPage = () => {
                             ingresos[fecha.getMonth()].ingresos += Number(pago.importe);
                         }
                     });
+                    ingresos.forEach(i => i.ingresos = Number(i.ingresos.toFixed(2)));
                 }
 
                 const { data: reservasData } = await supabase.from('reservas').select('fecha_reserva');
